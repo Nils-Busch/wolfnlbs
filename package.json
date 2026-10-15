@@ -1,0 +1,22 @@
+{
+  "name": "was-fuer-woelfe",
+  "private": true,
+  "version": "3.0.0",
+  "description": "Werwolf-Partyspiel – jeder Spieler mit eigenem Handy. Läuft auf Cloudflare Workers + Durable Objects.",
+  "type": "module",
+  "workspaces": [
+    "client"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace client",
+    "dev": "wrangler dev",
+    "dev:client": "npm run dev --workspace client",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
