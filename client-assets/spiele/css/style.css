@@ -64,7 +64,7 @@ main { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 3rem; }
 }
 .card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 30px -15px var(--accent); }
 .card .icon { font-size: 2.4rem; line-height: 1; margin-bottom: .3rem; }
-.card h3 { margin: 0; font-size: 1.2rem; }
+.card h3 { margin: 0; font-size: 1.2rem; color: #f5f1e8; }
 .card p { margin: 0; color: var(--muted); font-size: .95rem; }
 .card .meta { margin-top: auto; padding-top: .7rem; font-size: .85rem; color: var(--accent); display: flex; gap: .5rem; flex-wrap: wrap; }
 .tag { border: 1px solid var(--line); border-radius: 999px; padding: .1rem .55rem; color: var(--muted); }
