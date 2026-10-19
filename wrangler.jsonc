@@ -12,7 +12,7 @@
   // gebaut – die beiden anderen Bereiche sind reines, unverändertes HTML/CSS/JS
   // und brauchen keinen Build-Schritt.
   "build": {
-    "command": "npm run build:woelfe",
+    "command": "npm run build",
     "watch_dir": ["clients/woelfe-src/src", "worker/src"]
   },
 
