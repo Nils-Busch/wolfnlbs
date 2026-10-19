@@ -1,0 +1,93 @@
+/* Startseite "Vereinsheim" – Auswahl zwischen den drei Bereichen. */
+
+.hub-wash {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle at var(--wash-x, 50%) var(--wash-y, 30%), color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%);
+  transition: opacity .45s ease, background-color .45s ease;
+}
+body.hub-hovering .hub-wash { opacity: 1; }
+
+.hub-header, .hub-main, .vh-footer { position: relative; z-index: 1; }
+
+.hub-main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4.5rem) 1.25rem 2rem;
+  text-align: center;
+}
+
+.hub-main .vh-eyebrow { justify-content: center; }
+.hub-main .vh-h1 { margin-bottom: .25rem; }
+.hub-sub {
+  color: var(--ink-soft);
+  max-width: 46ch;
+  margin: 0 auto 2.5rem;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.hub-option {
+  --accent: var(--accent-hub);
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1.6rem 1.4rem 1.4rem;
+  position: relative;
+  box-shadow: 0 10px 22px -12px var(--shadow), 0 1px 0 rgba(255,255,255,0.4) inset;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.hub-option:nth-child(1) { --tilt: -1.4deg; }
+.hub-option:nth-child(2) { --tilt: .9deg; }
+.hub-option:nth-child(3) { --tilt: -0.6deg; }
+
+.hub-option::before {
+  /* Tesafilm-Ecke */
+  content: "";
+  position: absolute;
+  top: -10px; left: 22px;
+  width: 58px; height: 24px;
+  background: linear-gradient(rgba(255,255,255,.7), rgba(255,255,255,.5));
+  border: 1px solid rgba(0,0,0,.05);
+  transform: rotate(-3deg);
+  box-shadow: 0 2px 4px rgba(0,0,0,.14);
+}
+
+.hub-option:hover, .hub-option:focus-visible {
+  transform: rotate(0deg) translateY(-6px);
+  box-shadow: 0 18px 30px -14px var(--shadow), 0 1px 0 rgba(255,255,255,0.4) inset;
+}
+
+.hub-option .vh-stamp { margin-bottom: .9rem; }
+.hub-option h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 0 0 .4rem;
+}
+.hub-option p { margin: 0 0 .9rem; color: var(--ink-soft); font-size: .92rem; }
+.hub-option .hub-go {
+  font-family: var(--font-hand);
+  font-size: 1.15rem;
+  color: var(--accent);
+}
+
+.hub-option[data-accent="woelfe"] { --accent: var(--accent-woelfe); }
+.hub-option[data-accent="spiele"] { --accent: var(--accent-spiele); }
+.hub-option[data-accent="tischtennis"] { --accent: var(--accent-tischtennis); }
+
+@media (max-width: 560px) {
+  .hub-option { transform: none; }
+  .hub-option:hover, .hub-option:focus-visible { transform: translateY(-4px); }
+}
