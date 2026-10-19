@@ -54,7 +54,7 @@
   // Optional: fester Admin-Zugang fürs Tischtennis-Turnier statt eines beim
   // ersten Start zufällig erzeugten (und nur in den Worker-Logs sichtbaren)
   // Passworts. Siehe README.
-  // "vars": { "ADMIN_USERNAME": "admin", "ADMIN_PASSWORD": "...", "SESSION_HOURS": "12" },
+  "vars": { "ADMIN_USERNAME": "admin", "ADMIN_PASSWORD": "admin", "SESSION_HOURS": "12" },
 
   "observability": { "enabled": true }
 }
