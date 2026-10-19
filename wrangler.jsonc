@@ -37,7 +37,7 @@
   },
   // SQLite-basierte Durable Objects laufen auch im kostenlosen Workers-Plan.
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["GameRoom", "DuelRoom", "Leaderboard"] }
+    { "tag": "v2", "new_sqlite_classes": ["GameRoom", "DuelRoom", "Leaderboard"] }
   ],
 
   // D1-Datenbank für das Tischtennis-Turnier. "database_id" muss nach dem
