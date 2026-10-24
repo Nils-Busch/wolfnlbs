@@ -1,12 +1,7 @@
 'use strict';
-/* Admin-Ansicht: Turniere, Teilnehmer, Ergebnisse, Benutzer & Rechte */
+/* Admin-Ansicht: Turniere, Teilnehmer, Ergebnisse.
+   Anmeldung, Benutzer & Rechte liegen jetzt auf der gemeinsamen Konto-Seite (/konto/). */
 const app = document.getElementById('app');
-const PERM_LABEL = {
-  'users.manage': 'Benutzer & Rechte verwalten',
-  'tournaments.manage': 'Turniere anlegen, starten, zurücksetzen',
-  'players.manage': 'Teilnehmer verwalten',
-  'results.enter': 'Ergebnisse und Tische eintragen',
-};
 const S = { user: null, perms: [], view: 'list', tid: null, tab: null, data: null, showDone: false, editing: new Set() };
 const can = p => S.perms.includes(p);
 
@@ -29,16 +24,18 @@ function loginView() {
       <label>Benutzername<input name="username" autocomplete="username" required autofocus></label>
       <label>Passwort<input name="password" type="password" autocomplete="current-password" required></label>
       <button class="primary">Anmelden</button>
-    </form>`;
+    </form>
+    <p class="hint" style="text-align:center">Noch kein Konto? <a href="/konto/#register">Hier registrieren</a> – danach muss der Admin dich freischalten.</p>`;
 }
 
 function shell(content) {
   const nav = [['list', 'Turniere']];
-  if (can('users.manage')) nav.push(['users', 'Benutzer & Rechte']);
-  nav.push(['account', 'Mein Konto']);
+  const links = [];
+  if (can('users.manage')) links.push(['/konto/#users', 'Benutzer & Rechte']);
+  links.push(['/konto/', 'Mein Konto']);
   app.innerHTML = `
     <div class="adminbar">
-      <nav>${nav.map(([v, l]) => `<button data-action="nav" data-view="${v}" class="${S.view === v || (v === 'list' && S.view === 'tournament') ? 'active' : ''}">${l}</button>`).join('')}</nav>
+      <nav>${nav.map(([v, l]) => `<button data-action="nav" data-view="${v}" class="${S.view === v || (v === 'list' && S.view === 'tournament') ? 'active' : ''}">${l}</button>`).join('')}${links.map(([h, l]) => `<a class="navlink" href="${h}">${l}</a>`).join('')}</nav>
       <span class="who">${esc(S.user.display_name)} <button class="link" data-action="logout">Abmelden</button></span>
     </div>${content}`;
 }
@@ -111,6 +108,7 @@ async function tournamentView() {
     <p class="t-meta">${[fmtDate(t.event_date), t.location, FORMAT_LABEL[t.format], bestOfLabel(t.best_of), t.double_elim ? 'mit Loserbracket' : ''].filter(Boolean).map(esc).join(', ')}
       <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span>
       <a class="link" href="/tischtennis/#t=${t.id}" target="_blank" rel="noopener">Besucheransicht öffnen</a>
+      <a class="link" href="/tischtennis/live#t=${t.id}" target="_blank" rel="noopener">📺 Liveansicht (Bildschirm)</a>
       ${can('tournaments.manage') ? `<button class="link" type="button" data-action="copy-visitor-link">Besucher-Link kopieren</button>` : ''}</p>
     ${actions.length ? `<div class="actions">${actions.join('')}</div>` : ''}
     ${renderTabs(tabs, S.tab)}
@@ -200,42 +198,6 @@ function adminSettings(d) {
       <button class="danger" data-action="del-t">Turnier löschen</button></div>`;
 }
 
-/* ---------- Benutzer ---------- */
-async function usersView() {
-  const users = await api('/api/users');
-  const perms = Object.keys(PERM_LABEL);
-  shell(`
-    <h1 class="page-title">Benutzer & Rechte</h1>
-    <div class="scroll"><table class="utable">
-      <thead><tr><th class="left">Benutzer</th>${perms.map(p => `<th class="perm">${PERM_LABEL[p]}</th>`).join('')}<th>Aktiv</th><th class="left">Neues Passwort</th><th></th></tr></thead>
-      <tbody>${users.map(u => `<tr>
-        <td class="left"><input form="u${u.id}" name="display_name" value="${esc(u.display_name)}" maxlength="80" aria-label="Anzeigename"><span class="muted">${esc(u.username)}</span></td>
-        ${perms.map(p => `<td><input form="u${u.id}" type="checkbox" name="perm" value="${p}" ${u.permissions.includes(p) ? 'checked' : ''} aria-label="${PERM_LABEL[p]}"></td>`).join('')}
-        <td><input form="u${u.id}" type="checkbox" name="active" ${u.active ? 'checked' : ''} ${u.id === S.user.id ? 'disabled' : ''} aria-label="Aktiv"></td>
-        <td><input form="u${u.id}" type="password" name="password" minlength="8" autocomplete="new-password" placeholder="unverändert"></td>
-        <td class="nowrap"><form id="u${u.id}" data-form="user" data-id="${u.id}"><button class="small">Speichern</button></form>
-          ${u.id !== S.user.id ? `<button class="link danger" data-action="del-user" data-id="${u.id}">Löschen</button>` : ''}</td></tr>`).join('')}
-      </tbody></table></div>
-    <form class="card" data-form="create-user"><h2>Benutzer anlegen</h2>
-      <div class="grid">
-        <label>Benutzername<input name="username" required pattern="[a-z0-9._\\-]{3,50}" title="3–50 Zeichen: a–z, 0–9, . _ -"></label>
-        <label>Anzeigename<input name="display_name" maxlength="80"></label>
-        <label class="span2">Startpasswort<input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
-      </div>
-      <fieldset><legend>Rechte</legend>${perms.map(p => `<label class="check"><input type="checkbox" name="perm" value="${p}" ${p === 'results.enter' ? 'checked' : ''}> ${PERM_LABEL[p]}</label>`).join('')}</fieldset>
-      <button class="primary">Benutzer anlegen</button></form>
-    <p class="hint">Ohne Rechte kann ein Benutzer sich anmelden, aber nur lesen – wie Besucher. Ein Schiedsrichter braucht nur „Ergebnisse und Tische eintragen“.</p>`);
-}
-
-function accountView() {
-  shell(`<h1 class="page-title">Mein Konto</h1>
-    <p>Angemeldet als <strong>${esc(S.user.username)}</strong>. Deine Rechte: ${S.perms.length ? S.perms.map(p => esc(PERM_LABEL[p])).join(', ') : 'nur lesen'}.</p>
-    <form class="card narrow" data-form="password"><h2>Passwort ändern</h2>
-      <label>Aktuelles Passwort<input name="current" type="password" required autocomplete="current-password"></label>
-      <label>Neues Passwort (mind. 8 Zeichen)<input name="next" type="password" minlength="8" required autocomplete="new-password"></label>
-      <button class="primary">Passwort ändern</button></form>`);
-}
-
 /* ---------- Rendering & Events ---------- */
 async function render() {
   try {
@@ -244,8 +206,7 @@ async function render() {
       S.user = me.user; S.perms = me.user?.permissions || [];
     }
     if (!S.user) return loginView();
-    if (S.view === 'users' && !can('users.manage')) S.view = 'list';
-    await ({ list: listView, tournament: tournamentView, users: usersView, account: async () => accountView() }[S.view])();
+    await ({ list: listView, tournament: tournamentView }[S.view] || listView)();
   } catch (e) {
     if (e.status === 401) { S.user = null; return loginView(); }
     if (e.status === 404 && S.view === 'tournament') { S.view = 'list'; return render(); }
@@ -283,27 +244,6 @@ app.addEventListener('submit', e => {
       }
       run(async () => { await api(`/api/matches/${id}/result`, { method: 'POST', body: { sets } }); S.editing.delete(Number(id)); }, 'Ergebnis gespeichert.');
     },
-    user: () => {
-      const body = {
-        display_name: app.querySelector(`input[form="u${id}"][name="display_name"]`).value,
-        permissions: [...app.querySelectorAll(`input[form="u${id}"][name="perm"]:checked`)].map(x => x.value),
-      };
-      const act = app.querySelector(`input[form="u${id}"][name="active"]`);
-      if (!act.disabled) body.active = act.checked;
-      const pw = app.querySelector(`input[form="u${id}"][name="password"]`).value;
-      if (pw) body.password = pw;
-      run(async () => {
-        await api(`/api/users/${id}`, { method: 'PATCH', body });
-        if (Number(id) === S.user.id) S.user = null; // eigene Rechte neu laden
-      }, 'Benutzer gespeichert.');
-    },
-    'create-user': () => {
-      const d = formData(f);
-      d.permissions = [...f.querySelectorAll('input[name="perm"]:checked')].map(x => x.value);
-      delete d.perm;
-      run(() => api('/api/users', { method: 'POST', body: d }), 'Benutzer angelegt.');
-    },
-    password: () => run(async () => { await api('/api/auth/password', { method: 'POST', body: formData(f) }); f.reset(); }, 'Passwort geändert.'),
   };
   actions[f.dataset.form]?.();
 });
@@ -328,7 +268,6 @@ app.addEventListener('click', e => {
     'del-t': () => confirm('Turnier endgültig löschen?') &&
       run(async () => { await api(`/api/tournaments/${S.tid}`, { method: 'DELETE' }); S.view = 'list'; }, 'Turnier gelöscht.'),
     'del-player': () => run(() => api(`/api/players/${id}`, { method: 'DELETE' }), 'Teilnehmer entfernt.'),
-    'del-user': () => confirm('Benutzer löschen?') && run(() => api(`/api/users/${id}`, { method: 'DELETE' }), 'Benutzer gelöscht.'),
     'edit-result': () => { S.editing.add(Number(id)); render(); },
     'cancel-edit': () => { S.editing.delete(Number(id)); render(); },
     'clear-result': () => confirm('Ergebnis löschen?') && run(() => api(`/api/matches/${id}/result`, { method: 'DELETE' }), 'Ergebnis gelöscht.'),

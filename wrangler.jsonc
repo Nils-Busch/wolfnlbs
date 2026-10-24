@@ -1,5 +1,5 @@
-// Cloudflare-Konfiguration für das Vereinsheim (Hub + Werwolf + Spielegalerie +
-// Tischtennis-Turnier in einem Projekt). Wird von Cloudflare beim Deploy
+// Cloudflare-Konfiguration für das Vereinsheim (Hub + Werwolf + Quiz +
+// Spielegalerie + Tischtennis-Turnier in einem Projekt). Wird von Cloudflare beim Deploy
 // automatisch gelesen.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -25,24 +25,27 @@
     "run_worker_first": ["/api/*", "/tischtennis/t/*"]
   },
 
-  // Ein Durable Object pro Werwolf-Spielraum bzw. pro Spielegalerie-Duell-Raum,
-  // plus ein einzelnes, global adressiertes Objekt für die Spielegalerie-
-  // Bestenlisten.
+  // Ein Durable Object pro Werwolf-Spielraum, pro Spielegalerie-Duell-Raum und
+  // pro laufendem Quiz, plus je ein einzelnes, global adressiertes Objekt für
+  // die Spielegalerie-Bestenlisten und für Wordle.
   "durable_objects": {
     "bindings": [
       { "name": "GAME_ROOM", "class_name": "GameRoom" },
       { "name": "DUEL_ROOM", "class_name": "DuelRoom" },
-      { "name": "LEADERBOARD", "class_name": "Leaderboard" }
+      { "name": "LEADERBOARD", "class_name": "Leaderboard" },
+      { "name": "QUIZ_ROOM", "class_name": "QuizRoom" },
+      { "name": "WORDLE", "class_name": "Wordle" }
     ]
   },
   // SQLite-basierte Durable Objects laufen auch im kostenlosen Workers-Plan.
+  // Wichtig: bestehende Einträge nie ändern, neue Klassen immer als neuen
+  // Eintrag mit neuem "tag" hinten anhängen.
   "migrations": [
-     { "tag": "v1", "new_sqlite_classes": ["GameRoom", "DuelRoom", "Leaderboard"] }
-   ],
+    { "tag": "v1", "new_sqlite_classes": ["GameRoom", "DuelRoom", "Leaderboard"] },
+    { "tag": "v2", "new_sqlite_classes": ["QuizRoom", "Wordle"] }
+  ],
 
-  // D1-Datenbank für das Tischtennis-Turnier. "database_id" muss nach dem
-  // Anlegen der Datenbank eingetragen werden (siehe README, Schritt "Cloudflare
-  // einrichten") – ohne das lehnt Cloudflare den Deploy ab.
+  // D1-Datenbank für Konten, Quizze und das Tischtennis-Turnier.
   "d1_databases": [
     {
       "binding": "DB",
@@ -51,10 +54,9 @@
     }
   ],
 
-  // Optional: fester Admin-Zugang fürs Tischtennis-Turnier statt eines beim
-  // ersten Start zufällig erzeugten (und nur in den Worker-Logs sichtbaren)
-  // Passworts. Siehe README.
-  "vars": { "ADMIN_USERNAME": "admin", "ADMIN_PASSWORD": "admin", "SESSION_HOURS": "12" },
+  // Wie lange ein Login gültig bleibt (Stunden). Passwörter gehören NICHT hierher
+  // (die Datei ist öffentlich auf GitHub) – siehe README, "Erster Admin-Zugang".
+  "vars": { "SESSION_HOURS": "12" },
 
   "observability": { "enabled": true }
 }

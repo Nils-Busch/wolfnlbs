@@ -1,5 +1,6 @@
 export { DuelRoom } from "./duelRoom.js";
 export { Leaderboard } from "./leaderboard.js";
+export { Wordle } from "./wordle.js";
 
 import { games as DUEL_GAMES } from "./rules.js";
 
@@ -33,8 +34,60 @@ function duelStub(env, code) {
   return env.DUEL_ROOM.get(env.DUEL_ROOM.idFromName(code));
 }
 
+function wordleStub(env) {
+  return env.WORDLE.get(env.WORDLE.idFromName("global"));
+}
+
+async function readJson(request) {
+  try {
+    const text = await request.text();
+    if (text.length > 2000) return null;
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return null;
+  }
+}
+
+// ---------- Wordle ----------
+//   POST /wordle/start   { mode: "daily" | "free" }
+//   GET  /wordle/session/:id
+//   POST /wordle/guess   { sessionId, word }
+//   POST /wordle/submit  { sessionId, name }
+//   GET  /wordle/board[?date=JJJJ-MM-TT]
+async function handleWordle(request, env, path) {
+  const stub = wordleStub(env);
+  const method = request.method;
+  const asResult = (r) => (r && r.error ? json(r, 400) : json(r));
+
+  if (path === "/wordle/board" && method === "GET") {
+    return json(await stub.board(new URL(request.url).searchParams.get("date")));
+  }
+  const sm = path.match(/^\/wordle\/session\/([a-f0-9]{32})$/);
+  if (sm && method === "GET") {
+    const v = await stub.get(sm[1]);
+    return v ? json(v) : json({ error: "Diese Runde gibt es nicht mehr." }, 404);
+  }
+  if (method !== "POST") return json({ error: "Nicht gefunden." }, 404);
+  const body = await readJson(request);
+  if (!body) return json({ error: "Ungültige Daten" }, 400);
+  const id = typeof body.sessionId === "string" && /^[a-f0-9]{32}$/.test(body.sessionId) ? body.sessionId : null;
+
+  if (path === "/wordle/start") return json(await stub.start(body.mode === "free" ? "free" : "daily"));
+  if (path === "/wordle/guess") {
+    if (!id) return json({ error: "Runde fehlt." }, 400);
+    return asResult(await stub.guess(id, body.word));
+  }
+  if (path === "/wordle/submit") {
+    if (!id) return json({ error: "Runde fehlt." }, 400);
+    return asResult(await stub.submit(id, body.name));
+  }
+  return json({ error: "Nicht gefunden." }, 404);
+}
+
 // path: der Teil nach "/api/spiele".
 export async function handleSpiele(request, env, path) {
+  if (path.startsWith("/wordle/")) return handleWordle(request, env, path);
+
   // ---------- Bestenlisten ----------
   const scoreMatch = path.match(/^\/scores\/([a-z0-9]+)$/);
   if (scoreMatch) {

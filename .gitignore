@@ -1,0 +1,15 @@
+# Abhängigkeiten und Build-Ergebnisse – entstehen bei jedem Build neu
+node_modules/
+dist/
+client-assets/woelfe/
+
+# Lokale Testdaten von "wrangler dev" (lokale Datenbank, Sessions, …)
+.wrangler/
+
+# Lokale Passwörter/Secrets – niemals hochladen
+.dev.vars
+.env
+.env.*
+
+*.log
+.DS_Store

@@ -1,0 +1,25 @@
+.konto-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.konto-head .vh-h1 { margin: 0; }
+.konto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; align-items: start; }
+.konto-grid > .vh-card { margin-top: .5rem; }
+.rights { list-style: none; padding: 0; margin: 0 0 .5rem; }
+.rights li { padding: .3rem 0; border-bottom: 1px dashed var(--line); font-size: .92rem; }
+.rights li b { display: inline-block; min-width: 6.5rem; color: var(--ink-soft); font-weight: 600; }
+.links { display: grid; gap: .5rem; margin-top: .9rem; }
+.pending { border-left: 6px solid var(--accent-tischtennis); }
+.pending-item { padding: .8rem 0; border-bottom: 1px dashed var(--line); }
+.pending-item:last-child { border-bottom: 0; }
+.pending-item .who { font-weight: 700; }
+.pending-item .when { color: var(--ink-soft); font-size: .85rem; }
+.perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .1rem 1rem; margin: .5rem 0 .7rem; }
+.perm-grid .area { grid-column: 1 / -1; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin-top: .4rem; font-weight: 700; }
+.user-row { padding: .9rem 0; border-bottom: 1px solid var(--line); }
+.user-row:last-child { border-bottom: 0; }
+.user-row .top { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+.user-row .top .name { flex: 1 1 200px; }
+.user-row .top .uname { color: var(--ink-soft); font-size: .85rem; }
+.user-row details summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: .9rem; margin-top: .4rem; }
+.user-row .edit { display: grid; gap: .6rem; margin-top: .6rem; }
+.state-pill.on { color: #2f5d2a; } .state-pill.off { color: #9b1c1c; }
+.success-box { text-align: center; }
+.success-box .big { font-size: 2.5rem; }

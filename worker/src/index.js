@@ -1,4 +1,4 @@
-// Einstiegspunkt des gemeinsamen Workers für alle drei Bereiche.
+// Einstiegspunkt des gemeinsamen Workers für alle Bereiche.
 //
 // Cloudflare liefert alles, was NICHT unter "run_worker_first" in wrangler.jsonc
 // fällt, direkt als statische Datei aus client-assets/ aus – dieser Worker sieht
@@ -6,10 +6,12 @@
 // für Tischtennis-Turniere.
 
 import { handleWoelfe, GameRoom } from "./woelfe/router.js";
-import { handleSpiele, DuelRoom, Leaderboard } from "./spiele/router.js";
+import { handleSpiele, DuelRoom, Leaderboard, Wordle } from "./spiele/router.js";
 import { handleTischtennisApi, resolveVisitorLink } from "./tischtennis/router.js";
+import { handleKontoApi } from "./konto/auth.js";
+import { handleQuiz, QuizRoom } from "./quiz/router.js";
 
-export { GameRoom, DuelRoom, Leaderboard };
+export { GameRoom, DuelRoom, Leaderboard, Wordle, QuizRoom };
 
 export default {
   async fetch(request, env) {
@@ -21,6 +23,12 @@ export default {
     }
     if (path.startsWith("/api/spiele")) {
       return handleSpiele(request, env, path.slice("/api/spiele".length) || "/");
+    }
+    if (path.startsWith("/api/konto")) {
+      return handleKontoApi(request, env, path.slice("/api/konto".length) || "/");
+    }
+    if (path.startsWith("/api/quiz")) {
+      return handleQuiz(request, env, path.slice("/api/quiz".length) || "/");
     }
     if (path.startsWith("/api/tischtennis")) {
       return handleTischtennisApi(request, env, path.slice("/api/tischtennis".length) || "/");

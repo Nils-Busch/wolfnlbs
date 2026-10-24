@@ -3,17 +3,11 @@
 // ursprünglichen server.js – siehe Kommentare bei den paar Stellen, die sich
 // zwangsläufig unterscheiden (keine FOR-UPDATE-Sperren, kein array_agg, …).
 
-import bcrypt from "bcryptjs";
 import * as L from "./logic.js";
-import { init, ALL_PERMISSIONS, parseMatch, parsePlayer, deleteTournamentCascade, deleteUserCascade } from "./db.js";
-import { randomToken, randomSlug, shuffle } from "./crypto.js";
-
-class HttpError extends Error {
-  constructor(status, msg) { super(msg); this.status = status; }
-}
-const fail = (status, msg) => { throw new HttpError(status, msg); };
-const intId = (v) => { const n = Number(v); if (!Number.isInteger(n) || n < 1) fail(400, "Ungültige ID."); return n; };
-const str = (v, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+import { init, parseMatch, parsePlayer, deleteTournamentCascade } from "./db.js";
+import { randomSlug, shuffle } from "./crypto.js";
+import { HttpError, fail, intId, str } from "../konto/http.js";
+import { getUser, handleKontoApi, isKontoPath } from "../konto/auth.js";
 
 function securityHeaders(res) {
   const h = new Headers(res.headers);
@@ -26,33 +20,6 @@ function json(data, status = 200, extraHeaders) {
   const headers = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
   if (extraHeaders) Object.assign(headers, extraHeaders);
   return new Response(JSON.stringify(data), { status, headers });
-}
-
-function readCookie(request, name) {
-  const header = request.headers.get("cookie") || "";
-  const m = header.split(";").map((s) => s.trim()).find((s) => s.startsWith(name + "="));
-  return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
-}
-function sessionCookieHeader(token, maxAgeSec, secure) {
-  return `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${secure ? "; Secure" : ""}`;
-}
-
-/* ---------- Anmeldeversuche drosseln ----------
-   Best-effort pro Worker-Isolate (kein globaler Zähler über alle Regionen
-   hinweg) – für ein Vereinsturnier reicht das als Bremse gegen Durchprobieren. */
-const loginFails = new Map();
-
-async function loadUser(env, token) {
-  if (!token) return null;
-  const now = Date.now();
-  const row = await env.DB.prepare(
-    `SELECT u.id, u.username, u.display_name FROM sessions s
-     JOIN users u ON u.id = s.user_id
-     WHERE s.token = ? AND s.expires_at > ? AND u.active = 1`
-  ).bind(token, now).first();
-  if (!row) return null;
-  const perms = await env.DB.prepare("SELECT permission FROM user_permissions WHERE user_id = ?").bind(row.id).all();
-  return { ...row, token, permissions: perms.results.map((r) => r.permission) };
 }
 
 /* ---------- Turnier-Ladehilfe (wie im Original) ---------- */
@@ -296,9 +263,13 @@ async function syncGrandFinalReset(env, m, winnerId) {
    path: Pfad relativ zu "/api/tischtennis", z.B. "/auth/login", "/tournaments/5"
    ========================================================================= */
 export async function handleTischtennisApi(request, env, path) {
+  // Anmeldung und Benutzerverwaltung gehören jetzt zu den gemeinsamen Konten.
+  // Die alten Pfade unter /api/tischtennis/auth/* und /users* leiten wir
+  // weiter, damit nichts kaputtgeht.
+  if (isKontoPath(path)) return handleKontoApi(request, env, path);
+
   await init(env);
   const method = request.method;
-  const SESSION_MS = (Number(env.SESSION_HOURS) || 12) * 3600 * 1000;
 
   // CSRF-Grundschutz: schreibende Requests nur als JSON.
   if (["POST", "PATCH", "PUT", "DELETE"].includes(method)) {
@@ -308,10 +279,7 @@ export async function handleTischtennisApi(request, env, path) {
     }
   }
 
-  const token = readCookie(request, "sid");
-  const user = await loadUser(env, token);
-  const can = (perm) => !!user && user.permissions.includes(perm);
-  const requireLogin = () => { if (!user) fail(401, "Bitte anmelden."); };
+  const user = await getUser(request, env);
   const requirePerm = (perm) => { if (!user) fail(401, "Bitte anmelden."); if (!user.permissions.includes(perm)) fail(403, `Fehlendes Recht: ${perm}`); };
 
   let body = null;
@@ -324,126 +292,7 @@ export async function handleTischtennisApi(request, env, path) {
   };
 
   try {
-    const secure = new URL(request.url).protocol === "https:";
-
-    /* ---------- Auth ---------- */
-    if (path === "/auth/login" && method === "POST") {
-      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-      const f = loginFails.get(ip);
-      if (f && f.count >= 10 && f.until > Date.now()) fail(429, "Zu viele Fehlversuche. Bitte 15 Minuten warten.");
-      const b = await readBody();
-      const row = await env.DB.prepare("SELECT * FROM users WHERE username = ? AND active = 1").bind(str(b.username)).first();
-      const ok = row && (await bcrypt.compare(String(b.password || ""), row.password_hash));
-      if (!ok) {
-        const cur = f && f.until > Date.now() ? f : { count: 0 };
-        loginFails.set(ip, { count: cur.count + 1, until: Date.now() + 15 * 60e3 });
-        fail(401, "Benutzername oder Passwort falsch.");
-      }
-      loginFails.delete(ip);
-      const tok = randomToken();
-      await env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?,?,?)")
-        .bind(tok, row.id, Date.now() + SESSION_MS).run();
-      return securityHeaders(json({ ok: true }, 200, { "set-cookie": sessionCookieHeader(tok, SESSION_MS / 1000, secure) }));
-    }
-
-    if (path === "/auth/logout" && method === "POST") {
-      if (user) await env.DB.prepare("DELETE FROM sessions WHERE token = ?").bind(user.token).run();
-      return securityHeaders(json({ ok: true }, 200, { "set-cookie": sessionCookieHeader("", 0, secure) }));
-    }
-
-    if (path === "/auth/me" && method === "GET") {
-      if (!user) return securityHeaders(json({ user: null }));
-      const { token: _t, ...u } = user;
-      return securityHeaders(json({ user: u, allPermissions: ALL_PERMISSIONS }));
-    }
-
-    if (path === "/auth/password" && method === "POST") {
-      requireLogin();
-      const b = await readBody();
-      const next = String(b.next || "");
-      if (next.length < 8) fail(400, "Neues Passwort braucht mindestens 8 Zeichen.");
-      const row = await env.DB.prepare("SELECT password_hash FROM users WHERE id = ?").bind(user.id).first();
-      if (!(await bcrypt.compare(String(b.current || ""), row.password_hash))) fail(400, "Aktuelles Passwort ist falsch.");
-      await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?").bind(await bcrypt.hash(next, 10), user.id).run();
-      await env.DB.prepare("DELETE FROM sessions WHERE user_id = ? AND token <> ?").bind(user.id, user.token).run();
-      return securityHeaders(json({ ok: true }));
-    }
-
-    /* ---------- Benutzerverwaltung ---------- */
-    if (path === "/users" && method === "GET") {
-      requirePerm("users.manage");
-      const usersRaw = await env.DB.prepare("SELECT id, username, display_name, active, created_at FROM users ORDER BY username").all();
-      const permsRaw = await env.DB.prepare("SELECT user_id, permission FROM user_permissions ORDER BY permission").all();
-      const byUser = new Map();
-      for (const p of permsRaw.results) {
-        if (!byUser.has(p.user_id)) byUser.set(p.user_id, []);
-        byUser.get(p.user_id).push(p.permission);
-      }
-      return securityHeaders(json(usersRaw.results.map((u) => ({ ...u, active: !!u.active, permissions: byUser.get(u.id) || [] }))));
-    }
-
-    async function assertAdminRemains(env) {
-      const row = await env.DB.prepare(
-        `SELECT count(*) AS n FROM users u JOIN user_permissions p ON p.user_id = u.id WHERE u.active = 1 AND p.permission = 'users.manage'`
-      ).first();
-      if (row.n === 0) fail(400, "Mindestens ein aktiver Benutzer muss Benutzer verwalten dürfen.");
-    }
-    const cleanPerms = (p) => [...new Set((Array.isArray(p) ? p : []).filter((x) => ALL_PERMISSIONS.includes(x)))];
-
-    if (path === "/users" && method === "POST") {
-      requirePerm("users.manage");
-      const b = await readBody();
-      const username = str(b.username, 50).toLowerCase();
-      const password = String(b.password || "");
-      if (!/^[a-z0-9._-]{3,50}$/.test(username)) fail(400, "Benutzername: 3–50 Zeichen, nur a–z, 0–9, Punkt, Bindestrich, Unterstrich.");
-      if (password.length < 8) fail(400, "Passwort braucht mindestens 8 Zeichen.");
-      const exists = await env.DB.prepare("SELECT 1 FROM users WHERE username = ?").bind(username).first();
-      if (exists) fail(409, "Benutzername ist schon vergeben.");
-      const hash = await bcrypt.hash(password, 10);
-      const res = await env.DB.prepare("INSERT INTO users (username, display_name, password_hash, active, created_at) VALUES (?,?,?,1,?)")
-        .bind(username, str(b.display_name, 80) || username, hash, Date.now()).run();
-      const id = res.meta.last_row_id;
-      const perms = cleanPerms(b.permissions);
-      if (perms.length) await env.DB.batch(perms.map((p) => env.DB.prepare("INSERT INTO user_permissions (user_id, permission) VALUES (?,?)").bind(id, p)));
-      return securityHeaders(json({ id }, 201));
-    }
-
     let m;
-    if ((m = path.match(/^\/users\/(\d+)$/)) && method === "PATCH") {
-      requirePerm("users.manage");
-      const id = intId(m[1]);
-      const b = await readBody();
-      if (id === user.id && b.active === false) fail(400, "Du kannst dein eigenes Konto nicht deaktivieren.");
-      const u = await env.DB.prepare("SELECT id FROM users WHERE id = ?").bind(id).first();
-      if (!u) fail(404, "Benutzer nicht gefunden.");
-      if (b.display_name !== undefined) await env.DB.prepare("UPDATE users SET display_name = ? WHERE id = ?").bind(str(b.display_name, 80) || "Ohne Namen", id).run();
-      if (typeof b.active === "boolean") {
-        await env.DB.prepare("UPDATE users SET active = ? WHERE id = ?").bind(b.active ? 1 : 0, id).run();
-        if (!b.active) await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id).run();
-      }
-      if (b.password !== undefined && b.password !== "") {
-        if (String(b.password).length < 8) fail(400, "Passwort braucht mindestens 8 Zeichen.");
-        await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?").bind(await bcrypt.hash(String(b.password), 10), id).run();
-        await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id).run();
-      }
-      if (b.permissions !== undefined) {
-        await env.DB.prepare("DELETE FROM user_permissions WHERE user_id = ?").bind(id).run();
-        const perms = cleanPerms(b.permissions);
-        if (perms.length) await env.DB.batch(perms.map((p) => env.DB.prepare("INSERT INTO user_permissions (user_id, permission) VALUES (?,?)").bind(id, p)));
-      }
-      await assertAdminRemains(env);
-      return securityHeaders(json({ ok: true }));
-    }
-
-    if ((m = path.match(/^\/users\/(\d+)$/)) && method === "DELETE") {
-      requirePerm("users.manage");
-      const id = intId(m[1]);
-      if (id === user.id) fail(400, "Du kannst dein eigenes Konto nicht löschen.");
-      await deleteUserCascade(env, id);
-      await assertAdminRemains(env);
-      return securityHeaders(json({ ok: true }));
-    }
-
     /* ---------- Turniere lesen (öffentlich) ---------- */
     if (path === "/tournaments" && method === "GET") {
       const rows = await env.DB.prepare(

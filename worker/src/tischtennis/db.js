@@ -11,34 +11,13 @@
 //    (Turnier -> Spiele/Teilnehmer, Benutzer -> Sessions/Rechte) führt die App
 //    explizit aus, statt sich auf das D1-Fremdschlüssel-Pragma zu verlassen.
 
-import { randomPassword } from "./crypto.js";
-import bcrypt from "bcryptjs";
-
-export const ALL_PERMISSIONS = ["users.manage", "tournaments.manage", "players.manage", "results.enter"];
+import { ensureAccounts } from "../konto/auth.js";
 
 // Einzelne, vollständige Statements (nicht ein großer exec()-Blob): D1s exec()
 // erwartet ein Statement pro Zeile, was mehrzeilig formatiertes SQL zerreißen
 // würde. prepare() parst dagegen jedes Statement unabhängig vom Zeilenumbruch
 // korrekt, deshalb hier eine Liste statt eines einzigen Strings.
 const SCHEMA_STATEMENTS = [
-  `CREATE TABLE IF NOT EXISTS users (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    username      TEXT UNIQUE NOT NULL,
-    display_name  TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
-    active        INTEGER NOT NULL DEFAULT 1,
-    created_at    INTEGER NOT NULL
-  )`,
-  `CREATE TABLE IF NOT EXISTS user_permissions (
-    user_id    INTEGER NOT NULL REFERENCES users(id),
-    permission TEXT NOT NULL,
-    PRIMARY KEY (user_id, permission)
-  )`,
-  `CREATE TABLE IF NOT EXISTS sessions (
-    token      TEXT PRIMARY KEY,
-    user_id    INTEGER NOT NULL REFERENCES users(id),
-    expires_at INTEGER NOT NULL
-  )`,
   `CREATE TABLE IF NOT EXISTS tournaments (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     name              TEXT NOT NULL,
@@ -88,29 +67,13 @@ const SCHEMA_STATEMENTS = [
 
 let initialized = false;
 
+// Konten (users, user_permissions, sessions) liegen jetzt in ../konto/auth.js,
+// weil Quiz und Tischtennis sich dieselben Konten teilen.
 export async function init(env) {
+  await ensureAccounts(env);
   if (initialized) return;
   for (const stmt of SCHEMA_STATEMENTS) {
     await env.DB.prepare(stmt).run();
-  }
-  await env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(Date.now()).run();
-
-  const { n } = await env.DB.prepare("SELECT count(*) AS n FROM users").first();
-  if (n === 0) {
-    const username = env.ADMIN_USERNAME || "admin";
-    const password = env.ADMIN_PASSWORD || randomPassword();
-    const hash = await bcrypt.hash(password, 10);
-    const { meta } = await env.DB
-      .prepare("INSERT INTO users (username, display_name, password_hash, active, created_at) VALUES (?,?,?,1,?)")
-      .bind(username, "Administrator", hash, Date.now())
-      .run();
-    const stmts = ALL_PERMISSIONS.map((p) =>
-      env.DB.prepare("INSERT INTO user_permissions (user_id, permission) VALUES (?,?)").bind(meta.last_row_id, p)
-    );
-    await env.DB.batch(stmts);
-    if (!env.ADMIN_PASSWORD) {
-      console.log(`Erster Admin angelegt: ${username} / ${password}  (Passwort nach dem ersten Login ändern)`);
-    }
   }
   initialized = true;
 }
@@ -131,14 +94,5 @@ export async function deleteTournamentCascade(env, id) {
     env.DB.prepare("DELETE FROM matches WHERE tournament_id = ?").bind(id),
     env.DB.prepare("DELETE FROM players WHERE tournament_id = ?").bind(id),
     env.DB.prepare("DELETE FROM tournaments WHERE id = ?").bind(id),
-  ]);
-}
-
-/** Kaskadierendes Löschen eines Benutzers. */
-export async function deleteUserCascade(env, id) {
-  await env.DB.batch([
-    env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id),
-    env.DB.prepare("DELETE FROM user_permissions WHERE user_id = ?").bind(id),
-    env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id),
   ]);
 }

@@ -1,131 +1,142 @@
 # Vereinsheim
 
-Eine gemeinsame Seite für drei Party-/Vereins-Apps:
+Eine gemeinsame Seite für die Party- und Vereins-Apps:
 
 - **🐺 Was für Wölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy
-- **🎮 Spielegalerie** – kleine Spiele für zwischendurch (Solo-Highscores + Duelle zu zweit)
-- **🏓 Tischtennis-Turnier** – Turnierverwaltung mit Gruppen-/KO-Modus und Besucheransicht
+- **❓ Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
+- **🎮 Spielegalerie** – kleine Spiele für zwischendurch (Solo-Highscores, Duelle zu zweit, **Wordle** mit Tagesrätsel)
+- **🏓 Tischtennis-Turnier** – Turnierverwaltung mit Gruppen-/KO-Modus, Besucheransicht und **Liveansicht für den Bildschirm**
+- **👤 Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
 
-Alle drei laufen unter einer einzigen Adresse, zusammengehalten von einer Startseite
-(dem „Hub"), über die man sich für einen Bereich entscheidet. Technisch ist alles
-**ein einziges Cloudflare-Projekt** (ein Worker + eine Konfigurationsdatei), es muss
-nirgends mehr etwas separat gehostet werden – und es läuft dauerhaft in Cloudflares
-Rechenzentrum, nicht auf einem Laptop.
+Technisch ist alles **ein einziges Cloudflare-Projekt** (ein Worker + eine
+Konfigurationsdatei) und läuft im kostenlosen Cloudflare-Plan.
 
 ## Projektstruktur
 
 ```
 client-assets/          Alles, was der Browser direkt lädt (HTML/CSS/JS)
-  shared/vereinsheim.css   Gemeinsames Design ("Vereinsheim"-Stil)
-  index.html, hub.css/js   Die Startseite mit dem Hover-Effekt
+  shared/                  Gemeinsames Design, Konto-Link oben rechts, QR-Code-Bibliothek
+  index.html, hub.css/js   Die Startseite
+  konto/                   Anmelden, Registrieren, Freischalten & Rechte
+  quiz/                    Quiz-Übersicht + Editor, Bildschirm (screen), Handy (play)
+  spiele/                  Spielegalerie (inkl. games/wordle.html)
+  tischtennis/             Turnier: Besucheransicht, Turnierleitung, Liveansicht (live.html)
   woelfe/                  Gebaute Werwolf-Oberfläche (entsteht automatisch beim Deploy)
-  spiele/                  Spielegalerie (Spiele, CSS, JS)
-  tischtennis/             Tischtennis-Turnier (Oberfläche + Turnierleitung)
 clients/woelfe-src/     Quellcode der Werwolf-Oberfläche (React), wird vorm Deploy gebaut
-worker/src/             Der eine Cloudflare Worker, aufgeteilt in drei Bereiche
-  woelfe/, spiele/, tischtennis/   Je Bereich die Server-Logik + Durable Objects
-  index.js                 Verteilt Anfragen an die drei Bereiche
+worker/src/             Der Cloudflare Worker
+  konto/                   Gemeinsame Konten (Registrierung, Login, Rechte)
+  quiz/                    Quiz-Speicher (D1) + Live-Quiz-Raum (Durable Object)
+  spiele/                  Bestenlisten, Duelle, Wordle (+ Wortliste)
+  tischtennis/, woelfe/    Turnier- und Werwolf-Logik
+  index.js                 Verteilt Anfragen an die Bereiche
 wrangler.jsonc          Die komplette Cloudflare-Konfiguration
 ```
 
-Die drei Bereiche sind technisch unabhängig (eigene Datenbank/eigener Speicher,
-kein gemeinsamer Login) – sie teilen sich nur die Adresse und das Design.
+## Konten & Rechte
+
+- **Registrieren:** Oben rechts auf „👤 Anmelden“ → „Registrieren“. Das neue Konto
+  wartet danach auf Freischaltung und kann sich erst dann anmelden.
+- **Freischalten:** Wer das Recht „Konten freischalten & Rechte vergeben“ hat, sieht
+  oben rechts eine Zahl mit wartenden Anfragen. Unter **Konto → Konten & Rechte**
+  lassen sich Anfragen freischalten (mit Rechten) oder ablehnen.
+- **Rechte** werden pro Person vergeben:
+
+  | Bereich | Recht | Bedeutung |
+  |---|---|---|
+  | Konten | Konten freischalten & Rechte vergeben | Admin |
+  | Quiz | Eigene Quizze erstellen & bearbeiten | Standard für neue Leute |
+  | Quiz | Alle Quizze bearbeiten & löschen | Moderation |
+  | Tischtennis | Turniere anlegen / Teilnehmer verwalten / Ergebnisse eintragen | wie bisher |
+
+- Ohne besondere Rechte kann man sich anmelden und **freigegebene Quizze starten**.
+- **Mitspielen** bei Quiz, Werwolf und Spielen geht immer **ohne Konto**.
+- Bestehende Konten aus dem Tischtennis-Turnier funktionieren unverändert weiter;
+  wer dort Benutzer verwalten durfte, bekommt automatisch auch die Quiz-Rechte.
+
+### Erster Admin-Zugang (nur bei einer ganz neuen Datenbank)
+
+Gibt es noch gar kein Konto, legt der Server beim ersten Aufruf `admin` mit einem
+Zufallspasswort an und schreibt es **einmalig** in die Cloudflare-Logs (Dashboard →
+Worker → Logs, Zeile „Erster Admin angelegt …“). Alternativ vorher im Dashboard unter
+**Worker → Einstellungen → Variablen und Geheimnisse** ein **Secret** namens
+`ADMIN_PASSWORD` anlegen. **Passwörter nie in `wrangler.jsonc` schreiben** – die
+Datei ist auf GitHub öffentlich lesbar.
+
+## Party-Quiz
+
+1. Mit Konto auf **Quiz** → „Neues Quiz erstellen“: Fragen mit 2–4 Antworten, die
+   richtige markieren, Zeit pro Frage wählen. Optional „Für alle freigeben“.
+2. Auf dem Fernseher/Beamer anmelden, beim Quiz **▶ Starten** klicken. Der Bildschirm
+   zeigt einen 4-stelligen Code und einen **QR-Code**.
+3. Alle anderen scannen den QR-Code oder gehen auf `…/quiz` und geben den Code ein.
+4. Weiter geht's mit dem Knopf unten rechts (oder Leertaste/Pfeil rechts). Eine Frage
+   löst sich automatisch auf, wenn alle geantwortet haben oder die Zeit um ist.
+   Richtige Antworten geben 500–1000 Punkte, je schneller desto mehr.
+
+Die richtige Antwort wird erst bei der Auflösung an die Handys geschickt. Der
+Bildschirm lässt sich nur in dem Browser steuern, in dem das Quiz gestartet wurde.
+Wer sein Handy neu lädt, landet wieder auf seinem Platz.
+
+## Wordle
+
+In der Spielegalerie: jeden Tag (deutsche Zeit) ein neues Wort mit 5 Buchstaben,
+dazu „Freies Spiel“ zum Üben. Das Lösungswort bleibt auf dem Server; in die
+Tagesbestenliste kommt nur, wer das Rätsel dort wirklich gelöst hat (sortiert nach
+Versuchen, dann Zeit). Wörter mit Ä, Ö, Ü und ß kommen nicht vor.
+
+Die Liste der erlaubten Rateversuche stammt aus dem
+[german-pos-dict](https://github.com/languagetool-org/german-pos-dict) von
+LanguageTool (Lizenz **CC BY-SA 4.0**) und steht in
+`worker/src/spiele/wordleWords.js` ebenfalls unter dieser Lizenz. Die Lösungswörter
+sind von Hand ausgewählt; neue Wörter bitte nur hinten anhängen.
+
+## Tischtennis: Liveansicht
+
+Für einen Fernseher in der Halle: **`/tischtennis/live`** (auch verlinkt in
+Besucheransicht und Turnierleitung). Zeigt groß, was an welchem Tisch läuft, die
+nächsten Spiele, Tabellen bzw. die aktuelle K.-o.-Runde und die letzten Ergebnisse.
+Aktualisiert sich alle 10 Sekunden, die rechte Spalte blättert automatisch weiter,
+am Ende erscheint der Turniersieg. Knopf „Vollbild“ unten rechts.
+
+Tipp: Tischnummern in der Turnierleitung eintragen – dann erscheinen die Spiele
+unter „An den Tischen“.
+
+## Auf Cloudflare veröffentlichen / aktualisieren
+
+Ist das Projekt schon mit GitHub verbunden, reicht es, die geänderten Dateien ins
+Repo hochzuladen – Cloudflare baut und veröffentlicht automatisch. Neue Tabellen in
+der Datenbank und die neuen Durable Objects legt das Projekt beim Deploy bzw. beim
+ersten Aufruf selbst an. Bestehende Konten, Turniere und Bestenlisten bleiben erhalten.
+
+Wichtig beim Hochladen über die GitHub-Webseite: Die Datei **`.gitignore`** beginnt
+mit einem Punkt und ist auf dem Mac/PC oft unsichtbar. Falls sie nach dem Hochladen
+im Repo fehlt: auf GitHub „Add file → Create new file“, Name `.gitignore`, Inhalt aus
+der Zip-Datei hineinkopieren.
+
+Ganz neu einrichten:
+1. Auf [dash.cloudflare.com](https://dash.cloudflare.com) registrieren (kostenloser Plan reicht).
+2. **Speicher & Datenbanken → D1 → Datenbank erstellen**, die **Database ID** in
+   `wrangler.jsonc` bei `database_id` eintragen.
+3. Inhalt dieses Ordners in ein GitHub-Repo hochladen (`wrangler.jsonc` auf oberster Ebene).
+4. **Workers & Pages → Erstellen → Repository importieren**, Worker-Name `vereinsheim`.
 
 ## Lokal ausprobieren (optional)
 
-Nur nötig, falls du selbst am Code weiterbauen willst. Voraussetzung: Node.js
-(Version 20 oder neuer).
+Voraussetzung: Node.js 20 oder neuer.
 
 ```
 npm install
 npm run dev
 ```
 
-Danach ist alles unter `http://localhost:8787` erreichbar – inklusive echter
-Durable Objects und einer lokalen Test-Datenbank (beides simuliert, nichts davon
-landet auf Cloudflare).
+Danach ist alles unter `http://localhost:8787` erreichbar – mit lokaler
+Test-Datenbank. Für ein festes lokales Admin-Passwort eine Datei `.dev.vars` mit
+`ADMIN_PASSWORD=…` anlegen (wird nicht hochgeladen, steht in `.gitignore`).
 
-## Auf Cloudflare veröffentlichen
+## Bekannte Grenzen
 
-Genau wie beim letzten Mal: kein Terminal nötig, alles über den Browser.
-
-**1. Bei Cloudflare anmelden**
-Falls noch nicht geschehen: auf [dash.cloudflare.com](https://dash.cloudflare.com) registrieren.
-Der kostenlose Plan reicht für dieses Projekt vollständig aus.
-
-**2. Datenbank für das Tischtennis-Turnier anlegen**
-Im Cloudflare-Dashboard zu **Speicher & Datenbanken → D1** gehen → **Datenbank
-erstellen** → Name z. B. `vereinsheim-tischtennis`. Nach dem Erstellen zeigt
-Cloudflare eine **Database ID** an (eine lange Zeichenfolge mit Bindestrichen) –
-die brauchst du im nächsten Schritt.
-
-**3. `wrangler.jsonc` anpassen**
-In der Datei `wrangler.jsonc` die Zeile mit
-`"database_id": "HIER-DIE-DATABASE-ID-AUS-WRANGLER-D1-CREATE-EINTRAGEN"`
-suchen und durch die eben kopierte Database ID ersetzen.
-
-Optional, aber empfehlenswert: direkt darunter die beiden auskommentierten
-Zeilen für `ADMIN_USERNAME`/`ADMIN_PASSWORD` aktivieren und selbst einen
-Admin-Zugang fürs Tischtennis-Turnier festlegen (siehe Abschnitt weiter unten,
-falls du das überspringen willst).
-
-**4. Projekt zu GitHub hochladen**
-Neues (leeres) GitHub-Repository anlegen, dann den kompletten Inhalt dieses
-Projekt-Ordners per Web-Upload hochladen. Wichtig: `wrangler.jsonc` muss direkt
-auf der obersten Ebene des Repos liegen, nicht in einem Unterordner.
-
-**5. Worker in Cloudflare einrichten**
-Im Dashboard: **Workers & Pages → Erstellen → Worker verbinden (Workers Builds)**
-→ das GitHub-Repo auswählen. Der Worker-Name **muss** `vereinsheim` sein (das ist
-der Name aus `wrangler.jsonc`). Build- und Deploy-Befehl übernimmt Cloudflare
-automatisch aus `wrangler.jsonc` (Build: `npm run build:woelfe`, Deploy:
-`npx wrangler deploy`).
-
-**6. Fertig**
-Nach dem ersten erfolgreichen Deploy ist alles unter
-`https://vereinsheim.<dein-account>.workers.dev` erreichbar – das ist jetzt die
-gemeinsame Startseite für alle drei Bereiche. Dieser Link bleibt bei jedem
-weiteren Deploy gleich.
-
-## Tischtennis-Turnier: erster Admin-Zugang
-
-Wurden `ADMIN_USERNAME`/`ADMIN_PASSWORD` in `wrangler.jsonc` gesetzt (Schritt 3
-oben), gilt dieser Zugang sofort ab dem ersten Deploy.
-
-Wurden sie **nicht** gesetzt, erzeugt der Server beim allerersten Aufruf
-automatisch ein Zufallspasswort und schreibt es **einmalig** in die
-Cloudflare-Logs: Dashboard → dein Worker → **Logs** (Live-Protokoll), dort nach
-der Zeile „Erster Admin angelegt: admin / …" suchen. Direkt danach im
-Tischtennis-Bereich unter `/tischtennis/admin` einloggen und das Passwort unter
-„Mein Konto" sofort ändern.
-
-## Neu: Besucher-Link für ein Turnier
-
-In der Turnierleitung (`/tischtennis/admin`) gibt es bei jedem Turnier jetzt
-einen Knopf **„Besucher-Link kopieren"**. Das kopiert einen kurzen Link (z. B.
-`https://vereinsheim.<dein-account>.workers.dev/tischtennis/t/ab12cd34`) in die
-Zwischenablage. Wer diesen Link öffnet, landet **direkt in der Besucheransicht
-genau dieses Turniers** – ohne vorher die Liste aller Turniere zu sehen. Der
-Link bleibt für ein Turnier immer derselbe; man kann ihn also z. B. auf ein
-Plakat drucken oder per Nachricht verschicken.
-
-## Design: „Vereinsheim"-Stil
-
-Statt glatter Farbverläufe und generischer Karten: warmes Packpapier,
-dezente Papier-Struktur, handschriftliche Akzente und „angepinnte" Karten mit
-Tape-Ecke – jeder Bereich hat zusätzlich seine eigene Akzentfarbe (Wölfe:
-dunkelrot, Spielegalerie: petrol, Tischtennis: orange). Auf der Startseite
-färbt sich beim Überfahren einer Karte mit der Maus kurz der ganze
-Bildschirm leicht in Richtung der jeweiligen Akzentfarbe ein – sobald man mit
-der Maus woanders hinfährt, ist der Effekt sofort wieder weg.
-
-## Was noch offen ist / bekannte Grenzen
-
-- Die Login-Sperre nach zu vielen Fehlversuchen und das automatische Anlegen
-  des allerersten Admin-Kontos gelten jeweils pro Worker-Instanz, nicht
-  global über alle Cloudflare-Standorte hinweg synchronisiert – für ein
-  kleines, selbst organisiertes Turnier unproblematisch.
-- Das kostenlose Werwolf-Design (dunkles Nacht-Theme) wurde bewusst nicht an
-  den Vereinsheim-Stil angeglichen, damit die Lesbarkeit beim Spielen nachts
-  nicht leidet; nur ein kleiner „← Vereinsheim"-Link auf dem Start-Bildschirm
-  führt zurück zum Hub.
+- Login-Sperre nach Fehlversuchen und die Begrenzung von Registrierungen gelten pro
+  Worker-Instanz, nicht global synchronisiert – für einen Verein ausreichend.
+- Die Wordle-Statistik (Serie usw.) wird nur auf dem jeweiligen Gerät gespeichert.
+- Bestenlisten der Solo-Spiele (außer Wordle) lassen sich mit etwas Technikwissen fälschen.
+- Das Werwolf-Design (dunkles Nacht-Theme) weicht bewusst vom Vereinsheim-Stil ab.

@@ -128,7 +128,9 @@ td { padding: 8px; border-bottom: 1px solid var(--rule); text-align: center; }
 
 /* Admin */
 .adminbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid var(--rule); padding-bottom: 10px; }
-.adminbar nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.adminbar nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.adminbar nav a.navlink { font: 700 .95rem var(--display); text-transform: uppercase; letter-spacing: .02em; padding: 6px 12px; color: var(--muted); text-decoration: none; }
+.adminbar nav a.navlink:hover { color: var(--ink); }
 .adminbar nav button { font: 700 .95rem var(--display); text-transform: uppercase; letter-spacing: .02em; background: none; border: 0; padding: 6px 12px; cursor: pointer; color: var(--muted); }
 .adminbar nav button.active { background: var(--ink-black); color: #fff; }
 .who { color: var(--muted); }

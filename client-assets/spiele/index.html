@@ -13,6 +13,7 @@
   <a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a>
   <nav>
     <a href="/woelfe/">Was für Wölfe</a>
+    <a href="/quiz/">Quiz</a>
     <a href="/spiele/" class="is-active">Spielegalerie</a>
     <a href="/tischtennis/">Tischtennis-Turnier</a>
   </nav>
@@ -26,6 +27,12 @@
 
   <h2 class="section-title">Solo · mit Bestenliste</h2>
   <div class="grid">
+    <a class="card" href="/spiele/games/wordle.html" id="wordleCard">
+      <div class="icon">🟩</div>
+      <h3>Wordle</h3>
+      <p>Jeden Tag ein neues deutsches Wort mit 5 Buchstaben – sechs Versuche. Dazu freie Runden zum Üben.</p>
+      <div class="meta"><span class="tag">Tagesrätsel</span><span class="rec"></span></div>
+    </a>
     <a class="card" href="/spiele/games/snake.html" data-game="snake">
       <div class="icon">🐍</div>
       <h3>Snake</h3>
@@ -87,6 +94,13 @@
   </div>
 </main>
 <script>
+  (async () => {
+    try {
+      const r = await (await fetch('/api/spiele/wordle/board')).json();
+      const top = r.board && r.board[0];
+      document.querySelector('#wordleCard .rec').textContent = top ? `🏆 heute ${top.attempts}/6 · ${top.name}` : `Rätsel #${r.number}`;
+    } catch {}
+  })();
   document.querySelectorAll('.card[data-game]').forEach(async (card) => {
     try {
       const list = await (await fetch('/api/spiele/scores/' + card.dataset.game)).json();
@@ -97,5 +111,6 @@
     } catch {}
   });
 </script>
+<script src="/shared/account-link.js"></script>
 </body>
 </html>

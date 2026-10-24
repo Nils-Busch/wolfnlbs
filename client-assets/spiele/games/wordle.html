@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Wordle · Spielegalerie</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟩</text></svg>">
+<link rel="stylesheet" href="/spiele/css/style.css">
+</head>
+<body>
+<header class="top"><a href="/spiele/" class="back">← Galerie</a><h1>🟩 Wordle</h1></header>
+<main class="solo">
+  <div class="wd">
+    <div class="hud">
+      <div class="levels" role="tablist">
+        <button id="modeDaily" class="on" role="tab">Tagesrätsel</button>
+        <button id="modeFree" role="tab">Freies Spiel</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="stat">Rätsel<b id="label">…</b></div>
+    </div>
+    <div class="wd-msg" id="msg" role="status" aria-live="polite"></div>
+    <div class="wd-grid" id="grid" aria-label="Spielfeld"></div>
+    <div class="wd-end" id="end" hidden></div>
+    <div class="wd-kb" id="kb"></div>
+    <p class="hint">Errate das deutsche Wort mit 5 Buchstaben in 6 Versuchen. 🟩 richtige Stelle · 🟨 kommt vor, andere Stelle · ⬛ kommt nicht vor.
+      Wörter mit Ä, Ö, Ü oder ß kommen nicht vor. Das Tagesrätsel wechselt um Mitternacht.</p>
+  </div>
+  <aside>
+    <div class="panel" id="board"><h2>🏆 Heute</h2><p class="muted">Lade …</p></div>
+    <div class="panel wd-stats" id="stats" style="margin-top:1rem"></div>
+  </aside>
+</main>
+<script src="/spiele/js/games/wordle.js"></script>
+</body>
+</html>

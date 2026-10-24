@@ -75,7 +75,8 @@ function renderDetail() {
     <a class="back" href="#">Alle Turniere</a>
     <h1 class="page-title">${esc(t.name)}</h1>
     <p class="t-meta">${[fmtDate(t.event_date), t.location, FORMAT_LABEL[t.format], bestOfLabel(t.best_of), t.double_elim ? 'mit Loserbracket' : ''].filter(Boolean).map(esc).join(', ')}
-      <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span></p>
+      <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span>
+      <a class="link" href="/tischtennis/live#t=${t.id}">📺 Liveansicht für den Bildschirm</a></p>
     ${winnerBanner(d)}
     ${renderTabs(tabs, state.tab)}
     <div class="tab-body">${body}</div>

@@ -254,3 +254,54 @@ button.flagmode.on { background: var(--p1); color: #0b1020; border-color: var(--
 .pad { display: none; gap: .4rem; margin-top: .8rem; max-width: 520px; }
 .pad button { flex: 1; font-size: 1.3rem; padding: .7rem 0; }
 @media (pointer: coarse) { .pad { display: flex; } }
+
+/* ---------------- Wordle ---------------- */
+.wd { max-width: 520px; }
+.wd .hud { max-width: none; }
+.wd-msg { min-height: 1.6em; text-align: center; font-weight: 700; margin: .2rem 0 .6rem; }
+.wd-msg.err { color: var(--p1); }
+.wd-grid { display: grid; grid-template-rows: repeat(6, 1fr); gap: 6px; max-width: 340px; margin: 0 auto; }
+.wd-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.wd-row.shake { animation: wdshake .45s; }
+@keyframes wdshake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.wd-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: clamp(1.4rem, 7vw, 2rem); font-weight: 800; text-transform: uppercase;
+  border: 2px solid var(--line); border-radius: 6px; background: var(--panel); user-select: none;
+}
+.wd-cell.filled { border-color: var(--muted); animation: pop .1s ease-out; }
+.wd-cell.g, .wd-cell.y, .wd-cell.b { color: #fff; border-color: transparent; animation: wdflip .5s ease both; }
+.wd-cell.g { background: #3f9b5a; }
+.wd-cell.y { background: #c9a227; }
+.wd-cell.b { background: #3a4260; }
+.wd-row .wd-cell:nth-child(2) { animation-delay: .1s; } .wd-row .wd-cell:nth-child(3) { animation-delay: .2s; }
+.wd-row .wd-cell:nth-child(4) { animation-delay: .3s; } .wd-row .wd-cell:nth-child(5) { animation-delay: .4s; }
+.wd-row.static .wd-cell { animation: none; }
+@keyframes wdflip { 0% { transform: rotateX(0); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.wd-kb { display: grid; gap: 6px; margin: 1rem auto 0; max-width: 520px; user-select: none; }
+.wd-kb .r { display: flex; gap: 5px; justify-content: center; }
+.wd-kb button { flex: 1; max-width: 46px; padding: .9rem 0; border-radius: 6px; background: #4a5578; color: #fff; font-size: 1rem; font-weight: 700; }
+.wd-kb button.wide { max-width: 72px; flex: 1.6; font-size: .8rem; }
+.wd-kb button.g { background: #3f9b5a; } .wd-kb button.y { background: #c9a227; } .wd-kb button.b { background: #232a43; color: var(--muted); }
+.wd-end { margin: 1rem auto 0; max-width: 340px; text-align: center; display: grid; gap: .6rem; }
+.wd-end .big { font-size: 1.3rem; font-weight: 800; }
+.wd-end .sol { letter-spacing: .3em; font-size: 1.5rem; font-weight: 800; color: var(--p1); }
+.wd-end form { display: flex; gap: .5rem; }
+.wd-end form input { flex: 1; }
+.wd-end .row { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; }
+.wd-board { list-style: none; padding: 0; margin: 0; counter-reset: wb; }
+.wd-board li { counter-increment: wb; display: flex; gap: .6rem; padding: .4rem .2rem; border-bottom: 1px solid var(--line); align-items: center; }
+.wd-board li::before { content: counter(wb); width: 1.6rem; color: var(--muted); }
+.wd-board li:nth-child(1)::before { content: "🥇"; } .wd-board li:nth-child(2)::before { content: "🥈"; } .wd-board li:nth-child(3)::before { content: "🥉"; }
+.wd-board li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wd-board li.me { background: rgba(124, 156, 255, .12); border-radius: 8px; }
+.wd-board li small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.wd-stats .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; text-align: center; margin-bottom: .8rem; }
+.wd-stats .nums b { display: block; font-size: 1.4rem; }
+.wd-stats .nums span { font-size: .72rem; color: var(--muted); }
+.wd-dist { display: grid; gap: 4px; }
+.wd-dist div { display: grid; grid-template-columns: 1rem 1fr; gap: .4rem; align-items: center; font-size: .85rem; }
+.wd-dist i { display: block; background: #4a5578; color: #fff; font-style: normal; font-weight: 700; padding: 1px 6px; text-align: right; min-width: 1.6rem; border-radius: 3px; }
+.wd-dist i.me { background: #3f9b5a; }
+@media (max-width: 420px) { .wd-kb button { padding: .8rem 0; font-size: .9rem; } .wd-kb .r { gap: 4px; } }
+.wd .levels button:not(.on) { background: transparent; color: var(--text); border: 1px solid var(--line); }
