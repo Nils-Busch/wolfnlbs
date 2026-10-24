@@ -36,9 +36,9 @@ export const PERMISSIONS = [
   { key: "users.manage", label: "Konten freischalten & Rechte vergeben", area: "Konten" },
   { key: "quiz.create", label: "Eigene Quizze erstellen & bearbeiten", area: "Quiz" },
   { key: "quiz.manage", label: "Alle Quizze bearbeiten & löschen", area: "Quiz" },
-  { key: "tournaments.manage", label: "Turniere anlegen, starten, zurücksetzen", area: "Tischtennis" },
-  { key: "players.manage", label: "Teilnehmer verwalten", area: "Tischtennis" },
-  { key: "results.enter", label: "Ergebnisse und Tische eintragen", area: "Tischtennis" },
+  { key: "tournaments.manage", label: "Turniere anlegen, starten, zurücksetzen", area: "Turniere" },
+  { key: "players.manage", label: "Teilnehmer verwalten", area: "Turniere" },
+  { key: "results.enter", label: "Ergebnisse und Tische eintragen", area: "Turniere" },
 ];
 export const ALL_PERMISSIONS = PERMISSIONS.map((p) => p.key);
 

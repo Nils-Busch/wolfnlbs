@@ -75,13 +75,26 @@ export async function init(env) {
   for (const stmt of SCHEMA_STATEMENTS) {
     await env.DB.prepare(stmt).run();
   }
+  // Migrationen für ältere Datenbanken (Spalten nachrüsten, falls sie fehlen).
+  await addColumnIfMissing(env, "tournaments", "sport", "TEXT NOT NULL DEFAULT 'tabletennis'");
+  await addColumnIfMissing(env, "matches", "extra", "TEXT NOT NULL DEFAULT '{}'");
   initialized = true;
 }
+
+async function addColumnIfMissing(env, table, column, definition) {
+  const cols = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.results.some((c) => c.name === column)) {
+    await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run();
+  }
+}
+
+/** Sportarten. Tischtennis: Sätze. Fußball: Tore, Unentschieden, Torschützen, Kader. */
+export const SPORTS = ["tabletennis", "football"];
 
 /* ---------- kleine Hilfsfunktionen für Zeilen mit JSON-Feldern ---------- */
 export function parseMatch(row) {
   if (!row) return row;
-  return { ...row, sets: JSON.parse(row.sets || "[]") };
+  return { ...row, sets: JSON.parse(row.sets || "[]"), extra: JSON.parse(row.extra || "{}") };
 }
 export function parsePlayer(row) {
   if (!row) return row;

@@ -4,7 +4,7 @@
 // zwangsläufig unterscheiden (keine FOR-UPDATE-Sperren, kein array_agg, …).
 
 import * as L from "./logic.js";
-import { init, parseMatch, parsePlayer, deleteTournamentCascade } from "./db.js";
+import { init, parseMatch, parsePlayer, deleteTournamentCascade, SPORTS } from "./db.js";
 import { randomSlug, shuffle } from "./crypto.js";
 import { HttpError, fail, intId, str } from "../konto/http.js";
 import { getUser, handleKontoApi, isKontoPath } from "../konto/auth.js";
@@ -37,9 +37,11 @@ async function loadTournament(env, id) {
 
   const names = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const groups = [...new Set(players.map((p) => p.group_no).filter((g) => g != null))].sort((a, b) => a - b);
+  const football = t.sport === "football";
+  const table = football ? L.footballStandings : L.standings;
   const standings = groups.map((g) => ({
     group_no: g,
-    rows: L.standings(
+    rows: table(
       players.filter((p) => p.group_no === g).map((p) => p.id),
       matches.filter((m) => m.phase === "group" && m.group_no === g),
       names
@@ -55,11 +57,12 @@ async function loadTournament(env, id) {
   const lbNames = {};
   lbMatches.forEach((m) => { lbNames[m.round] = m.round === lbLastRound ? "Verliererbaum-Finale" : `Verliererbaum Runde ${m.round}`; });
   const roundNames = { wb: wbNames, lb: lbNames, gf: { 1: "Finale", 2: "Entscheidungsspiel" } };
-  return { tournament: t, players, matches, standings, koRoundNames: roundNames };
+  return { tournament: t, players, matches, standings, koRoundNames: roundNames, scorers: football ? L.topScorers(matches) : null };
 }
 
 function tournamentFields(b, t = {}) {
   const out = {
+    sport: b.sport !== undefined ? b.sport : (t.sport ?? "tabletennis"),
     name: b.name !== undefined ? str(b.name, 120) : t.name,
     event_date: b.event_date !== undefined ? (b.event_date || null) : (t.event_date ?? null),
     location: b.location !== undefined ? str(b.location, 120) : (t.location ?? ""),
@@ -71,6 +74,8 @@ function tournamentFields(b, t = {}) {
   };
   if (!out.name) fail(400, "Name fehlt.");
   if (out.event_date && !/^\d{4}-\d{2}-\d{2}$/.test(String(out.event_date).slice(0, 10))) fail(400, "Datum im Format JJJJ-MM-TT.");
+  if (!SPORTS.includes(out.sport)) fail(400, "Unbekannte Sportart.");
+  if (out.sport === "football") out.best_of = 1; // Fußball kennt keine Sätze
   if (!["ko", "league", "group"].includes(out.format)) fail(400, "Unbekannter Modus.");
   if (![1, 3, 5, 7].includes(out.best_of)) fail(400, "Spielmodus: Einzelspiel oder Best of 3, 5 oder 7.");
   if (!Number.isInteger(out.group_count) || out.group_count < 1 || out.group_count > 32) fail(400, "Gruppenanzahl 1–32.");
@@ -211,6 +216,15 @@ async function assertDraft(env, tid) {
   if (!t) fail(404, "Turnier nicht gefunden.");
   if (t.status !== "draft") fail(409, "Teilnehmer lassen sich nur vor dem Start ändern. Turnier ggf. zurücksetzen.");
 }
+// Kader eines Teams: Text mit einem Namen pro Zeile oder Liste -> JSON [{name}] (null = kein Kader).
+const membersVal = (v) => {
+  if (v === undefined || v === null) return null;
+  const list = (Array.isArray(v) ? v.map((x) => (typeof x === "string" ? x : x?.name)) : String(v).split("\n"))
+    .map((x) => str(x, 80))
+    .filter(Boolean)
+    .slice(0, 60);
+  return list.length ? JSON.stringify(list.map((name) => ({ name }))) : null;
+};
 const seedVal = (v) => {
   if (v === undefined || v === null || v === "") return null;
   const n = Number(v);
@@ -220,7 +234,7 @@ const seedVal = (v) => {
 
 async function lockMatch(env, id) {
   const m = await env.DB.prepare(
-    `SELECT m.*, t.best_of, t.status AS t_status FROM matches m JOIN tournaments t ON t.id = m.tournament_id WHERE m.id = ?`
+    `SELECT m.*, t.best_of, t.sport, t.status AS t_status FROM matches m JOIN tournaments t ON t.id = m.tournament_id WHERE m.id = ?`
   ).bind(id).first();
   if (!m) fail(404, "Spiel nicht gefunden.");
   if (m.status === "bye") fail(409, "Freilos – hier gibt es kein Ergebnis.");
@@ -311,9 +325,9 @@ export async function handleTischtennisApi(request, env, path) {
       requirePerm("tournaments.manage");
       const f = tournamentFields(await readBody());
       const res = await env.DB.prepare(
-        `INSERT INTO tournaments (name, event_date, location, format, best_of, group_count, advance_per_group, double_elim, status, created_at)
-         VALUES (?,?,?,?,?,?,?,?, 'draft', ?)`
-      ).bind(f.name, f.event_date, f.location, f.format, f.best_of, f.group_count, f.advance_per_group, f.double_elim ? 1 : 0, Date.now()).run();
+        `INSERT INTO tournaments (name, event_date, location, format, best_of, group_count, advance_per_group, double_elim, sport, status, created_at)
+         VALUES (?,?,?,?,?,?,?,?,?, 'draft', ?)`
+      ).bind(f.name, f.event_date, f.location, f.format, f.best_of, f.group_count, f.advance_per_group, f.double_elim ? 1 : 0, f.sport, Date.now()).run();
       return securityHeaders(json({ id: res.meta.last_row_id }, 201));
     }
 
@@ -323,14 +337,14 @@ export async function handleTischtennisApi(request, env, path) {
       const b = await readBody();
       const t = await env.DB.prepare("SELECT * FROM tournaments WHERE id = ?").bind(id).first();
       if (!t) fail(404, "Turnier nicht gefunden.");
-      const structural = ["format", "best_of", "group_count", "advance_per_group", "double_elim"].some(
+      const structural = ["sport", "format", "best_of", "group_count", "advance_per_group", "double_elim"].some(
         (k) => b[k] !== undefined && String(b[k]) !== String(t[k])
       );
-      if (structural && t.status !== "draft") fail(409, "Modus, Satzanzahl und Loserbracket lassen sich nur vor dem Start ändern.");
+      if (structural && t.status !== "draft") fail(409, "Sportart, Modus, Satzanzahl und Loserbracket lassen sich nur vor dem Start ändern.");
       const f = tournamentFields(b, { ...t, double_elim: !!t.double_elim });
       await env.DB.prepare(
-        `UPDATE tournaments SET name=?, event_date=?, location=?, format=?, best_of=?, group_count=?, advance_per_group=?, double_elim=? WHERE id=?`
-      ).bind(f.name, f.event_date, f.location, f.format, f.best_of, f.group_count, f.advance_per_group, f.double_elim ? 1 : 0, id).run();
+        `UPDATE tournaments SET name=?, event_date=?, location=?, format=?, best_of=?, group_count=?, advance_per_group=?, double_elim=?, sport=? WHERE id=?`
+      ).bind(f.name, f.event_date, f.location, f.format, f.best_of, f.group_count, f.advance_per_group, f.double_elim ? 1 : 0, f.sport, id).run();
       return securityHeaders(json({ ok: true }));
     }
 
@@ -443,15 +457,15 @@ export async function handleTischtennisApi(request, env, path) {
       const b = await readBody();
       const entries = typeof b.lines === "string"
         ? b.lines.split("\n").map((l) => l.split(";")).filter((p) => p[0].trim()).map((p) => ({ name: p[0], club: p[1] || "" }))
-        : [{ name: b.name, club: b.club, seed: b.seed }];
+        : [{ name: b.name, club: b.club, seed: b.seed, members: b.members }];
       if (!entries.length) fail(400, "Keine Namen angegeben.");
       if (entries.length > 512) fail(400, "Maximal 512 Teilnehmer auf einmal.");
       await assertDraft(env, tid);
       for (const e of entries) {
         const name = str(e.name, 80);
         if (!name) fail(400, "Name fehlt.");
-        await env.DB.prepare("INSERT INTO players (tournament_id, name, club, seed) VALUES (?,?,?,?)")
-          .bind(tid, name, str(e.club, 80), seedVal(e.seed)).run();
+        await env.DB.prepare("INSERT INTO players (tournament_id, name, club, seed, members) VALUES (?,?,?,?,?)")
+          .bind(tid, name, str(e.club, 80), seedVal(e.seed), membersVal(e.members)).run();
       }
       return securityHeaders(json({ ok: true, added: entries.length }, 201));
     }
@@ -462,13 +476,17 @@ export async function handleTischtennisApi(request, env, path) {
       const b = await readBody();
       const p = await env.DB.prepare("SELECT * FROM players WHERE id = ?").bind(id).first();
       if (!p) fail(404, "Teilnehmer nicht gefunden.");
-      await assertDraft(env, p.tournament_id);
+      // Den Kader eines Teams darf man auch während des Turniers noch ändern
+      // (Nachmeldungen, Torschützen); alles andere nur vor dem Start.
+      const onlyMembers = Object.keys(b).length > 0 && Object.keys(b).every((k) => k === "members");
+      if (!onlyMembers) await assertDraft(env, p.tournament_id);
       const name = b.name !== undefined ? str(b.name, 80) : p.name;
       if (!name) fail(400, "Name fehlt.");
-      await env.DB.prepare("UPDATE players SET name=?, club=?, seed=? WHERE id=?").bind(
+      await env.DB.prepare("UPDATE players SET name=?, club=?, seed=?, members=? WHERE id=?").bind(
         name,
         b.club !== undefined ? str(b.club, 80) : p.club,
         b.seed !== undefined ? seedVal(b.seed) : p.seed,
+        b.members !== undefined ? membersVal(b.members) : p.members,
         id
       ).run();
       return securityHeaders(json({ ok: true }));
@@ -518,16 +536,32 @@ export async function handleTischtennisApi(request, env, path) {
       const mm = await lockMatch(env, id);
       if (!mm.player1_id || !mm.player2_id) fail(409, "Die Paarung steht noch nicht fest.");
       const b = await readBody();
-      const sets = Array.isArray(b.sets) ? b.sets.map((s) => (Array.isArray(s) ? s.map(Number) : s)) : null;
-      const v = L.validateSets(sets, mm.best_of);
-      if (!v.ok) fail(400, v.error);
-      const winner = v.winner === 1 ? mm.player1_id : mm.player2_id;
-      const loser = v.winner === 1 ? mm.player2_id : mm.player1_id;
-      await env.DB.prepare("UPDATE matches SET sets=?, winner_id=?, status='done', updated_at=? WHERE id=?")
-        .bind(JSON.stringify(sets), winner, Date.now(), id).run();
-      await placeWinner(env, mm, winner);
-      await placeLoser(env, mm, loser);
-      await syncGrandFinalReset(env, mm, winner);
+      let sets, extra = {}, winnerSide;
+      if (mm.sport === "football") {
+        const goals = Array.isArray(b.goals) ? b.goals.map(Number) : null;
+        const pens = Array.isArray(b.penalties) ? b.penalties.map(Number) : null;
+        const v = L.validateFootball(goals, pens, mm.phase === "ko");
+        if (!v.ok) fail(400, v.error);
+        const sc = L.normalizeScorers(b.scorers, goals);
+        if (!sc.ok) fail(400, sc.error);
+        sets = [goals];
+        extra = { penalties: v.penalties, scorers: sc.scorers };
+        winnerSide = v.winner;
+      } else {
+        sets = Array.isArray(b.sets) ? b.sets.map((s) => (Array.isArray(s) ? s.map(Number) : s)) : null;
+        const v = L.validateSets(sets, mm.best_of);
+        if (!v.ok) fail(400, v.error);
+        winnerSide = v.winner;
+      }
+      const winner = winnerSide === 1 ? mm.player1_id : winnerSide === 2 ? mm.player2_id : null;
+      const loser = winnerSide === 1 ? mm.player2_id : winnerSide === 2 ? mm.player1_id : null;
+      await env.DB.prepare("UPDATE matches SET sets=?, extra=?, winner_id=?, status='done', updated_at=? WHERE id=?")
+        .bind(JSON.stringify(sets), JSON.stringify(extra), winner, Date.now(), id).run();
+      if (winner) {
+        await placeWinner(env, mm, winner);
+        await placeLoser(env, mm, loser);
+        await syncGrandFinalReset(env, mm, winner);
+      }
       await updateStatus(env, mm.tournament_id);
       return securityHeaders(json({ ok: true }));
     }
@@ -536,7 +570,7 @@ export async function handleTischtennisApi(request, env, path) {
       requirePerm("results.enter");
       const id = intId(m[1]);
       const mm = await lockMatch(env, id);
-      await env.DB.prepare("UPDATE matches SET sets='[]', winner_id=NULL, status='pending', updated_at=? WHERE id=?").bind(Date.now(), id).run();
+      await env.DB.prepare("UPDATE matches SET sets='[]', extra='{}', winner_id=NULL, status='pending', updated_at=? WHERE id=?").bind(Date.now(), id).run();
       if (mm.status === "done") {
         await placeWinner(env, mm, null);
         await placeLoser(env, mm, null);

@@ -41,8 +41,22 @@ function sortMatches(a, b) {
 function buildPages(d) {
   const P = nameMap(d.players);
   const pages = [];
+  const fb = isFb(d);
   for (const g of d.standings) {
     const title = d.tournament.format === 'group' ? `Gruppe ${String.fromCharCode(64 + g.group_no)}` : 'Tabelle';
+    if (fb) {
+      pages.push({
+        title,
+        html: `<table class="standings"><thead><tr><th>#</th><th class="l">Team</th><th>Sp</th><th>S-U-N</th><th>Tore</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>${g.rows
+          .map(
+            (r, i) => `<tr class="${d.tournament.format === 'group' && i < d.tournament.advance_per_group ? 'q' : ''}">
+              <td>${i + 1}</td><td class="l">${nameOf(P, r.player_id)}</td><td>${r.played}</td><td>${r.won}-${r.drawn}-${r.lost}</td>
+              <td>${r.goalsFor}:${r.goalsAgainst}</td><td>${r.goalsFor - r.goalsAgainst > 0 ? '+' : ''}${r.goalsFor - r.goalsAgainst}</td><td class="pts">${r.points}</td></tr>`
+          )
+          .join('')}</tbody></table>`,
+      });
+      continue;
+    }
     pages.push({
       title,
       html: `<table class="standings"><thead><tr><th>#</th><th class="l">Spieler</th><th>Sp</th><th>S:N</th><th>Sätze</th><th>Pkt</th></tr></thead><tbody>${g.rows
@@ -83,6 +97,15 @@ function buildPages(d) {
       });
     }
   }
+  if (fb && d.scorers && d.scorers.length) {
+    pages.push({
+      title: 'Torschützen',
+      html: `<table class="standings"><thead><tr><th>#</th><th class="l">Spieler</th><th class="l">Team</th><th>Tore</th></tr></thead><tbody>${d.scorers
+        .slice(0, 8)
+        .map((x, i) => `<tr><td>${i + 1}</td><td class="l">${esc(x.name)}</td><td class="l" style="color:var(--muted)">${nameOf(P, x.team_id)}</td><td class="pts">${x.goals}</td></tr>`)
+        .join('')}</tbody></table>`,
+    });
+  }
   const done = d.matches.filter((m) => m.status === 'done').sort((a, b) => b.updated_at - a.updated_at).slice(0, 7);
   if (done.length) {
     pages.push({
@@ -93,7 +116,7 @@ function buildPages(d) {
             <span class="${m.winner_id === m.player1_id ? 'w' : ''}">${nameOf(P, m.player1_id)}</span>
             <span class="score">${setScore(m)}</span>
             <span class="r ${m.winner_id === m.player2_id ? 'w' : ''}">${nameOf(P, m.player2_id)}</span>
-            <span class="sets">${esc(setDetail(m))}</span>
+            <span class="sets">${[esc(setDetail(m)), scorerLine(m)].filter(Boolean).join(' · ')}</span>
           </li>`
         )
         .join('')}</ul>`,
@@ -107,6 +130,7 @@ function render() {
   if (!d) return;
   const t = d.tournament;
   const P = nameMap(d.players);
+  const W = words(d);
   const champ = winnerId(d);
 
   const ready = d.matches.filter((m) => m.status === 'pending' && m.player1_id && m.player2_id);
@@ -122,22 +146,22 @@ function render() {
 
   let main;
   if (t.status === 'draft') {
-    main = `<div class="cols" style="grid-template-columns:1fr"><div class="col"><p class="live-empty">Das Turnier startet gleich – ${d.players.length} Teilnehmer gemeldet.</p></div></div>`;
+    main = `<div class="cols" style="grid-template-columns:1fr"><div class="col"><p class="live-empty">Das Turnier startet gleich – ${d.players.length} ${W.entrants} gemeldet.</p></div></div>`;
   } else {
     main = `<div class="cols">
       <section class="col">
-        <h2>An den Tischen</h2>
+        <h2>${W.tables}</h2>
         ${
           atTables.length
             ? atTables
                 .slice(0, maxTables)
                 .map(
-                  (m) => `<div class="tablecard"><div class="no"><small>Tisch</small>${m.table_no}</div>
+                  (m) => `<div class="tablecard"><div class="no"><small>${W.table}</small>${m.table_no}</div>
                     <div class="who"><span class="round">${esc(matchTitle(m, d))}</span>
                       <span class="pname">${nameOf(P, m.player1_id)}</span><span class="vs">gegen</span><span class="pname">${nameOf(P, m.player2_id)}</span></div></div>`
                 )
-                .join('') + (atTables.length > maxTables ? `<p class="more">+ ${atTables.length - maxTables} weitere Tische</p>` : '')
-            : `<p class="more">Gerade ist kein Tisch belegt.${next.length ? ' Die nächsten Spiele stehen rechts daneben.' : ''}</p>`
+                .join('') + (atTables.length > maxTables ? `<p class="more">+ ${atTables.length - maxTables} weitere</p>` : '')
+            : `<p class="more">Gerade ${isFb(d) ? 'läuft auf keinem Platz ein Spiel' : 'ist kein Tisch belegt'}.${next.length ? ' Die nächsten Spiele stehen rechts daneben.' : ''}</p>`
         }
       </section>
       <section class="col">
@@ -160,8 +184,8 @@ function render() {
 
   const stale = Date.now() - L.lastOk > REFRESH_MS * 3;
   app.innerHTML = `
-    <header class="bar"><span class="logo">🏓 Live</span><h1>${esc(t.name)}</h1>
-      <span class="meta">${esc([FORMAT_LABEL[t.format], bestOfLabel(t.best_of)].join(' · '))}</span>
+    <header class="bar"><span class="logo">${W.icon} Live</span><h1>${esc(t.name)}</h1>
+      <span class="meta">${esc(modeParts(t).slice(1).join(' · '))}</span>
       <span class="clock">${clock()}</span></header>
     ${main}
     <footer class="ticker ${stale ? 'stale' : ''}"><span><span class="dot"></span>${stale ? 'Verbindung unterbrochen – versuche es weiter …' : 'Live – aktualisiert sich automatisch'}</span>
@@ -195,7 +219,7 @@ async function pickView() {
     ${
       (shown.length ? shown : list).length
         ? `<ul>${(shown.length ? shown : list)
-            .map((t) => `<li><a href="#t=${t.id}">${esc(t.name)} <span>${esc(STATUS_LABEL[t.status])} · ${t.player_count} Teilnehmer</span></a></li>`)
+            .map((t) => `<li><a href="#t=${t.id}">${t.sport === 'football' ? '⚽' : '🏓'} ${esc(t.name)} <span>${esc(STATUS_LABEL[t.status])} · ${t.player_count} ${t.sport === 'football' ? 'Teams' : 'Teilnehmer'}</span></a></li>`)
             .join('')}</ul>`
         : '<p>Noch keine Turniere angelegt.</p>'
     }

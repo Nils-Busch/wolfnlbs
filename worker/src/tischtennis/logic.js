@@ -137,3 +137,102 @@ export function koSeedingFromGroups(ranked) {
 export function koRoundName(matchesInRound) {
   return { 1: 'Finale', 2: 'Halbfinale', 4: 'Viertelfinale', 8: 'Achtelfinale' }[matchesInRound] || `Runde der letzten ${matchesInRound * 2}`;
 }
+
+/* =========================================================================
+   Fußball
+   ========================================================================= */
+
+/**
+ * Prüft ein Fußball-Ergebnis. goals = [Tore links, Tore rechts].
+ * In der K.-o.-Runde braucht ein Unentschieden ein Elfmeterschießen (penalties).
+ * Liefert {ok:true, winner: 1|2|0 (0 = Unentschieden), penalties: [a,b]|null} oder {ok:false, error}.
+ */
+export function validateFootball(goals, penalties, isKo) {
+  const okNum = (x) => Number.isInteger(x) && x >= 0 && x <= 99;
+  if (!Array.isArray(goals) || goals.length !== 2 || !goals.every(okNum)) return { ok: false, error: 'Bitte die Tore beider Teams eintragen (0–99).' };
+  const [a, b] = goals;
+  if (a !== b) return { ok: true, winner: a > b ? 1 : 2, penalties: null };
+  if (!isKo) return { ok: true, winner: 0, penalties: null };
+  if (!Array.isArray(penalties) || penalties.length !== 2 || !penalties.every(okNum))
+    return { ok: false, error: 'Unentschieden in der K.-o.-Runde: Bitte das Ergebnis des Elfmeterschießens eintragen.' };
+  if (penalties[0] === penalties[1]) return { ok: false, error: 'Das Elfmeterschießen braucht einen Sieger.' };
+  return { ok: true, winner: penalties[0] > penalties[1] ? 1 : 2, penalties };
+}
+
+/**
+ * Torschützen säubern: [{side:1|2, name, goals}] – gleiche Namen pro Seite werden
+ * zusammengefasst. Mehr Torschützen-Tore als echte Tore sind nicht erlaubt.
+ */
+export function normalizeScorers(raw, goals) {
+  if (raw == null) return { ok: true, scorers: [] };
+  if (!Array.isArray(raw) || raw.length > 200) return { ok: false, error: 'Ungültige Torschützen.' };
+  const map = new Map();
+  for (const s of raw) {
+    const side = Number(s?.side);
+    const name = typeof s?.name === 'string' ? s.name.trim().slice(0, 80) : '';
+    const n = s?.goals === undefined ? 1 : Number(s.goals);
+    if (!name) continue;
+    if (side !== 1 && side !== 2) return { ok: false, error: 'Ungültige Torschützen.' };
+    if (!Number.isInteger(n) || n < 1 || n > 20) return { ok: false, error: 'Ungültige Toranzahl bei einem Torschützen.' };
+    const key = `${side}|${name.toLowerCase()}`;
+    const cur = map.get(key);
+    if (cur) cur.goals += n; else map.set(key, { side, name, goals: n });
+  }
+  const scorers = [...map.values()];
+  for (const side of [1, 2]) {
+    const sum = scorers.filter((x) => x.side === side).reduce((t, x) => t + x.goals, 0);
+    if (sum > goals[side - 1]) return { ok: false, error: `Mehr Torschützen als Tore beim ${side === 1 ? 'linken' : 'rechten'} Team.` };
+  }
+  return { ok: true, scorers };
+}
+
+/**
+ * Fußball-Tabelle: Sieg 3, Unentschieden 1, Niederlage 0 Punkte.
+ * Sortierung: Punkte, Tordifferenz, erzielte Tore, direkter Vergleich, Name.
+ */
+export function footballStandings(playerIds, matches, playerNames = {}) {
+  const row = (id) => ({ player_id: id, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 });
+  const t = new Map(playerIds.map((id) => [id, row(id)]));
+  const done = matches.filter((m) => m.status === 'done' && m.sets && m.sets[0]);
+  for (const m of done) {
+    const p1 = t.get(m.player1_id), p2 = t.get(m.player2_id);
+    if (!p1 || !p2) continue;
+    const [a, b] = m.sets[0];
+    p1.played++; p2.played++;
+    p1.goalsFor += a; p1.goalsAgainst += b; p2.goalsFor += b; p2.goalsAgainst += a;
+    if (a > b) { p1.won++; p1.points += 3; p2.lost++; }
+    else if (b > a) { p2.won++; p2.points += 3; p1.lost++; }
+    else { p1.drawn++; p2.drawn++; p1.points++; p2.points++; }
+  }
+  const h2h = (x, y) => {
+    let px = 0, py = 0;
+    for (const m of done) {
+      if (!((m.player1_id === x && m.player2_id === y) || (m.player1_id === y && m.player2_id === x))) continue;
+      const [a, b] = m.sets[0];
+      const gx = m.player1_id === x ? a : b, gy = m.player1_id === x ? b : a;
+      if (gx > gy) px += 3; else if (gy > gx) py += 3; else { px++; py++; }
+    }
+    return py - px;
+  };
+  return [...t.values()].sort((x, y) =>
+    (y.points - x.points) ||
+    ((y.goalsFor - y.goalsAgainst) - (x.goalsFor - x.goalsAgainst)) ||
+    (y.goalsFor - x.goalsFor) ||
+    h2h(x.player_id, y.player_id) ||
+    String(playerNames[x.player_id] || '').localeCompare(String(playerNames[y.player_id] || ''), 'de'));
+}
+
+/** Torschützenliste über alle Spiele: [{name, team_id, goals}] absteigend. */
+export function topScorers(matches) {
+  const map = new Map();
+  for (const m of matches) {
+    if (m.status !== 'done') continue;
+    for (const s of (m.extra && m.extra.scorers) || []) {
+      const team = s.side === 1 ? m.player1_id : m.player2_id;
+      const key = `${team}|${s.name.toLowerCase()}`;
+      const cur = map.get(key);
+      if (cur) cur.goals += s.goals; else map.set(key, { name: s.name, team_id: team, goals: s.goals });
+    }
+  }
+  return [...map.values()].sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name, 'de'));
+}

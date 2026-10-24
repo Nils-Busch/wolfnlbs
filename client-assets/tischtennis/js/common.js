@@ -15,7 +15,27 @@ async function api(path, opts = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(data.error || `Fehler ${res.status}`), { status: res.status });
+  // Turnierdaten: Sportart an Spiele und Teilnehmer hängen, damit die Anzeige-Helfer
+  // unten (Ergebnis, Namen) wissen, ob es Tore oder Sätze sind.
+  if (data && data.tournament && Array.isArray(data.matches)) {
+    const fb = data.tournament.sport === 'football';
+    data.matches.forEach(m => { m.fb = fb; });
+    (data.players || []).forEach(p => { p.fb = fb; });
+  }
   return data;
+}
+
+const SPORT_LABEL = { tabletennis: '🏓 Tischtennis', football: '⚽ Fußball' };
+const isFb = d => !!d && d.tournament && d.tournament.sport === 'football';
+/** Wörter, die sich je nach Sportart unterscheiden. */
+function words(d) {
+  return isFb(d)
+    ? { table: 'Platz', tables: 'Auf den Plätzen', entrants: 'Teams', entrant: 'Team', icon: '⚽' }
+    : { table: 'Tisch', tables: 'An den Tischen', entrants: 'Teilnehmer', entrant: 'Spieler', icon: '🏓' };
+}
+/** Kurzbeschreibung des Modus für Kopfzeilen, z. B. "⚽ Fußball, Gruppen + K.-o." */
+function modeParts(t) {
+  return [SPORT_LABEL[t.sport] || SPORT_LABEL.tabletennis, FORMAT_LABEL[t.format], t.sport === 'football' ? '' : bestOfLabel(t.best_of), t.double_elim ? 'mit Loserbracket' : ''].filter(Boolean);
 }
 
 const FORMAT_LABEL = { ko: 'K.-o.-System', league: 'Jeder gegen jeden', group: 'Gruppen + K.-o.' };
@@ -34,6 +54,10 @@ function nameMap(players) { return Object.fromEntries(players.map(p => [p.id, p]
 
 function setScore(m) {
   if (m.status !== 'done') return '';
+  if (m.fb) {
+    const [g1, g2] = m.sets[0] || [0, 0];
+    return `${g1}:${g2}`;
+  }
   let a = 0, b = 0;
   m.sets.forEach(([x, y]) => (x > y ? a++ : b++));
   return `${a}:${b}`;
@@ -41,16 +65,59 @@ function setScore(m) {
 
 function playerLabel(p, fallback = 'offen') {
   if (!p) return `<span class="muted">${fallback}</span>`;
-  if (p.members && p.members.length) {
+  if (p.members && p.members.length && !p.fb) {
     const names = p.members.map(m => esc(m.name) + (m.club ? ` <span class="club">${esc(m.club)}</span>` : '')).join(' &amp; ');
     return `${esc(p.name)}<br><span class="club">${names}</span>`;
   }
   return `${esc(p.name)}${p.club ? ` <span class="club">${esc(p.club)}</span>` : ''}`;
 }
 
+function renderFootballStandings(data) {
+  const P = nameMap(data.players);
+  return data.standings.map(g => `
+    <section class="block">
+      ${data.tournament.format === 'group' ? `<h3>Gruppe ${String.fromCharCode(64 + g.group_no)}</h3>` : ''}
+      <div class="scroll"><table class="standings">
+        <thead><tr><th>Platz</th><th class="left">Team</th><th title="Spiele">Sp</th><th title="Siege">S</th><th title="Unentschieden">U</th><th title="Niederlagen">N</th><th>Tore</th><th title="Tordifferenz">Diff</th><th>Punkte</th></tr></thead>
+        <tbody>${g.rows.map((r, i) => `
+          <tr class="${data.tournament.format === 'group' && i < data.tournament.advance_per_group ? 'qualified' : ''}">
+            <td class="num">${i + 1}</td><td class="left">${playerLabel(P[r.player_id])}</td>
+            <td class="num">${r.played}</td><td class="num">${r.won}</td><td class="num">${r.drawn}</td><td class="num">${r.lost}</td>
+            <td class="num">${r.goalsFor}:${r.goalsAgainst}</td><td class="num">${r.goalsFor - r.goalsAgainst > 0 ? '+' : ''}${r.goalsFor - r.goalsAgainst}</td>
+            <td class="num strong">${r.points}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+    </section>`).join('') +
+    `<p class="hint">Sieg 3 Punkte, Unentschieden 1 Punkt, Niederlage 0. Bei Gleichstand zählen Tordifferenz, dann mehr erzielte Tore, dann der direkte Vergleich.${data.tournament.format === 'group' ? ' Markierte Plätze erreichen die K.-o.-Runde.' : ''}</p>`;
+}
+
+/** Torschützenliste (nur Fußball). */
+function renderScorers(data, limit = 0) {
+  const list = data.scorers || [];
+  if (!list.length) return '<p class="empty">Noch keine Torschützen eingetragen.</p>';
+  const P = nameMap(data.players);
+  const rows = limit ? list.slice(0, limit) : list;
+  let rank = 0, last = null;
+  return `<div class="scroll"><table class="standings scorers">
+    <thead><tr><th>Platz</th><th class="left">Spieler</th><th class="left">Team</th><th>Tore</th></tr></thead>
+    <tbody>${rows.map((s, i) => { if (s.goals !== last) { rank = i + 1; last = s.goals; } return `
+      <tr><td class="num">${rank}</td><td class="left">${esc(s.name)}</td><td class="left">${esc(P[s.team_id]?.name || '')}</td><td class="num strong">${s.goals}</td></tr>`; }).join('')}</tbody>
+  </table></div>`;
+}
+
+/** Torschützen eines Spiels als kurze Zeile, z. B. "⚽ Max 2, Tim – Jonas". */
+function scorerLine(m) {
+  if (!m.fb || m.status !== 'done') return '';
+  const sc = (m.extra && m.extra.scorers) || [];
+  if (!sc.length) return '';
+  const side = n => sc.filter(x => x.side === n).map(x => esc(x.name) + (x.goals > 1 ? ` ${x.goals}×` : '')).join(', ');
+  return `⚽ ${side(1) || '–'} | ${side(2) || '–'}`;
+}
+
 function renderStandings(data) {
   const P = nameMap(data.players);
   if (!data.standings.length) return '<p class="empty">Noch keine Tabelle – das Turnier hat keine Gruppenphase oder ist nicht gestartet.</p>';
+  if (isFb(data)) return renderFootballStandings(data);
   return data.standings.map(g => `
     <section class="block">
       ${data.tournament.format === 'group' ? `<h3>Gruppe ${String.fromCharCode(64 + g.group_no)}</h3>` : ''}
@@ -78,7 +145,7 @@ function renderBracketSection(ms, names, P, extra, sideTag) {
         const side = (pid, idx) => `
           <div class="side ${m.winner_id && m.winner_id === pid ? 'win' : ''}">
             <span class="pname">${m.status === 'bye' && !pid ? '<span class="muted">Freilos</span>' : playerLabel(P[pid])}${sideTag ? sideTag(idx) : ''}</span>
-            <span class="sets">${m.status === 'done' ? m.sets.filter(([a, b]) => (idx === 1 ? a > b : b > a)).length : ''}</span>
+            <span class="sets">${m.status !== 'done' ? '' : m.fb ? (m.sets[0] || [])[idx - 1] ?? '' : m.sets.filter(([a, b]) => (idx === 1 ? a > b : b > a)).length}</span>
           </div>`;
         return `<div class="bmatch ${m.status}">${side(m.player1_id, 1)}${side(m.player2_id, 2)}${extra(m)}</div>`;
       }).join('')}</div>
@@ -112,7 +179,12 @@ function matchTitle(m, data) {
 }
 
 function setDetail(m) {
-  return m.status === 'done' ? m.sets.map(([a, b]) => `${a}:${b}`).join(', ') : '';
+  if (m.status !== 'done') return '';
+  if (m.fb) {
+    const p = m.extra && m.extra.penalties;
+    return p ? `n. E. ${p[0]}:${p[1]}` : '';
+  }
+  return m.sets.map(([a, b]) => `${a}:${b}`).join(', ');
 }
 
 function renderTabs(tabs, active) {

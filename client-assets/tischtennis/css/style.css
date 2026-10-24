@@ -192,3 +192,48 @@ button.link.danger { color: var(--danger); }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 #toast.error { background: var(--danger); border-left-color: #fff; }
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+
+/* ---------- Sportart (Tischtennis / Fußball) ---------- */
+.sport-pick { border: 1px solid var(--rule); padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+.sport-pick legend { font: 700 .8rem var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 0 4px; }
+.sport-opt { display: inline-flex !important; flex-direction: row !important; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
+.sport-hint { flex-basis: 100%; margin: 0; }
+.sport-form[data-sport="football"] .tt-only { display: none; }
+
+/* Fußball: Ergebnis-Eingabe mit Torschützen */
+.fbform { flex-wrap: wrap; }
+.fbform .pens { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--muted); }
+.fbform .pens[hidden] { display: none; }
+.scorer-cols { flex-basis: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.scorer-col { display: grid; gap: 4px; align-content: start; }
+.scorer-col input { width: 100%; }
+.scorer-head { font: 700 .75rem var(--display); text-transform: uppercase; color: var(--muted); letter-spacing: .04em; }
+@media (max-width: 560px) { .scorer-cols { grid-template-columns: 1fr; } }
+
+/* Fußball: Teams mit Kader */
+.teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 12px 0; }
+.teams .card { margin: 0; display: grid; gap: 8px; }
+.team-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.team-head input { flex: 1 1 120px; min-width: 0; }
+.team-head input.short { flex: 0 0 80px; }
+.team .row { display: flex; gap: 10px; align-items: center; }
+.kader { margin: 0; color: var(--muted); font-size: .9rem; }
+table.scorers td.left:nth-child(3) { color: var(--muted); }
+
+/* Besucher-Link mit QR-Code */
+.qr-card { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+.qr-img { background: #fff; padding: 8px; line-height: 0; }
+.qr-img svg { width: 190px; height: 190px; display: block; }
+.qr-text { flex: 1 1 260px; }
+.qr-text h2 { margin-top: 0; }
+.qr-url { font: 700 1.05rem var(--display); word-break: break-all; }
+.qr-text .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; left: 0; top: 0; width: 100%; border: 0; box-shadow: none; flex-direction: column; text-align: center; }
+  .print-area .qr-img svg { width: 9cm; height: 9cm; }
+  .print-area .qr-text h2 { font-size: 28pt; }
+  .print-area .qr-text p { font-size: 16pt; }
+  .no-print { display: none !important; }
+}

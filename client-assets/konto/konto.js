@@ -111,7 +111,7 @@ function accountView() {
   const links = [];
   if (can('quiz.create') || can('quiz.manage')) links.push(['/quiz/', '❓ Meine Quizze verwalten']);
   else links.push(['/quiz/', '❓ Quiz starten']);
-  if (can('tournaments.manage') || can('players.manage') || can('results.enter')) links.push(['/tischtennis/admin', '🏓 Turnierleitung']);
+  if (can('tournaments.manage') || can('players.manage') || can('results.enter')) links.push(['/tischtennis/admin', '🏆 Turnierleitung']);
   shell(`
     <div class="konto-grid">
       <section class="vh-card pinned">

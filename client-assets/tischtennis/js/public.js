@@ -14,7 +14,7 @@ async function showList() {
   app.innerHTML = `<h1 class="page-title">Turniere</h1><ul class="t-list">${list.map(t => `
     <li><a href="#t=${t.id}">
       <span class="t-name">${esc(t.name)}</span>
-      <span class="t-meta">${[fmtDate(t.event_date), t.location, FORMAT_LABEL[t.format], `${t.player_count} Teilnehmer`].filter(Boolean).map(esc).join(', ')}</span>
+      <span class="t-meta">${[SPORT_LABEL[t.sport] || SPORT_LABEL.tabletennis, fmtDate(t.event_date), t.location, FORMAT_LABEL[t.format], `${t.player_count} ${t.sport === 'football' ? 'Teams' : 'Teilnehmer'}`].filter(Boolean).map(esc).join(', ')}</span>
       <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span>
     </a></li>`).join('')}</ul>`;
 }
@@ -32,18 +32,22 @@ function renderMatches(d) {
     .sort((a, b) => (b.table_no ? 1 : 0) - (a.table_no ? 1 : 0) || a.round - b.round);
   const done = playable.filter(m => m.status === 'done').sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
   const row = m => `<li class="match ${m.status}">
-      <span class="m-info">${m.table_no ? `<span class="tableno">Tisch ${m.table_no}</span>` : ''}${esc(matchTitle(m, d))}</span>
+      <span class="m-info">${m.table_no ? `<span class="tableno">${words(d).table} ${m.table_no}</span>` : ''}${esc(matchTitle(m, d))}</span>
       <span class="m-p p1 ${m.winner_id && m.winner_id === m.player1_id ? 'win' : ''}">${playerLabel(P[m.player1_id])}</span>
       <span class="m-score">${setScore(m) || 'gegen'}</span>
       <span class="m-p right ${m.winner_id && m.winner_id === m.player2_id ? 'win' : ''}">${playerLabel(P[m.player2_id])}</span>
-      <span class="m-sets">${setDetail(m)}</span></li>`;
+      <span class="m-sets">${[esc(setDetail(m)), scorerLine(m)].filter(Boolean).join(' · ')}</span></li>`;
   return `
     <section class="block"><h2>Als Nächstes</h2>${open.length ? `<ul class="matches">${open.map(row).join('')}</ul>` : '<p class="empty">Gerade keine spielbereiten Begegnungen.</p>'}</section>
     <section class="block"><h2>Ergebnisse</h2>${done.length ? `<ul class="matches">${done.map(row).join('')}</ul>` : '<p class="empty">Noch keine Ergebnisse.</p>'}</section>`;
 }
 
 function renderPlayers(d) {
-  if (!d.players.length) return '<p class="empty">Noch keine Teilnehmer gemeldet.</p>';
+  if (!d.players.length) return `<p class="empty">Noch keine ${words(d).entrants} gemeldet.</p>`;
+  if (isFb(d)) {
+    return `<div class="teams">${d.players.map(p => `<div class="card team"><div class="team-head"><strong>${esc(p.name)}</strong>${p.club ? ` <span class="club">${esc(p.club)}</span>` : ''}${p.group_no && d.tournament.format === 'group' ? ` <span class="seed">Gruppe ${String.fromCharCode(64 + p.group_no)}</span>` : ''}</div>
+      <p class="kader">${(p.members || []).map(m => esc(m.name)).join(', ') || 'Kein Kader eingetragen.'}</p></div>`).join('')}</div>`;
+  }
   return `<ol class="players">${d.players.map(p => `<li>${playerLabel(p)}${p.seed ? ` <span class="seed">Setzplatz ${p.seed}</span>` : ''}${p.group_no && d.tournament.format === 'group' ? ` <span class="seed">Gruppe ${String.fromCharCode(64 + p.group_no)}</span>` : ''}</li>`).join('')}</ol>`;
 }
 
@@ -68,13 +72,14 @@ function renderDetail() {
   const tabs = [['matches', 'Spiele']];
   if (t.format !== 'ko') tabs.push(['table', t.format === 'group' ? 'Gruppen' : 'Tabelle']);
   if (t.format !== 'league') tabs.push(['bracket', 'Turnierbaum']);
-  tabs.push(['players', 'Teilnehmer']);
+  if (isFb(d)) tabs.push(['scorers', 'Torschützen']);
+  tabs.push(['players', words(d).entrants]);
   if (!tabs.some(x => x[0] === state.tab)) state.tab = defaultTab(d);
-  const body = { matches: renderMatches, table: renderStandings, bracket: x => renderBracket(x), players: renderPlayers }[state.tab](d);
+  const body = { matches: renderMatches, table: renderStandings, bracket: x => renderBracket(x), scorers: x => renderScorers(x), players: renderPlayers }[state.tab](d);
   app.innerHTML = `
     <a class="back" href="#">Alle Turniere</a>
     <h1 class="page-title">${esc(t.name)}</h1>
-    <p class="t-meta">${[fmtDate(t.event_date), t.location, FORMAT_LABEL[t.format], bestOfLabel(t.best_of), t.double_elim ? 'mit Loserbracket' : ''].filter(Boolean).map(esc).join(', ')}
+    <p class="t-meta">${[fmtDate(t.event_date), t.location, ...modeParts(t)].filter(Boolean).map(esc).join(', ')}
       <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span>
       <a class="link" href="/tischtennis/live#t=${t.id}">📺 Liveansicht für den Bildschirm</a></p>
     ${winnerBanner(d)}
