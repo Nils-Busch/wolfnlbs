@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/shared/vereinsheim.css">
 <link rel="stylesheet" href="/spiele/css/style.css">
 </head>
-<body class="vh-body" style="--accent: var(--accent-spiele)">
+<body class="vh-body vh-area-spiele">
 <header class="vh-header">
   <a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a>
   <nav>
@@ -18,78 +18,81 @@
     <a href="/tischtennis/">Turniere</a>
   </nav>
 </header>
-<main>
+<main class="gallery">
   <section class="hero">
-    <span class="vh-stamp">Dauerbrenner</span>
-    <h1>🎮 Spielegalerie</h1>
-    <p>Allein auf Rekordjagd oder im Duell – lokal am selben Gerät oder online per Raumcode.</p>
+    <h1>Spielegalerie</h1>
+    <p>Allein auf Rekordjagd oder im Duell – am selben Gerät oder online per Raumcode.</p>
   </section>
 
-  <h2 class="section-title">Solo · mit Bestenliste</h2>
+  <a class="daily" href="/spiele/games/wordle.html" id="wordleCard">
+    <span class="daily-tiles" aria-hidden="true"><i class="g">R</i><i class="y">A</i><i class="b">T</i><i class="g">E</i><i class="g">N</i></span>
+    <span class="daily-text">
+      <span class="daily-kicker">Wordle – Tagesrätsel <b class="rec"></b></span>
+      <h2>Fünf Buchstaben, sechs Versuche.</h2>
+      <span class="daily-sub">Jeden Tag ein neues deutsches Wort. Wer es mit den wenigsten Versuchen löst, steht oben.</span>
+    </span>
+    <span class="daily-go">Heute raten</span>
+  </a>
+
+  <h2 class="section-title">Allein spielen<span>mit Bestenliste</span></h2>
   <div class="grid">
-    <a class="card" href="/spiele/games/wordle.html" id="wordleCard">
-      <div class="icon">🟩</div>
-      <h3>Wordle</h3>
-      <p>Jeden Tag ein neues deutsches Wort mit 5 Buchstaben – sechs Versuche. Dazu freie Runden zum Üben.</p>
-      <div class="meta"><span class="tag">Tagesrätsel</span><span class="rec"></span></div>
-    </a>
     <a class="card" href="/spiele/games/snake.html" data-game="snake">
-      <div class="icon">🐍</div>
+      <span class="icon">🐍</span>
       <h3>Snake</h3>
       <p>Futter einsammeln, wachsen, nicht in dich selbst beißen. Wird mit jedem Bissen schneller.</p>
-      <div class="meta"><span class="tag">Tastatur & Touch</span><span class="rec"></span></div>
+      <span class="meta"><span class="tag">Tastatur &amp; Touch</span><span class="rec"></span></span>
     </a>
     <a class="card" href="/spiele/games/blockfall.html" data-game="blockfall">
-      <div class="icon">🧱</div>
+      <span class="icon">🧱</span>
       <h3>Blockfall</h3>
       <p>Fallende Steine drehen und volle Reihen abräumen. Ab jeder zehnten Reihe wird’s schneller.</p>
-      <div class="meta"><span class="tag">Tastatur & Touch</span><span class="rec"></span></div>
+      <span class="meta"><span class="tag">Tastatur &amp; Touch</span><span class="rec"></span></span>
     </a>
     <a class="card" href="/spiele/games/2048.html" data-game="2048">
-      <div class="icon">🔢</div>
+      <span class="icon">🔢</span>
       <h3>2048</h3>
       <p>Kacheln schieben und gleiche Zahlen verschmelzen, bis die 2048 erscheint.</p>
-      <div class="meta"><span class="tag">Tastatur & Touch</span><span class="rec"></span></div>
+      <span class="meta"><span class="tag">Tastatur &amp; Touch</span><span class="rec"></span></span>
     </a>
     <a class="card" href="/spiele/games/minesweeper.html" data-game="mines9" data-unit="s">
-      <div class="icon">💣</div>
+      <span class="icon">💣</span>
       <h3>Minesweeper</h3>
       <p>Alle Felder ohne Mine aufdecken. Zwei Größen, eigene Bestenliste je Größe.</p>
-      <div class="meta"><span class="tag">Maus & Touch</span><span class="rec"></span></div>
+      <span class="meta"><span class="tag">Maus &amp; Touch</span><span class="rec"></span></span>
     </a>
     <a class="card" href="/spiele/games/memory.html" data-game="memory" data-unit="Züge">
-      <div class="icon">🃏</div>
+      <span class="icon">🃏</span>
       <h3>Memory</h3>
       <p>Finde alle acht Paare mit so wenigen Zügen wie möglich.</p>
-      <div class="meta"><span class="tag">Maus & Touch</span><span class="rec"></span></div>
+      <span class="meta"><span class="tag">Maus &amp; Touch</span><span class="rec"></span></span>
     </a>
   </div>
 
-  <h2 class="section-title">Gegeneinander · lokal oder online</h2>
-  <div class="grid">
+  <h2 class="section-title">Zu zweit<span>am selben Gerät oder online</span></h2>
+  <div class="grid duel">
     <a class="card" href="/spiele/games/tictactoe.html">
-      <div class="icon">✕◯</div>
+      <span class="icon txt">✕◯</span>
       <h3>Tic-Tac-Toe</h3>
       <p>Der Klassiker: drei in einer Reihe. Schnelle Runden, Siege werden gezählt.</p>
-      <div class="meta"><span class="tag">2 Spieler</span><span class="tag">Online</span></div>
+      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span></span>
     </a>
     <a class="card" href="/spiele/games/connect4.html">
-      <div class="icon">🔴</div>
+      <span class="icon">🔴</span>
       <h3>Vier gewinnt</h3>
       <p>Steine einwerfen und vier in einer Reihe bilden – waagerecht, senkrecht oder diagonal.</p>
-      <div class="meta"><span class="tag">2 Spieler</span><span class="tag">Online</span></div>
+      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span></span>
     </a>
     <a class="card" href="/spiele/games/reversi.html">
-      <div class="icon">⚫</div>
+      <span class="icon">⚫</span>
       <h3>Reversi</h3>
       <p>Gegnerische Steine einschließen und umdrehen. Wer am Ende das Brett beherrscht, gewinnt.</p>
-      <div class="meta"><span class="tag">2 Spieler</span><span class="tag">Online</span></div>
+      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span></span>
     </a>
     <a class="card" href="/spiele/games/dots.html">
-      <div class="icon">▦</div>
+      <span class="icon">▦</span>
       <h3>Käsekästchen</h3>
       <p>Striche ziehen, Kästchen schließen, nochmal ziehen. Taktik pur aus dem Schulheft.</p>
-      <div class="meta"><span class="tag">2 Spieler</span><span class="tag">Online</span></div>
+      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span></span>
     </a>
   </div>
 </main>
@@ -98,7 +101,7 @@
     try {
       const r = await (await fetch('/api/spiele/wordle/board')).json();
       const top = r.board && r.board[0];
-      document.querySelector('#wordleCard .rec').textContent = top ? `🏆 heute ${top.attempts}/6 · ${top.name}` : `Rätsel #${r.number}`;
+      document.querySelector('#wordleCard .rec').textContent = top ? `#${r.number}, Bestwert heute: ${top.attempts}/6 von ${top.name}` : `#${r.number}`;
     } catch {}
   })();
   document.querySelectorAll('.card[data-game]').forEach(async (card) => {
@@ -106,7 +109,7 @@
       const list = await (await fetch('/api/spiele/scores/' + card.dataset.game)).json();
       if (list.length) {
         const top = list[0];
-        card.querySelector('.rec').textContent = `🏆 ${top.score} ${card.dataset.unit || 'Pkt'} · ${top.name}`;
+        card.querySelector('.rec').textContent = `🏆 ${top.score} ${card.dataset.unit || 'Pkt'}, ${top.name}`;
       }
     } catch {}
   });

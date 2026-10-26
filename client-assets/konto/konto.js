@@ -62,7 +62,7 @@ function loggedOutView() {
   }
   app.innerHTML = `
     <div class="vh-narrow">
-      <span class="vh-eyebrow">👤 Konto</span>
+      <div class="konto-pawns" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <h1 class="vh-h1">${tab === 'login' ? 'Anmelden' : 'Konto erstellen'}</h1>
       <div class="vh-tabs" role="tablist">
         <button role="tab" data-tab="login" aria-selected="${tab === 'login'}">Anmelden</button>
@@ -99,7 +99,7 @@ function shell(content) {
   if (can('users.manage')) tabs.push(['users', `Konten & Rechte${S.pendingCount ? ` (${S.pendingCount} neu)` : ''}`]);
   app.innerHTML = `
     <div class="konto-head">
-      <div><span class="vh-eyebrow">👤 Konto</span><h1 class="vh-h1">Hallo, ${esc(S.me.display_name)}!</h1></div>
+      <div class="konto-hello"><span class="avatar" aria-hidden="true">${esc((S.me.display_name || '?').trim().charAt(0).toUpperCase())}</span><h1 class="vh-h1">Hallo, ${esc(S.me.display_name)}!</h1></div>
       <button class="vh-btn vh-btn-small" data-action="logout">Abmelden</button>
     </div>
     ${tabs.length > 1 ? `<div class="vh-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${esc(l)}</button>`).join('')}</div>` : ''}

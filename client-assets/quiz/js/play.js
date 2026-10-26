@@ -11,8 +11,8 @@ function session() {
 
 function topline() {
   const s = P.state;
-  return `<div class="topline"><span>Raum <b>${esc(P.code)}</b>${s && s.index >= 0 && s.phase !== 'END' ? ` · Frage ${s.index + 1}/${s.total}` : ''}</span>
-    <span>${s && s.me ? `<b>${esc(s.me.name)}</b> · ${s.me.score} Pkt` : ''}${P.connected ? '' : ' · ⚠️ offline'}</span></div>`;
+  return `<div class="topline"><span>Raum <b>${esc(P.code)}</b>${s && s.index >= 0 && s.phase !== 'END' ? `, Frage ${s.index + 1} von ${s.total}` : ''}${P.connected ? '' : ' – ⚠️ offline'}</span>
+    ${s && s.me ? `<span class="score" title="${esc(s.me.name)}">${s.me.score} Pkt</span>` : ''}</div>`;
 }
 
 function joinForm(error = '') {
@@ -80,7 +80,7 @@ function render() {
         <h2>${none ? 'Keine Antwort' : r.wasCorrect ? `Richtig! +${r.gain}` : 'Leider falsch'}</h2>
         ${!r.wasCorrect ? `<p>Richtig war: <strong>${ANSWER_STYLE[r.correct].shape} ${esc(s.question.answers[r.correct])}</strong></p>` : ''}
       </div>
-      <p class="qz-score">Du hast <b>${s.me.score}</b> Punkte und bist auf <b>Platz ${s.me.rank}</b> von ${s.playerCount}.</p>
+      <p class="qz-score">Du hast <b data-count="${s.me.score}" data-from="${s.me.score - (r.gain || 0)}">${s.me.score}</b> Punkte und bist auf <b>Platz ${s.me.rank}</b> von ${s.playerCount}.</p>
       <p class="vh-hint">Gleich kommt die nächste Frage …</p></div>`;
   } else if (s.phase === 'END') {
     const medal = ['🥇', '🥈', '🥉'][s.me.rank - 1] || '🎉';
@@ -92,12 +92,21 @@ function render() {
       <a class="vh-btn" href="/quiz/">Fertig</a></div>`;
   }
   app.innerHTML = topline() + body;
+  // Punkte hochzählen und Sieg feiern – nur beim ersten Anzeigen dieser Phase
+  const key = `${s.phase}:${s.index}`;
+  if (key !== P.animatedKey) {
+    P.animatedKey = key;
+    const c = app.querySelector('[data-count]');
+    if (c && window.VH) VH.countUp(c, Number(c.dataset.count), 900);
+    if (s.phase === 'END' && s.me.rank === 1 && window.VH) VH.confetti();
+  }
 
   if (s.phase === 'QUESTION') {
     const total = s.question.seconds * 1000;
     const upd = () => {
       const bar = document.getElementById('bar');
-      if (bar) bar.style.width = `${(clockSync.remaining(s.endsAt) / total) * 100}%`;
+      const left = clockSync.remaining(s.endsAt);
+      if (bar) { bar.style.width = `${(left / total) * 100}%`; bar.classList.toggle('low', left <= 5000); }
     };
     upd();
     P.tick = setInterval(upd, 250);

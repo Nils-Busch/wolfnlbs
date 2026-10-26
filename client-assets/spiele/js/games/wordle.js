@@ -240,6 +240,7 @@
       if (res.status !== 'playing') {
         recordStats(res);
         setTimeout(renderStats, 600);
+        if (res.status === 'won' && window.VH) setTimeout(() => VH.confetti(), 900);
         if (res.mode === 'daily') loadBoard();
       }
     } catch (e) {

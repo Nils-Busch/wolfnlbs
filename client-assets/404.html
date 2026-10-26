@@ -10,11 +10,29 @@
 <header class="vh-header">
   <a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a>
 </header>
-<main style="max-width:560px;margin:3rem auto;padding:0 1.25rem;text-align:center;">
-  <span class="vh-stamp">404</span>
-  <h1 class="vh-h1">Hier hängt kein Zettel.</h1>
+<main class="nf">
+  <div class="nf-die" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <h1 class="vh-h1">Daneben gewürfelt.</h1>
   <p>Diese Seite gibt es nicht (mehr). Vielleicht ist der Link abgelaufen.</p>
   <p><a class="vh-btn vh-btn-accent" href="/">Zurück zum Vereinsheim</a></p>
 </main>
+<style>
+  .nf { max-width: 560px; margin: clamp(2.5rem, 8vw, 5rem) auto; padding: 0 1.25rem; text-align: center; }
+  .nf .vh-h1 { margin-top: 1.5rem; }
+  .nf-die {
+    width: 84px; height: 84px; margin: 0 auto; padding: 14px; border-radius: 22px; background: #fff;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 4px 22px;
+    box-shadow: 0 6px 0 #c9cfdb, 0 14px 24px -10px rgba(0,0,0,.35);
+    animation: nf-roll 1.1s cubic-bezier(.3,.7,.4,1) both;
+  }
+  .nf-die i { border-radius: 50%; background: var(--vh-red); aspect-ratio: 1; width: 100%; align-self: center; }
+  @keyframes nf-roll {
+    0% { transform: translate(-120px, -60px) rotate(-540deg); opacity: 0; }
+    60% { transform: translate(8px, 0) rotate(12deg); opacity: 1; }
+    80% { transform: translate(-3px, -6px) rotate(-4deg); }
+    100% { transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .nf-die { animation: none; } }
+</style>
 </body>
 </html>

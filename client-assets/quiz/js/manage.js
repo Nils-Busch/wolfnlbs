@@ -21,9 +21,9 @@ async function loadMe() {
 /* ---------- Startseite ---------- */
 function joinCard() {
   const last = store.get('quiz-play');
-  return `<form class="vh-card pinned qz-join" data-form="join">
-    <h2>📱 Mitspielen</h2>
-    <p class="vh-hint" style="margin:0">Code vom Bildschirm eingeben – ein Konto brauchst du dafür nicht.</p>
+  return `<form class="qz-join" data-form="join">
+    <h2>Mitspielen</h2>
+    <p class="vh-hint">Code vom Bildschirm eingeben – ein Konto brauchst du dafür nicht.</p>
     <label class="vh-field">Raum-Code<input name="code" class="qz-code-input" maxlength="4" autocomplete="off" autocapitalize="characters" required placeholder="ABCD"></label>
     <label class="vh-field">Dein Name<input name="name" maxlength="16" required value="${esc(last?.name || '')}" placeholder="z. B. Nils"></label>
     <button class="vh-btn vh-btn-accent">Beitreten</button>
@@ -33,27 +33,27 @@ function joinCard() {
 
 function hostCard() {
   if (!M.me) {
-    return `<div class="vh-card taped">
-      <h2>📺 Quiz leiten</h2>
+    return `<div class="vh-card qz-host">
+      <h2>Quiz leiten</h2>
       <p>Zum Starten und Erstellen von Quizzen brauchst du ein Konto. Die Fragen erscheinen dann auf einem großen Bildschirm,
       alle anderen antworten mit dem Handy.</p>
       <div class="vh-row"><a class="vh-btn vh-btn-accent" href="/konto/?next=/quiz/">Anmelden</a>
       <a class="vh-btn" href="/konto/#register">Konto erstellen</a></div>
     </div>`;
   }
-  return `<div class="vh-card taped">
-    <h2>📺 Quiz leiten</h2>
-    <p>Such dir unten ein Quiz aus und klick auf <strong>▶ Starten</strong>. Diese Seite wird dann zum Bildschirm für alle –
+  return `<div class="vh-card qz-host">
+    <h2>Quiz leiten</h2>
+    <p>Such dir unten ein Quiz aus und klick auf <strong>Starten</strong>. Diese Seite wird dann zum Bildschirm für alle –
       am besten auf einem Fernseher oder Beamer öffnen.</p>
-    ${M.canCreate ? '<a class="vh-btn vh-btn-accent" href="#new">＋ Neues Quiz erstellen</a>' : '<p class="vh-hint">Eigene Quizze erstellen darfst du noch nicht – frag den Admin, ob er dir das Recht gibt.</p>'}
+    ${M.canCreate ? '<a class="vh-btn vh-btn-accent" href="#new" style="align-self:flex-start">＋ Neues Quiz erstellen</a>' : '<p class="vh-hint">Eigene Quizze erstellen darfst du noch nicht – frag den Admin, ob er dir das Recht gibt.</p>'}
   </div>`;
 }
 
 function quizItem(q) {
-  return `<article class="vh-card qz-item">
-    <h3>${esc(q.title)}</h3>
-    <div class="meta">${q.question_count} Frage${q.question_count === 1 ? '' : 'n'} · ${q.mine ? 'von dir' : 'von ' + esc(q.owner_name)}
-      ${q.shared ? ' · <span class="vh-pill">für alle</span>' : ' · <span class="vh-pill">privat</span>'}</div>
+  return `<li class="qz-item">
+    <span class="count" title="${q.question_count} Fragen">${q.question_count}<small>Fragen</small></span>
+    <div><h3>${esc(q.title)}</h3>
+      <div class="meta"><span>${q.mine ? 'von dir' : 'von ' + esc(q.owner_name)}</span><span class="vh-pill">${q.shared ? 'für alle' : 'privat'}</span></div></div>
     ${q.description ? `<p class="desc">${esc(q.description)}</p>` : ''}
     <div class="actions">
       <button class="vh-btn vh-btn-accent vh-btn-small" data-action="start" data-id="${q.id}" ${q.question_count ? '' : 'disabled title="Noch keine Fragen"'}>▶ Starten</button>
@@ -61,7 +61,7 @@ function quizItem(q) {
       ${M.canCreate && !q.mine ? `<button class="vh-btn vh-btn-small" data-action="copy" data-id="${q.id}">Kopieren</button>` : ''}
       ${q.can_edit ? `<button class="vh-btn vh-btn-small vh-btn-danger" data-action="delete" data-id="${q.id}">Löschen</button>` : ''}
     </div>
-  </article>`;
+  </li>`;
 }
 
 async function homeView() {
@@ -73,9 +73,10 @@ async function homeView() {
   }
   const list = (M.list || []).filter((q) => M.filter === 'all' || (M.filter === 'mine' ? q.mine : !q.mine));
   app.innerHTML = `
-    <span class="vh-eyebrow">❓ Quizabend</span>
-    <h1 class="vh-h1">Party-Quiz</h1>
-    <p class="vh-hint" style="max-width:60ch">Fragen auf dem Fernseher, Antworten am Handy. Wer schneller richtig liegt, bekommt mehr Punkte.</p>
+    <div class="qz-top"><div>
+      <h1 class="vh-h1">Party-Quiz</h1>
+      <p>Fragen auf dem Fernseher, Antworten am Handy. Wer schneller richtig liegt, bekommt mehr Punkte.</p>
+    </div></div>
     <div class="qz-hero">${joinCard()}${hostCard()}</div>
     ${
       M.me
@@ -83,7 +84,7 @@ async function homeView() {
             <div class="qz-filter vh-tabs" style="margin:0">
               ${[['all', 'Alle'], ['mine', 'Meine'], ['others', 'Von anderen']].map(([k, l]) => `<button data-filter="${k}" aria-selected="${M.filter === k}">${l}</button>`).join('')}
             </div></div>
-          ${list.length ? `<div class="qz-list">${list.map(quizItem).join('')}</div>` : `<p class="vh-hint">${M.filter === 'mine' || !M.list.length ? 'Noch keine Quizze. ' + (M.canCreate ? '<a href="#new">Leg das erste an!</a>' : '') : 'Hier ist nichts.'}</p>`}`
+          ${list.length ? `<ul class="qz-list">${list.map(quizItem).join('')}</ul>` : `<div class="qz-list qz-empty">${M.filter === 'mine' || !M.list.length ? 'Noch keine Quizze. ' + (M.canCreate ? '<a class="vh-link" href="#new">Leg das erste an.</a>' : '') : 'In dieser Auswahl gibt es keine Quizze.'}</div>`}`
         : ''
     }`;
 }
@@ -123,7 +124,7 @@ function renderEditor() {
       ${d.questions.map((q, i) => questionCard(q, i, d.questions.length)).join('')}
       <button type="button" class="vh-btn qz-add" data-action="add">＋ Frage hinzufügen</button>
       <div class="qz-savebar">
-        <span class="state">${d.questions.length} Frage${d.questions.length === 1 ? '' : 'n'}${M.dirty ? ' · ungespeicherte Änderungen' : ''}</span>
+        <span class="state${M.dirty ? ' dirty' : ''}">${d.questions.length} Frage${d.questions.length === 1 ? '' : 'n'}${M.dirty ? ', nicht gespeichert' : ''}</span>
         <button type="button" class="vh-btn" data-action="back">Abbrechen</button>
         <button class="vh-btn vh-btn-accent" ${M.saving ? 'disabled' : ''}>💾 Speichern</button>
       </div>
@@ -132,7 +133,7 @@ function renderEditor() {
 
 function questionCard(q, i, total) {
   return `<section class="vh-card qz-q" data-q="${i}">
-    <div class="qhead"><span class="num">Frage ${i + 1}</span>
+    <div class="qhead"><span class="num">${i + 1}</span><span class="label">Frage ${i + 1} von ${total}</span>
       <span class="tools">
         <button type="button" data-action="up" data-q="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
         <button type="button" data-action="down" data-q="${i}" ${i === total - 1 ? 'disabled' : ''} title="Nach unten">↓</button>
@@ -178,7 +179,7 @@ app.addEventListener('input', (e) => {
   if (!M.dirty) {
     M.dirty = true;
     const st = app.querySelector('.qz-savebar .state');
-    if (st) st.textContent += ' · ungespeicherte Änderungen';
+    if (st) { st.textContent += ', nicht gespeichert'; st.classList.add('dirty'); }
   }
 });
 app.addEventListener('change', (e) => {

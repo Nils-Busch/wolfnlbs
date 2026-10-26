@@ -39,7 +39,7 @@ function answerTiles(q, reveal, answered) {
       const cnt = reveal ? reveal.counts[i] || 0 : null;
       return `<div class="qs-ans ${st.cls} ${cls}">
         <span class="shape">${st.shape}</span><span class="txt">${esc(a)}</span>
-        ${reveal ? `<span class="cnt">${cnt}</span><span class="bar" style="width:${total ? (cnt / total) * 100 : 0}%"></span>` : ''}
+        ${reveal ? `<span class="cnt">${cnt}</span><span class="bar" style="--w:${total ? (cnt / total) * 100 : 0}%"></span>` : ''}
       </div>`;
     })
     .join('')}</div>`;
@@ -68,10 +68,9 @@ function render() {
     app.innerHTML = `${bar()}
       <main class="qs-main"><div class="qs-lobby">
         <div class="join">
-          <span class="vh-eyebrow">Mach mit!</span>
           <h1>Handy raus und mitspielen</h1>
           <div class="url">Geh auf <b>${esc(prettyUrl())}</b> und gib diesen Code ein:</div>
-          <div class="bigcode">${esc(Q.code)}</div>
+          <div class="bigcode" aria-label="Code ${esc(Q.code)}">${[...Q.code].map((ch) => `<span>${esc(ch)}</span>`).join('')}</div>
         </div>
         <div class="qs-qr">${qrSvg(joinUrl())}<p>oder einfach scannen</p></div>
         <div class="qs-players">${
@@ -89,11 +88,12 @@ function render() {
     const q = s.question;
     app.innerHTML = `${bar()}
       <main class="qs-main"><div class="qs-question">
-        <div class="qs-qhead"><span class="n">Frage ${s.index + 1}/${s.total}</span>
+        <div class="qs-qhead"><span class="n" title="Frage ${s.index + 1} von ${s.total}">${s.index + 1}/${s.total}</span>
           <h1 class="qs-qtext">${esc(q.text)}</h1>
           <div class="qs-clock"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" id="ring" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><span class="t" id="secs"></span></div>
         </div>
-        <div class="qs-progress">${s.answered} von ${s.players.filter((p) => p.connected).length} haben geantwortet</div>
+        <div class="qs-progress"><span class="dots" aria-hidden="true">${(() => { const n = s.players.filter((p) => p.connected).length; return Array.from({ length: Math.min(n, 40) }, (_, i) => `<i class="${i < s.answered ? 'on' : ''}"></i>`).join(''); })()}</span>
+          ${s.answered} von ${s.players.filter((p) => p.connected).length} haben geantwortet</div>
         ${answerTiles(q, null)}
       </div></main>
       ${foot(`<button class="vh-btn" data-action="next">Auflösen</button>`, 'Löst automatisch auf, wenn alle geantwortet haben oder die Zeit um ist.')}`;
@@ -104,6 +104,8 @@ function render() {
       const secs = document.getElementById('secs');
       if (ring) ring.setAttribute('stroke-dashoffset', String(276.5 * (1 - left / total)));
       if (secs) secs.textContent = Math.ceil(left / 1000);
+      const clockEl = document.querySelector('.qs-clock');
+      if (clockEl) clockEl.classList.toggle('low', left > 0 && left <= 5000);
     };
     upd();
     Q.tick = setInterval(upd, 200);
@@ -115,7 +117,7 @@ function render() {
     const last = s.index + 1 >= s.total;
     app.innerHTML = `${bar()}
       <main class="qs-main"><div class="qs-question">
-        <div class="qs-qhead"><span class="n">Frage ${s.index + 1}/${s.total}</span><h1 class="qs-qtext">${esc(q.text)}</h1></div>
+        <div class="qs-qhead"><span class="n" title="Frage ${s.index + 1} von ${s.total}">${s.index + 1}/${s.total}</span><h1 class="qs-qtext">${esc(q.text)}</h1></div>
         <div></div>
         <div class="qs-reveal">
           ${answerTiles(q, s.reveal)}
@@ -135,17 +137,23 @@ function render() {
       const ps = top(r);
       if (!ps.length) return `<div class="col ${cls}"></div>`;
       return `<div class="col ${cls}"><span class="nm">${ps.map((p) => esc(p.name)).join(' & ')}</span><span class="pts">${ps[0].score} Punkte</span>
-        <div class="block">${['🥇', '🥈', '🥉'][r - 1]}</div></div>`;
+        <div class="block">${r}</div></div>`;
     };
     const rest = f.filter((p) => p.rank > 3);
     app.innerHTML = `${bar()}
       <main class="qs-main"><div class="qs-end">
-        <span class="vh-eyebrow">Geschafft!</span>
         <h1>Das Siegertreppchen</h1>
         <div class="qs-podium">${col(2, 'p2')}${col(1, 'p1')}${col(3, 'p3')}</div>
         ${rest.length ? `<div class="qs-rest">${rest.map((p) => `<span>${p.rank}. ${esc(p.name)} (${p.score})</span>`).join('')}</div>` : ''}
       </div></main>
       ${foot(`<button class="vh-btn" data-action="restart">↻ Nochmal spielen</button><a class="vh-btn vh-btn-accent" href="/quiz/">Fertig</a>`)}`;
+    // Konfetti genau einmal, wenn Platz 1 auf dem Treppchen landet
+    if (!Q.celebrated && window.VH) {
+      Q.celebrated = true;
+      setTimeout(() => VH.confetti({ count: 140 }), VH.reduced() ? 0 : 2300);
+    }
+  } else {
+    Q.celebrated = false;
   }
 }
 

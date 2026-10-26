@@ -23,3 +23,29 @@
 .state-pill.on { color: #2f5d2a; } .state-pill.off { color: #9b1c1c; }
 .success-box { text-align: center; }
 .success-box .big { font-size: 2.5rem; }
+
+/* ---------- Neuer Look ---------- */
+.konto-pawns { display: flex; gap: .45rem; margin-bottom: 1rem; }
+.konto-pawns i { width: 1rem; height: 1rem; border-radius: 50%; background: var(--vh-red); animation: vh-drop-in .5s var(--vh-ease-out) both; }
+.konto-pawns i:nth-child(2) { background: var(--vh-blue); animation-delay: .08s; }
+.konto-pawns i:nth-child(3) { background: var(--vh-green); animation-delay: .16s; }
+.konto-pawns i:nth-child(4) { background: var(--vh-yellow); animation-delay: .24s; }
+.konto-hello { display: flex; align-items: center; gap: .9rem; }
+.konto-hello .avatar {
+  width: 3.2rem; height: 3.2rem; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: var(--vh-table); color: #fff; font: 800 1.4rem var(--vh-display);
+  box-shadow: 0 0 0 4px var(--vh-board), 0 0 0 6px var(--vh-yellow);
+  animation: vh-pop .5s var(--vh-ease-hop) both;
+}
+.konto-head { margin-bottom: 1.5rem; }
+.rights li b { color: var(--vh-ink-soft); }
+.links .vh-btn { justify-content: flex-start; }
+.pending { border-color: transparent; box-shadow: inset 6px 0 0 var(--vh-yellow), 0 1px 0 var(--vh-line); }
+.pending-item { animation: vh-rise .35s var(--vh-ease-out) both; }
+.user-row details[open] summary { margin-bottom: .2rem; }
+.user-row details[open] .edit { animation: vh-rise .25s var(--vh-ease-out); }
+.user-row details summary { color: var(--vh-blue-deep); list-style: none; display: inline-flex; align-items: center; gap: .35rem; }
+.user-row details summary::before { content: "▸"; transition: transform .2s; }
+.user-row details[open] summary::before { transform: rotate(90deg); }
+.perm-grid .area { text-transform: none; letter-spacing: 0; font-size: .82rem; }
+.success-box .big { font-size: 3rem; animation: vh-pop .5s var(--vh-ease-hop) both; }

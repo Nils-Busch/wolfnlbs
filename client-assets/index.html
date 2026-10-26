@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vereinsheim</title>
 <meta name="description" content="Selbstgebaute Spiele für den Abend: Was für Wölfe, Party-Quiz, die Spielegalerie und Turniere.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📌</text></svg>">
+<meta name="theme-color" content="#172036">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
 <link rel="stylesheet" href="/hub.css">
 </head>
-<body class="vh-body">
-<div class="hub-wash"></div>
+<body class="vh-body hub-body">
 
-<header class="vh-header hub-header">
+<header class="vh-header">
   <a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a>
   <nav>
     <a href="/woelfe/">Was für Wölfe</a>
@@ -22,40 +22,59 @@
   </nav>
 </header>
 
-<main class="hub-main">
-  <span class="vh-eyebrow">📌 schwarzes Brett</span>
-  <h1 class="vh-h1">Was spielen wir heute?</h1>
-  <p class="hub-sub">Selbstgebaute Spiele für Handy, Couch und Vereinsabend. Einfach aussuchen.</p>
-
-  <div class="hub-grid">
-    <a class="hub-option" data-accent="woelfe" href="/woelfe/">
-      <span class="vh-stamp">🐺 Nachtwache</span>
-      <h2>Was für Wölfe</h2>
-      <p>Werwolf-Partyrunde: jeder mit eigenem Handy, geheime Rollen, Wolfsgeflüster in der Nacht.</p>
-      <span class="hub-go">Raum eröffnen →</span>
-    </a>
-    <a class="hub-option" data-accent="quiz" href="/quiz/">
-      <span class="vh-stamp">❓ Quizabend</span>
-      <h2>Party-Quiz</h2>
-      <p>Fragen auf dem Fernseher, Antworten am Handy – wer schneller richtig liegt, holt mehr Punkte.</p>
-      <span class="hub-go">Mitspielen →</span>
-    </a>
-    <a class="hub-option" data-accent="spiele" href="/spiele/">
-      <span class="vh-stamp">🎮 Dauerbrenner</span>
-      <h2>Spielegalerie</h2>
-      <p>Solo auf Rekordjagd oder im Duell gegen jemand anderen – lokal oder per Raumcode.</p>
-      <span class="hub-go">Reingucken →</span>
-    </a>
-    <a class="hub-option" data-accent="tischtennis" href="/tischtennis/">
-      <span class="vh-stamp">🏆 Turniertag</span>
-      <h2>Turniere</h2>
-      <p>Tischtennis oder Fußball: Gruppen, K.-o.-Baum oder Jeder-gegen-Jeden – mit Live-Tabelle für alle Zuschauer.</p>
-      <span class="hub-go">Turniere ansehen →</span>
-    </a>
+<main class="hub">
+  <div class="hub-intro">
+    <h1 class="hub-title">Was spielen wir heute?</h1>
+    <p class="hub-sub">Vier Spiele für Handy, Fernseher und Vereinsabend. Such dir eins aus – oder lass den Würfel entscheiden.</p>
   </div>
+
+  <section class="board" aria-label="Spiele">
+      <a class="home home-red" href="/woelfe/" data-area="woelfe">
+        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
+        <span class="home-text">
+          <h2>Was für Wölfe</h2>
+          <p>Werwolf für die ganze Runde: geheime Rollen auf jedem Handy, Wolfsgeflüster in der Nacht.</p>
+          <span class="go">Raum eröffnen</span>
+        </span>
+      </a>
+    <div class="track track-top" aria-hidden="true"></div>
+      <a class="home home-blue" href="/quiz/" data-area="quiz">
+        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
+        <span class="home-text">
+          <h2>Party-Quiz</h2>
+          <p>Fragen auf dem Fernseher, Antworten am Handy. Wer schneller richtig liegt, holt mehr Punkte.</p>
+          <span class="go">Mitspielen</span>
+        </span>
+      </a>
+    <div class="track track-left" aria-hidden="true"></div>
+    <div class="goal">
+      <button class="die" type="button" aria-label="Würfeln – der Würfel sucht ein Spiel aus" data-face="5">
+        <span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span>
+      </button>
+      <p class="die-msg" aria-live="polite">Würfeln!</p>
+    </div>
+    <div class="track track-right" aria-hidden="true"></div>
+      <a class="home home-green" href="/spiele/" data-area="spiele">
+        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
+        <span class="home-text">
+          <h2>Spielegalerie</h2>
+          <p>Snake, Wordle, 2048 und Co. – allein auf Rekordjagd oder im Duell per Raumcode.</p>
+          <span class="go">Reinschauen</span>
+        </span>
+      </a>
+    <div class="track track-bottom" aria-hidden="true"></div>
+      <a class="home home-yellow" href="/tischtennis/" data-area="turnier">
+        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
+        <span class="home-text">
+          <h2>Turniere</h2>
+          <p>Tischtennis oder Fußball: Gruppen, K.-o.-Baum und eine Liveansicht für die Halle.</p>
+          <span class="go">Turniere ansehen</span>
+        </span>
+      </a>
+  </section>
 </main>
 
-<footer class="vh-footer">Selbstgebaut, nicht aus der Fabrik. Läuft auf Cloudflare.</footer>
+<footer class="vh-footer">Selbstgebaut fürs Vereinsheim. Läuft auf Cloudflare.</footer>
 
 <script src="/hub.js"></script>
 <script src="/shared/account-link.js"></script>
