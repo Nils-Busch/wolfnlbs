@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Städteraten · Tagesrätsel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📍</text></svg>">
+<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="stylesheet" href="/raetsel/raetsel.css">
+</head>
+<body class="rt">
+<header class="top"><a href="/raetsel/" class="back">← Tagesrätsel</a><h1>📍 Städteraten <span class="rt-num" id="stNum"></span></h1></header>
+<main class="solo st">
+  <div class="st-main">
+    <div class="st-modes">
+      <div class="levels" id="modes" role="tablist">
+        <button data-mode="daily" role="tab">Tageskarte</button>
+        <button data-mode="free" role="tab">Freies Spiel</button>
+        <button data-mode="cpu" role="tab">Gegen Computer</button>
+      </div>
+      <div class="vs-levels" id="cpuLevels" hidden role="group" aria-label="Stärke des Computers">
+        <button type="button" data-level="easy">Leicht</button>
+        <button type="button" data-level="medium">Mittel</button>
+        <button type="button" data-level="hard">Schwer</button>
+      </div>
+    </div>
+    <div class="st-card">
+      <div class="st-prompt" id="prompt" aria-live="polite"></div>
+      <div class="st-scores">
+        <span class="st-dots" id="dots"></span>
+        <span class="st-score">Du <b id="stScore">0</b></span>
+        <span class="st-score cpu" id="stCpu" hidden>Computer <b id="stCpuScore">0</b></span>
+      </div>
+    </div>
+    <div class="st-map" id="map"></div>
+    <div class="st-under">
+      <div id="stResult" class="st-result"></div>
+      <div id="stActions" class="st-actions"></div>
+    </div>
+  </div>
+  <aside class="st-side" id="side"></aside>
+</main>
+<p class="rt-credit">Karte: Natural Earth (gemeinfrei). Städte: <a href="https://www.geonames.org/">GeoNames</a>, CC BY 4.0.</p>
+<script src="/shared/motion.js"></script>
+<script src="/raetsel/js/daily.js"></script>
+<script src="/raetsel/js/staedte-data.js"></script>
+<script src="/raetsel/js/staedte.js"></script>
+</body>
+</html>

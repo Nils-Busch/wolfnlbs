@@ -6,6 +6,23 @@ import { games as DUEL_GAMES } from "./rules.js";
 
 // 'desc' = mehr ist besser, 'asc' = weniger ist besser (z.B. Züge bei Memory).
 const SCORE_ORDER = { snake: "desc", "2048": "desc", memory: "asc", blockfall: "desc", mines9: "asc", mines16: "asc" };
+// Tagesrätsel: eine Bestenliste pro Tag, z. B. "staedte20261026" (Punkte) oder "nono20261026" (Sekunden).
+const DAILY_ORDER = { staedte: "desc", nono: "asc" };
+const DAILY_MAX = { staedte: 5000, nono: 24 * 3600 };
+
+function scoreOrder(game) {
+  if (Object.hasOwn(SCORE_ORDER, game)) return SCORE_ORDER[game];
+  const m = game.match(/^([a-z]+)(\d{8})$/);
+  if (!m || !Object.hasOwn(DAILY_ORDER, m[1])) return null;
+  // nur heute und gestern (Zeitzone egal) annehmen
+  const today = new Date();
+  const ok = [0, 1, -1].some((d) => new Date(today.getTime() - d * 86400000).toISOString().slice(0, 10).replaceAll("-", "") === m[2]);
+  return ok ? DAILY_ORDER[m[1]] : null;
+}
+function scoreMax(game) {
+  const m = game.match(/^([a-z]+)\d{8}$/);
+  return m && DAILY_MAX[m[1]] ? DAILY_MAX[m[1]] : 10_000_000;
+}
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // ohne 0/O/1/I
 
 function json(data, status = 200) {
@@ -92,7 +109,8 @@ export async function handleSpiele(request, env, path) {
   const scoreMatch = path.match(/^\/scores\/([a-z0-9]+)$/);
   if (scoreMatch) {
     const game = scoreMatch[1];
-    if (!Object.hasOwn(SCORE_ORDER, game)) return json({ error: "Unbekanntes Spiel" }, 404);
+    const order = scoreOrder(game);
+    if (!order) return json({ error: "Unbekanntes Spiel" }, 404);
     const lb = leaderboardStub(env);
 
     if (request.method === "GET") return json(await lb.list(game));
@@ -107,8 +125,8 @@ export async function handleSpiele(request, env, path) {
       const name = String(body?.name || "").trim().slice(0, 16);
       const score = Number(body?.score);
       if (!name) return json({ error: "Name fehlt" }, 400);
-      if (!Number.isInteger(score) || score < 0 || score > 10_000_000) return json({ error: "Ungültige Punktzahl" }, 400);
-      const list = await lb.add(game, name, score, SCORE_ORDER[game]);
+      if (!Number.isInteger(score) || score < 0 || score > scoreMax(game)) return json({ error: "Ungültige Punktzahl" }, 400);
+      const list = await lb.add(game, name, score, order);
       return json(list);
     }
     return json({ error: "Methode nicht erlaubt" }, 405);

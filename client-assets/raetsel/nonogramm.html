@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nonogramm · Tagesrätsel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>▦</text></svg>">
+<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="stylesheet" href="/raetsel/raetsel.css">
+</head>
+<body class="rt">
+<header class="top"><a href="/raetsel/" class="back">← Tagesrätsel</a><h1>▦ Nonogramm <span class="rt-num" id="nnNum"></span></h1></header>
+<main class="solo nn">
+  <div class="nn-main">
+    <div class="st-modes">
+      <div class="levels" id="nnModes" role="tablist">
+        <button data-mode="daily" role="tab">Tagesrätsel</button>
+        <button data-mode="free" role="tab">Freies Spiel</button>
+      </div>
+      <div class="vs-levels" id="nnSizes" hidden role="group" aria-label="Größe">
+        <button type="button" data-size="5">5 × 5</button>
+        <button type="button" data-size="10">10 × 10</button>
+        <button type="button" data-size="15">15 × 15</button>
+      </div>
+    </div>
+    <div class="nn-bar">
+      <div class="vs-levels nn-tools" id="nnTools" role="group" aria-label="Werkzeug">
+        <button type="button" data-tool="fill" class="on">■ Füllen</button>
+        <button type="button" data-tool="x">✕ Markieren</button>
+      </div>
+      <span class="nn-time">⏱ <b id="nnTime">0:00</b></span>
+      <button class="ghost" id="nnReset">Leeren</button>
+    </div>
+    <div class="nn-wrap"><div class="nn-board" id="nnBoard"></div></div>
+    <p class="nn-done" id="nnDone" hidden></p>
+    <p class="hint">Die Zahlen sagen, wie viele Felder am Stück gefüllt sind – in dieser Reihenfolge, mit mindestens einem Leerfeld dazwischen. Ziehen füllt mehrere Felder, Rechtsklick oder „Markieren“ setzt ein ✕ für sichere Leerfelder.</p>
+  </div>
+  <aside class="st-side" id="side"></aside>
+</main>
+<script src="/shared/motion.js"></script>
+<script src="/raetsel/js/daily.js"></script>
+<script src="/raetsel/js/nonogramm.js"></script>
+</body>
+</html>

@@ -203,5 +203,41 @@ const dots = {
   },
 };
 
-export const games = { tictactoe, connect4, reversi, dots };
+
+/* ---------------- Gomoku (Fünf in einer Reihe) ---------------- */
+// 15 × 15 Felder, fünf oder mehr eigene Steine in einer Reihe gewinnen.
+const GN = 15;
+
+const gomoku = {
+  SIZE: GN,
+  init(starter = 0) {
+    return base(Array(GN * GN).fill(null), starter);
+  },
+  move(s, player, mv) {
+    if (s.winner !== null || s.draw || player !== s.turn) return null;
+    const cell = mv && mv.cell;
+    if (!Number.isInteger(cell) || cell < 0 || cell >= GN * GN || s.board[cell] !== null) return null;
+    const board = s.board.slice();
+    board[cell] = player;
+    const n = base(board, 1 - player);
+    n.last = cell;
+    const row = Math.floor(cell / GN), col = cell % GN;
+    for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
+      const line = [cell];
+      for (const sgn of [1, -1]) {
+        let r = row + dr * sgn, c = col + dc * sgn;
+        while (r >= 0 && r < GN && c >= 0 && c < GN && board[r * GN + c] === player) {
+          line.push(r * GN + c);
+          r += dr * sgn;
+          c += dc * sgn;
+        }
+      }
+      if (line.length >= 5) { n.winner = player; n.line = line; break; }
+    }
+    if (n.winner === null && board.every((v) => v !== null)) n.draw = true;
+    return n;
+  },
+};
+
+export const games = { tictactoe, connect4, reversi, dots, gomoku };
 export const isOver = (s) => !!s && (s.winner !== null || s.draw);

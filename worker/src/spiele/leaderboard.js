@@ -15,6 +15,16 @@ export class Leaderboard extends DurableObject {
     });
   }
 
+  // Tages-Bestenlisten (z. B. "staedte20261026") nur 14 Tage aufheben,
+  // damit der gespeicherte Wert klein bleibt.
+  pruneDaily() {
+    const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10).replaceAll("-", "");
+    for (const key of Object.keys(this.scores)) {
+      const m = key.match(/^[a-z]+(\d{8})$/);
+      if (m && m[1] < cutoff) delete this.scores[key];
+    }
+  }
+
   async list(game) {
     return this.scores[game] || [];
   }
@@ -25,6 +35,7 @@ export class Leaderboard extends DurableObject {
     const dir = order === "asc" ? 1 : -1;
     list.sort((a, b) => dir * (a.score - b.score) || a.date.localeCompare(b.date));
     this.scores[game] = list.slice(0, MAX_SCORES);
+    this.pruneDaily();
     await this.ctx.storage.put("scores", this.scores);
     return this.scores[game];
   }

@@ -4,7 +4,8 @@ Eine gemeinsame Seite für die Party- und Vereins-Apps:
 
 - **🐺 Was für Wölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy
 - **❓ Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
-- **🎮 Spielegalerie** – kleine Spiele für zwischendurch (Solo-Highscores, Duelle zu zweit, **Wordle** mit Tagesrätsel)
+- **🎮 Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores, **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**)
+- **🧩 Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten** und **Nonogramm** mit Tagesbestenliste
 - **🏆 Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, Besucheransicht mit **QR-Code**, **Liveansicht für den Bildschirm**
 - **👤 Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
 
@@ -19,7 +20,8 @@ client-assets/          Alles, was der Browser direkt lädt (HTML/CSS/JS)
   index.html, hub.css/js   Die Startseite
   konto/                   Anmelden, Registrieren, Freischalten & Rechte
   quiz/                    Quiz-Übersicht + Editor, Bildschirm (screen), Handy (play)
-  spiele/                  Spielegalerie (inkl. games/wordle.html)
+  spiele/                  Spielegalerie (inkl. games/wordle.html), js/ai.js = Computergegner
+  raetsel/                 Tagesrätsel: Übersicht, Städteraten, Nonogramm
   tischtennis/             Turniere (Tischtennis + Fußball): Besucheransicht, Turnierleitung, Liveansicht
   woelfe/                  Gebaute Werwolf-Oberfläche (entsteht automatisch beim Deploy)
 clients/woelfe-src/     Quellcode der Werwolf-Oberfläche (React), wird vorm Deploy gebaut
@@ -77,9 +79,31 @@ Die richtige Antwort wird erst bei der Auflösung an die Handys geschickt. Der
 Bildschirm lässt sich nur in dem Browser steuern, in dem das Quiz gestartet wurde.
 Wer sein Handy neu lädt, landet wieder auf seinem Platz.
 
+## Spielegalerie: Computergegner, Mäxchen, Gomoku
+
+- **Gegen den Computer** (Tic-Tac-Toe, Vier gewinnt, Reversi, Käsekästchen, Gomoku) in
+  drei Stufen: Leicht, Mittel, Schwer. Läuft komplett im Browser (`client-assets/spiele/js/ai.js`).
+- **Mäxchen**: 2–6 Plätze an einem Handy, Menschen und Computer gemischt. Würfel heimlich
+  unter dem Becher anschauen, ansagen, bluffen; wer auffliegt, verliert einen Deckel.
+- **Gomoku**: fünf in einer Reihe auf 15 × 15, auch online per Raumcode.
+
+## Tagesrätsel
+
+Unter `/raetsel/`: Wordle, Städteraten und Nonogramm, für alle am selben Tag gleich
+(deutsche Zeit, neue Rätsel um Mitternacht).
+
+- **Städteraten**: fünf Städte auf der Deutschlandkarte antippen, bis zu 1000 Punkte je
+  Stadt nach Entfernung. Dazu „Freies Spiel“ und „Gegen den Computer“.
+  Karte: [Natural Earth](https://www.naturalearthdata.com/) (gemeinfrei);
+  Städte: [GeoNames](https://www.geonames.org/) (CC BY 4.0). Die Daten in
+  `client-assets/raetsel/js/staedte-data.js` sind daraus vereinfacht erzeugt.
+- **Nonogramm**: täglich ein 10 × 10-Bild, Bestenliste nach Zeit; im freien Spiel auch
+  5 × 5 und 15 × 15.
+- Die Tagesbestenlisten werden 14 Tage aufgehoben.
+
 ## Wordle
 
-In der Spielegalerie: jeden Tag (deutsche Zeit) ein neues Wort mit 5 Buchstaben,
+In den Tagesrätseln: jeden Tag (deutsche Zeit) ein neues Wort mit 5 Buchstaben,
 dazu „Freies Spiel“ zum Üben. Das Lösungswort bleibt auf dem Server; in die
 Tagesbestenliste kommt nur, wer das Rätsel dort wirklich gelöst hat (sortiert nach
 Versuchen, dann Zeit). Wörter mit Ä, Ö, Ü und ß kommen nicht vor.
@@ -162,6 +186,6 @@ Test-Datenbank. Für ein festes lokales Admin-Passwort eine Datei `.dev.vars` mi
 
 - Login-Sperre nach Fehlversuchen und die Begrenzung von Registrierungen gelten pro
   Worker-Instanz, nicht global synchronisiert – für einen Verein ausreichend.
-- Die Wordle-Statistik (Serie usw.) wird nur auf dem jeweiligen Gerät gespeichert.
-- Bestenlisten der Solo-Spiele (außer Wordle) lassen sich mit etwas Technikwissen fälschen.
+- Die Statistiken der Tagesrätsel (Serie usw.) werden nur auf dem jeweiligen Gerät gespeichert.
+- Bestenlisten der Solo-Spiele, von Städteraten und Nonogramm (außer Wordle) lassen sich mit etwas Technikwissen fälschen.
 - Das Werwolf-Design (dunkles Nacht-Theme) weicht bewusst vom Vereinsheim-Stil ab.

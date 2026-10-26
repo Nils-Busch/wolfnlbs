@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tagesrätsel – Vereinsheim</title>
+<meta name="description" content="Jeden Tag neu: Wordle, Städteraten und Nonogramm mit Tagesbestenliste.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+<link rel="stylesheet" href="/shared/vereinsheim.css">
+<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="stylesheet" href="/raetsel/raetsel.css">
+</head>
+<body class="vh-body vh-area-raetsel rt">
+<header class="vh-header">
+  <a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a>
+  <nav>
+    <a href="/woelfe/">Was für Wölfe</a>
+    <a href="/quiz/">Quiz</a>
+    <a href="/spiele/">Spielegalerie</a>
+    <a href="/raetsel/" class="is-active">Tagesrätsel</a>
+    <a href="/tischtennis/">Turniere</a>
+  </nav>
+</header>
+<main class="gallery">
+  <section class="rt-hero">
+    <div>
+      <h1>Tagesrätsel</h1>
+      <p id="rtDate">Drei Rätsel, jeden Tag neu – für alle dieselben. Wer ist heute am schnellsten?</p>
+    </div>
+    <div class="rt-clock" aria-live="off"><span>Neue Rätsel in</span><b id="rtClock">–</b></div>
+  </section>
+
+  <div class="rt-grid">
+    <a class="rt-card" id="rtWordle" href="/spiele/games/wordle.html">
+      <span class="rt-art" aria-hidden="true"><i class="t g">R</i><i class="t y">A</i><i class="t">T</i><i class="t g">E</i><i class="t g">N</i></span>
+      <h2>Wordle</h2>
+      <p>Errate das deutsche Wort mit fünf Buchstaben in höchstens sechs Versuchen.</p>
+      <span class="rt-state">Heute raten</span>
+    </a>
+    <a class="rt-card" id="rtStaedte" href="/raetsel/staedte.html">
+      <span class="rt-art" aria-hidden="true"><svg viewBox="-2 -4 53 70"><path class="de" d="M44.1 33.5L43.3 33.7L43.8 34.6L39.9 35.9L39.3 36.8L38.9 36.6L37.9 37.6L37.1 37.7L36.9 38.4L34.6 38.5L33.6 40.3L31.6 38.2L32.0 37.2L33.6 36.4L33.4 35.3L35.3 34.5L34.5 33.1L33.2 32.9L32.9 32.2L33.3 29.1L36.5 28.2L37.9 29.0L38.0 30.5L39.2 30.2L40.9 30.8L42.0 30.7L42.9 29.4L45.7 29.3L46.9 30.1L46.9 33.1L45.9 35.1L45.2 34.8L44.5 33.3ZM32.6 39.1L33.3 41.2L34.7 42.4L34.0 43.7L35.3 46.2L37.1 47.2L39.2 49.9L40.7 50.7L41.1 52.8L40.7 53.4L39.4 53.0L39.1 54.6L35.8 56.7L37.1 58.8L36.6 59.8L37.5 60.3L37.1 61.9L36.0 61.2L35.9 60.3L34.6 60.6L34.2 60.1L33.3 60.2L33.3 59.7L33.0 60.8L30.2 60.9L28.3 62.4L27.0 62.5L26.4 61.4L24.2 61.0L24.2 62.4L22.9 63.4L23.1 62.6L22.5 62.7L21.8 61.3L21.0 60.9L19.8 61.3L21.4 60.2L22.7 60.2L22.8 56.8L22.0 54.5L23.7 53.3L23.5 52.0L24.5 52.0L24.4 50.2L22.8 48.0L22.7 45.5L21.7 45.7L21.0 43.8L20.3 44.1L20.3 43.3L18.7 43.3L19.2 44.4L17.6 45.0L17.8 43.3L16.9 41.2L18.2 40.4L19.6 40.7L19.6 39.7L20.4 39.7L20.9 38.3L22.0 38.1L22.7 37.1L25.7 39.9L26.3 39.6L25.6 39.0L26.0 38.5L27.6 38.7L28.3 39.4L28.3 37.8L28.8 37.5L29.7 38.6L31.7 38.3ZM2.5 41.1L2.7 39.9L4.1 38.9L4.0 38.5L6.0 38.8L5.8 37.8L10.0 35.7L11.3 34.2L12.9 36.9L12.1 37.4L11.9 38.4L12.6 39.4L10.9 41.2L11.4 41.8L13.1 41.2L14.4 43.5L13.8 44.3L14.5 47.1L13.3 49.7L10.2 49.3L8.7 48.2L9.0 46.7L8.3 46.2L8.4 45.0L6.7 44.6L3.8 45.4L4.5 43.2L3.1 42.5ZM3.7 46.0L3.8 45.4L6.7 44.6L8.4 45.0L8.9 48.3L8.4 48.8L7.2 48.7L6.6 47.9L5.6 48.3L4.6 46.2ZM16.2 2.4L18.3 3.2L20.0 2.7L21.2 3.5L21.8 3.4L22.2 5.1L21.3 5.8L22.8 5.7L22.8 7.0L23.7 6.1L25.7 7.1L27.7 6.5L27.4 8.1L25.8 9.2L26.9 10.3L25.8 10.9L26.8 13.1L26.2 13.0L25.1 14.6L23.0 13.4L23.0 11.8L20.5 13.0L19.0 11.0L16.6 10.1L16.2 9.3L17.0 9.4L17.1 8.8L16.1 8.2L16.9 7.1L15.4 7.4L15.0 6.9L15.5 6.7L15.3 6.3L17.1 5.7L15.3 3.1L15.3 2.4ZM28.4 5.8L28.6 6.3L27.1 5.9L27.7 5.3ZM13.8 2.0L14.0 2.4L15.3 2.5L13.6 2.7L13.5 3.7ZM7.4 18.9L7.9 17.9L8.0 15.6L8.3 15.0L8.9 15.2L7.2 14.8L7.5 12.8L8.5 12.1L11.8 11.8L12.9 13.2L12.5 14.0L13.1 14.3L13.6 13.8L13.4 12.7L14.8 13.3L14.6 14.7L14.6 13.6L15.3 13.3L14.5 12.0L15.3 10.5L16.3 11.0L18.4 10.7L21.3 14.1L25.6 14.7L27.5 16.4L30.0 17.3L29.1 18.4L27.1 18.3L25.9 18.9L27.0 20.7L26.8 21.9L27.4 22.6L27.1 22.9L27.5 23.8L26.9 25.1L24.9 25.5L25.3 29.1L23.9 28.9L22.8 30.1L21.0 30.3L20.7 31.3L19.7 30.7L20.2 30.4L20.3 28.7L18.9 28.4L19.4 26.7L18.7 26.7L17.8 24.6L17.0 24.5L17.4 23.7L17.0 23.0L17.7 21.8L16.2 22.5L15.6 22.4L15.3 21.4L13.5 22.0L14.5 24.2L11.9 25.3L11.5 24.9L12.1 24.2L11.5 24.0L11.9 23.1L10.4 21.9L8.5 23.4L7.3 23.7L6.9 22.0L5.5 21.8L5.5 20.6L7.1 20.6ZM5.9 24.7L9.8 22.6L10.1 21.8L11.9 23.1L11.5 24.0L12.1 24.2L11.5 24.9L11.9 25.3L14.5 24.2L13.5 22.0L15.3 21.4L15.6 22.4L16.2 22.5L17.5 21.6L17.0 24.5L17.8 24.6L18.7 26.7L19.4 26.7L19.2 28.4L18.1 29.9L17.1 29.5L16.5 29.8L16.7 30.5L15.3 30.8L14.9 31.4L15.7 31.5L15.6 32.7L14.7 32.9L14.4 34.3L13.0 35.0L12.7 36.1L11.0 34.2L10.5 35.4L5.8 37.8L6.0 38.7L4.0 38.5L3.9 39.0L3.7 37.8L2.9 37.5L3.3 36.7L2.1 35.9L2.3 34.3L1.3 33.4L2.7 32.4L2.3 31.9L3.0 30.5L1.6 27.1L2.8 26.9L2.6 26.4L3.7 27.0L5.7 26.3L6.1 25.8L5.4 25.2ZM19.8 61.3L18.0 60.2L15.6 60.0L15.0 59.2L14.0 60.1L15.1 60.3L14.8 60.9L13.2 60.6L10.3 61.2L9.6 59.9L11.1 52.7L12.5 51.1L14.4 47.2L14.1 45.0L14.9 45.4L15.4 44.6L16.5 45.6L16.3 46.4L16.8 45.6L17.7 45.5L17.4 45.0L19.2 44.4L18.6 43.5L19.4 43.2L20.3 43.3L20.3 44.1L21.0 43.8L21.7 45.8L22.7 45.5L22.8 48.0L24.4 50.1L24.5 52.0L23.5 52.0L23.7 53.3L22.0 54.5L22.8 56.8L22.7 60.2L21.4 60.2ZM45.2 20.8L44.8 22.5L45.9 25.0L45.0 27.0L45.8 28.3L45.7 29.3L42.9 29.4L41.9 30.7L39.2 30.2L38.0 30.5L38.1 29.4L37.4 28.7L38.3 26.8L34.2 25.5L33.1 24.2L33.6 21.5L32.7 21.2L33.1 18.7L28.4 16.7L29.7 16.6L30.1 15.7L31.3 15.8L33.0 14.6L37.1 16.3L37.8 15.5L39.4 15.2L41.1 13.3L41.7 14.2L43.3 14.2L42.6 15.4L44.1 14.9L43.9 17.1L42.8 17.9L42.7 18.8ZM43.4 12.0L44.1 14.9L43.4 15.5L42.6 15.4L43.3 14.2L41.7 14.2L41.0 13.2L41.1 13.7L39.4 15.2L37.0 16.3L33.0 14.6L31.3 15.8L30.1 15.7L29.7 16.6L28.4 16.7L25.1 14.6L26.2 13.0L26.8 13.1L26.8 12.2L25.9 11.6L25.9 10.7L26.9 10.3L26.6 9.9L27.9 9.5L29.4 10.4L30.5 8.4L32.5 8.0L32.7 8.8L32.6 8.1L34.8 5.7L36.7 6.1L34.3 6.5L33.9 7.4L34.4 7.6L35.5 6.3L36.4 6.7L37.3 6.1L37.7 7.4L39.5 8.9L40.7 8.2L41.1 8.8L40.8 9.3L41.6 10.1L41.2 10.8L42.3 11.6L43.4 11.5ZM43.2 10.1L43.1 10.6L41.3 10.8L41.6 9.6L42.4 10.1L42.4 9.6L41.8 9.1L41.0 9.4L40.9 8.3ZM40.6 6.5L40.7 7.4L40.4 6.8L39.5 6.9L38.9 7.4L39.1 7.8L37.8 7.3L37.8 6.6L38.4 6.5L37.9 6.2L38.5 5.7L37.8 5.3L38.6 5.4L38.9 4.9L38.8 5.4L39.7 5.5L38.9 4.7L38.4 5.1L38.3 4.4L39.2 4.1L39.2 4.9L40.3 4.9L40.0 6.0ZM14.8 13.4L14.6 12.7L15.2 12.8L15.2 13.5ZM14.6 15.8L16.7 16.3L16.9 17.2L15.6 17.2ZM20.9 13.2L20.9 12.6L21.1 12.9L23.0 11.8L23.0 13.4L23.7 14.1L21.6 14.3ZM21.8 30.5L21.8 31.2L23.2 32.2L22.7 32.5L23.0 33.6L21.8 34.1L22.3 34.5L21.4 36.5L22.4 36.3L22.3 37.6L20.9 38.3L20.4 39.7L19.6 39.7L19.6 40.7L17.1 40.8L17.7 45.5L16.8 45.6L16.1 46.4L16.5 45.6L15.4 44.6L14.9 45.4L14.1 45.0L13.8 44.1L14.4 43.5L13.2 41.3L11.4 41.8L10.9 41.2L12.6 39.4L11.9 38.4L12.1 37.4L12.9 36.9L12.7 35.4L14.4 34.3L14.7 32.9L15.6 32.7L15.7 31.5L14.9 31.4L15.5 30.7L16.7 30.5L16.6 29.8L17.1 29.5L17.8 30.1L19.5 28.4L20.5 29.0L19.8 30.7L20.7 31.3L21.0 30.3ZM21.8 31.2L21.7 30.6L23.9 28.9L25.3 29.1L25.3 28.6L26.1 28.5L26.8 28.8L26.9 30.3L28.9 30.7L29.2 32.8L30.4 32.8L30.8 33.5L33.1 34.2L33.7 32.9L34.5 33.1L35.3 34.5L33.4 35.3L33.6 36.4L32.0 37.2L31.4 38.4L29.7 38.6L28.8 37.5L28.3 37.8L28.3 39.4L27.6 38.7L26.0 38.5L25.6 39.0L26.3 39.6L25.7 39.9L23.7 37.7L22.7 37.1L22.3 37.5L22.3 36.3L21.5 36.5L22.3 34.5L21.8 34.1L23.0 33.6L22.7 32.5L23.2 32.2ZM25.6 28.6L25.0 27.4L25.3 25.9L24.9 25.5L26.9 25.1L27.5 23.8L27.1 22.9L27.4 22.6L26.8 21.9L27.0 20.7L25.9 18.9L27.1 18.3L29.1 18.4L30.2 17.2L31.6 18.4L33.2 18.8L32.7 21.2L33.6 21.5L33.1 24.0L33.9 25.3L38.3 26.8L37.4 28.7L36.4 28.3L33.1 29.4L32.7 31.3L33.5 33.5L33.1 34.2L30.8 33.5L30.4 32.8L29.2 32.8L28.9 30.7L26.9 30.3L26.8 28.8ZM39.5 20.3L40.9 22.0L40.6 22.6L37.6 22.3L37.9 20.8Z"/><g class="pin" transform="translate(25.6 34)"><path d="M0 0 C-1.5 -3.5 -4.5 -5 -4.5 -8.5 A4.5 4.5 0 1 1 4.5 -8.5 C4.5 -5 1.5 -3.5 0 0 Z"/></g></svg></span>
+      <h2>Städteraten</h2>
+      <p>Fünf Städte, eine Karte: Tippe, wo sie liegen. Je näher dran, desto mehr Punkte.</p>
+      <span class="rt-state">Heute spielen</span>
+    </a>
+    <a class="rt-card" id="rtNono" href="/raetsel/nonogramm.html">
+      <span class="rt-art" aria-hidden="true"><span class="nono"><i class="f"></i><i></i><i class="f"></i><i class="f"></i><i></i><i class="f"></i><i class="f"></i><i></i><i class="f"></i><i></i><i></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i class="f"></i><i></i><i></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i class="f"></i></span></span>
+      <h2>Nonogramm</h2>
+      <p>Die Zahlen am Rand verraten, welche Felder gefüllt sind. Logik statt Raten.</p>
+      <span class="rt-state">Heute lösen</span>
+    </a>
+  </div>
+</main>
+<footer class="vh-footer">Wordle-Wortliste: german-pos-dict (CC BY-SA 4.0). Städte: GeoNames (CC BY 4.0), Karte: Natural Earth.</footer>
+<script src="/raetsel/js/daily.js"></script>
+<script>
+  (() => {
+    const today = Daily.today();
+    document.getElementById('rtDate').textContent = `${Daily.longDate(today)}: drei Rätsel, für alle dieselben. Wer ist heute am schnellsten?`;
+    const clock = document.getElementById('rtClock');
+    const tick = () => { clock.textContent = Daily.fmtCountdown(Daily.untilMidnight()); };
+    tick();
+    setInterval(tick, 1000);
+
+    const mark = (id, done, text) => {
+      if (!done) return;
+      const card = document.getElementById(id);
+      card.classList.add('solved');
+      card.querySelector('.rt-state').textContent = text;
+    };
+    const w = Daily.store.get('wordle-stats');
+    if (w && w.lastCounted === today) mark('rtWordle', true, w.last === today ? 'Heute gelöst' : 'Heute gespielt');
+    const s = Daily.store.get('staedte-day');
+    if (s && s.date === today && s.guesses.length >= 5) mark('rtStaedte', true, `Heute: ${s.guesses.reduce((a, g) => a + g.pts, 0).toLocaleString('de-DE')} Punkte`);
+    const n = Daily.store.get('nono-day');
+    if (n && n.date === today && n.done) mark('rtNono', true, `Gelöst in ${Math.floor(n.elapsed / 60)}:${String(n.elapsed % 60).padStart(2, '0')}`);
+  })();
+</script>
+<script src="/shared/account-link.js"></script>
+</body>
+</html>

@@ -46,6 +46,8 @@
   --vh-blue-deep: #1f4fb0;
   --vh-green-deep: #0f7646;
   --vh-yellow-deep: #b98900;
+  --vh-teal: #0fa3a3;
+  --vh-teal-deep: #0a7676;
 
   /* Bereichsfarbe der aktuellen Seite (per style="--vh-area: …" am body) */
   --vh-area: var(--vh-table);
@@ -88,6 +90,7 @@
 .vh-area-woelfe  { --vh-area: var(--vh-red);    --vh-area-deep: var(--vh-red-deep); }
 .vh-area-quiz    { --vh-area: var(--vh-blue);   --vh-area-deep: var(--vh-blue-deep); }
 .vh-area-spiele  { --vh-area: var(--vh-green);  --vh-area-deep: var(--vh-green-deep); }
+.vh-area-raetsel { --vh-area: var(--vh-teal);   --vh-area-deep: var(--vh-teal-deep); }
 .vh-area-turnier { --vh-area: var(--vh-yellow); --vh-area-deep: var(--vh-yellow-deep); --vh-area-ink: var(--vh-table); }
 .vh-area-konto   { --vh-area: var(--vh-table);  --vh-area-deep: #0d1424; }
 
@@ -151,6 +154,7 @@ a { color: inherit; }
 .vh-header nav a[href^="/quiz"] { --c: var(--vh-blue); }
 .vh-header nav a[href^="/spiele"] { --c: var(--vh-green); }
 .vh-header nav a[href^="/tischtennis"] { --c: var(--vh-yellow); }
+.vh-header nav a[href^="/raetsel"] { --c: var(--vh-teal); }
 .vh-header nav a::before {
   content: ""; display: inline-block; width: .55rem; height: .55rem; border-radius: 50%;
   background: var(--c); margin-right: .45rem; vertical-align: .05em;

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mäxchen · Spielegalerie</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+<link rel="stylesheet" href="/spiele/css/style.css">
+</head>
+<body>
+<header class="top"><a href="/spiele/" class="back">← Galerie</a><h1>🎲 Mäxchen</h1></header>
+<main class="mx">
+  <section class="panel mx-setup" id="mxSetup">
+    <h2>Wer sitzt am Tisch?</h2>
+    <ul class="mx-seats" id="mxSeats"></ul>
+    <div class="mx-add">
+      <button class="ghost" id="mxAddHuman">+ Mensch</button>
+      <button class="ghost" id="mxAddBot">+ Computer</button>
+    </div>
+    <div class="mx-opt" id="mxLevelRow">
+      <span>Computer spielen</span>
+      <div class="vs-levels" id="mxLevels" role="group" aria-label="Stärke der Computer">
+        <button type="button" data-level="easy">Leicht</button>
+        <button type="button" data-level="medium">Mittel</button>
+        <button type="button" data-level="hard">Schwer</button>
+      </div>
+    </div>
+    <div class="mx-opt">
+      <span>Deckel pro Person</span>
+      <div class="vs-levels" id="mxLives" role="group" aria-label="Deckel pro Person">
+        <button type="button" data-lives="3">3</button>
+        <button type="button" data-lives="5">5</button>
+        <button type="button" data-lives="7">7</button>
+      </div>
+    </div>
+    <button id="mxStart" class="mx-start">🎲 Los geht’s</button>
+    <details class="mx-rules">
+      <summary>So geht Mäxchen</summary>
+      <ol>
+        <li>Würfle verdeckt mit zwei Würfeln und schau heimlich unter den Becher.</li>
+        <li>Der höhere Würfel zählt zuerst: 5 und 3 sind 53. Päsche schlagen alles außer Mäxchen (2 und 1).</li>
+        <li>Sag einen Wert an, der höher ist als der vorige – ob er stimmt oder nicht.</li>
+        <li>Der Nächste glaubt es und würfelt selbst, oder er deckt auf. Wer gelogen hat oder zu Unrecht zweifelt, verliert einen Deckel.</li>
+        <li>Geht es um ein Mäxchen, kostet die Runde zwei Deckel. Wer keine Deckel mehr hat, ist raus.</li>
+      </ol>
+      <p class="mx-order">Von klein nach groß: 31, 32, 41 … 65, dann 1er- bis 6er-Pasch, ganz oben Mäxchen.</p>
+    </details>
+  </section>
+
+  <section id="mxGame" hidden>
+    <ul class="mx-players" id="mxPlayers"></ul>
+    <div class="mx-table">
+      <div class="mx-said" id="mxSaid" aria-live="polite"></div>
+      <button class="mx-cup" id="mxCup" type="button" aria-label="Würfelbecher">
+        <span class="mx-dice" id="mxDice"></span>
+        <svg class="mx-cupsvg" viewBox="0 0 120 120" aria-hidden="true">
+          <ellipse cx="60" cy="108" rx="44" ry="8" fill="rgba(0,0,0,.28)"/>
+          <path d="M22 104 L32 22 Q60 12 88 22 L98 104 Q60 116 22 104 Z" fill="#8b4a22"/>
+          <path d="M22 104 L32 22 Q60 12 88 22 L98 104 Q60 116 22 104 Z" fill="url(#mxShade)"/>
+          <ellipse cx="60" cy="22" rx="28" ry="7" fill="#6e3818"/>
+          <path d="M26 72 Q60 82 94 72" stroke="#c9873f" stroke-width="5" fill="none"/>
+          <path d="M28 88 Q60 98 92 88" stroke="#c9873f" stroke-width="5" fill="none"/>
+          <defs><linearGradient id="mxShade" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".35" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient></defs>
+        </svg>
+      </button>
+    </div>
+    <p class="mx-status" id="mxStatus" role="status"></p>
+    <div class="mx-actions" id="mxActions"></div>
+    <div class="vs-actions">
+      <button id="mxAgain" hidden>🔁 Nochmal</button>
+      <button id="mxQuit" class="ghost">Neu aufstellen</button>
+    </div>
+    <ol class="mx-log" id="mxLog"></ol>
+  </section>
+</main>
+<script src="/shared/motion.js"></script>
+<script src="/spiele/js/games/maexchen.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 /**
  * Versus – Lobby und Spielsteuerung für Duell-Spiele.
+ *  Computer: gegen ai.js in drei Stufen, komplett im Browser.
  *  Lokal:  beide Spieler am selben Gerät, Regeln laufen im Browser.
  *  Online: ein eigener Raum (Durable Object) pro Partie, Server prüft jeden Zug.
  *
@@ -24,7 +25,15 @@ const Versus = (() => {
           <input id="vsName" maxlength="16" placeholder="z. B. Nils" autocomplete="nickname">
         </label>
         <div class="vs-modes">
-          <button id="vsLocal">👥 Lokal – zu zweit an einem Gerät</button>
+          <div class="vs-cpu" id="vsCpuBox" hidden>
+            <button id="vsCpu">🤖 Gegen den Computer</button>
+            <div class="vs-levels" role="radiogroup" aria-label="Stärke des Computers">
+              <button type="button" data-level="easy" role="radio">Leicht</button>
+              <button type="button" data-level="medium" role="radio">Mittel</button>
+              <button type="button" data-level="hard" role="radio">Schwer</button>
+            </div>
+          </div>
+          <button id="vsLocal" class="ghost">👥 Lokal – zu zweit an einem Gerät</button>
           <div class="or">oder online gegen jemand anderen</div>
           <button id="vsCreate" class="ghost">🌐 Raum erstellen</button>
           <div class="vs-join">
@@ -66,7 +75,10 @@ const Versus = (() => {
     if (urlRoom) $('vsCode').value = urlRoom.toUpperCase().slice(0, 4);
 
     // Zustand
-    let mode = null;          // 'local' | 'online'
+    let mode = null;          // 'cpu' | 'local' | 'online'
+    let level = store.get('gg-level') || 'medium';
+    let cpuTimer = null;
+    const hasCpu = typeof AI !== 'undefined' && AI.supports(cfg.game);
     let ws = null;
     let you = null;           // eigener Spielerindex (online)
     let state = null;
@@ -94,6 +106,7 @@ const Versus = (() => {
     }
 
     function canMove() {
+      if (mode === 'cpu') return !!state && !Rules.isOver(state) && state.turn === 0 && !cpuTimer;
       return !!state && !notice && !Rules.isOver(state) && (mode === 'local' || state.turn === you);
     }
 
@@ -102,8 +115,13 @@ const Versus = (() => {
       if (!state) return 'Warte auf Mitspieler…';
       if (state.draw) return 'Unentschieden!';
       if (state.winner !== null) {
+        if (mode === 'cpu') return state.winner === 0 ? 'Du hast gewonnen! 🎉' : 'Der Computer gewinnt.';
         if (mode === 'online') return state.winner === you ? 'Du hast gewonnen! 🎉' : 'Du hast verloren.';
         return `${names[state.winner]} gewinnt! 🎉`;
+      }
+      if (mode === 'cpu') {
+        if (state.winner === 0) return 'Du hast gewonnen! 🎉';
+        return state.turn === 0 ? 'Du bist am Zug' : 'Der Computer überlegt …';
       }
       if (mode === 'online') return state.turn === you ? 'Du bist am Zug' : `${names[state.turn]} ist am Zug …`;
       return `${names[state.turn]} ist am Zug`;
@@ -134,17 +152,41 @@ const Versus = (() => {
         $('vsShareCode').textContent = code;
         $('vsShareLink').value = `${location.origin}${location.pathname}?room=${code}`;
       }
-      $('vsRoomTag').textContent = mode === 'online' && code ? `Online-Raum ${code}` : mode === 'local' ? 'Lokales Spiel' : '';
+      $('vsRoomTag').textContent = mode === 'online' && code ? `Online-Raum ${code}` : mode === 'local' ? 'Lokales Spiel' : mode === 'cpu' ? `Gegen den Computer · ${AI.LEVELS[level]}` : '';
+      $('vsGame').classList.toggle('thinking', mode === 'cpu' && !!state && !Rules.isOver(state) && state.turn === 1);
+    }
+
+    function apply(mv) {
+      const next = rules.move(state, state.turn, mv);
+      if (!next) return false;
+      state = next;
+      if (next.winner !== null) {
+        wins[next.winner]++;
+        if (mode === 'cpu' && next.winner === 0 && window.VH) VH.confetti();
+      }
+      render();
+      scheduleCpu();
+      return true;
+    }
+
+    // Der Computer zieht mit kurzer Denkpause, damit man seinen Zug sieht.
+    function scheduleCpu() {
+      if (mode !== 'cpu' || !state || Rules.isOver(state) || state.turn !== 1 || cpuTimer) return;
+      cpuTimer = setTimeout(() => {
+        cpuTimer = null;
+        if (mode !== 'cpu' || !state || state.turn !== 1) return;
+        const t0 = performance.now();
+        const mv = AI.pick(cfg.game, state, 1, level);
+        const wait = Math.max(0, 250 - (performance.now() - t0));
+        setTimeout(() => apply(mv), wait);
+      }, 380 + Math.random() * 300);
+      render();
     }
 
     function move(mv) {
       if (!canMove()) return;
-      if (mode === 'local') {
-        const next = rules.move(state, state.turn, mv);
-        if (!next) return;
-        state = next;
-        if (next.winner !== null) wins[next.winner]++;
-        render();
+      if (mode === 'local' || mode === 'cpu') {
+        apply(mv);
       } else {
         send({ type: 'move', move: mv });
       }
@@ -206,12 +248,36 @@ const Versus = (() => {
     }
 
     function reset() {
+      clearTimeout(cpuTimer); cpuTimer = null;
       mode = null; you = null; state = null; code = null; notice = null; rematchSent = false;
       names = ['Spieler 1', 'Spieler 2']; wins = [0, 0]; starter = 0;
       $('vsHint').textContent = '';
     }
 
     /* ---------- Buttons ---------- */
+    function showLevel() {
+      document.querySelectorAll('#vsCpuBox [data-level]').forEach((b) => {
+        const on = b.dataset.level === level;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    if (hasCpu) {
+      $('vsCpuBox').hidden = false;
+      if (!AI.LEVELS[level]) level = 'medium';
+      showLevel();
+      document.querySelectorAll('#vsCpuBox [data-level]').forEach((b) => {
+        b.onclick = () => { level = b.dataset.level; store.set('gg-level', level); showLevel(); };
+      });
+      $('vsCpu').onclick = () => {
+        reset();
+        mode = 'cpu';
+        names = [myName('Du'), `Computer`];
+        state = rules.init(starter);
+        showGame(); render(); scheduleCpu();
+      };
+    }
+
     $('vsLocal').onclick = () => {
       reset();
       mode = 'local';
@@ -262,10 +328,11 @@ const Versus = (() => {
     $('vsCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
 
     $('vsRematch').onclick = () => {
-      if (mode === 'local') {
+      if (mode === 'local' || mode === 'cpu') {
         starter = 1 - starter;
         state = rules.init(starter);
         render();
+        scheduleCpu();
       } else {
         rematchSent = true;
         send({ type: 'rematch' });
