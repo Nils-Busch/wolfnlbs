@@ -3,6 +3,7 @@ import { useGame } from "../store.jsx";
 import Timer from "../components/Timer.jsx";
 import PlayerList from "../components/PlayerList.jsx";
 import RoleBadge from "../components/RoleBadge.jsx";
+import { PHASES } from "../lib/fx.js";
 
 import NightWolves from "../components/NightWolves.jsx";
 import NightSeer from "../components/NightSeer.jsx";
@@ -15,60 +16,49 @@ import Vote from "../components/Vote.jsx";
 import VoteResult from "../components/VoteResult.jsx";
 import GameOver from "../components/GameOver.jsx";
 
-const PHASE_LABELS = {
-  NIGHT_WOLVES: "🌙 Nacht – Werwölfe",
-  NIGHT_SEER: "🌙 Nacht – Seherin",
-  NIGHT_WITCH: "🌙 Nacht – Hexe",
-  HUNTER_SHOT: "🏹 Der Jäger schießt",
-  DAY_REVEAL: "☀️ Der Morgen danach",
-  MAYOR_ELECTION: "🎗️ Bürgermeisterwahl",
-  DAY_DISCUSSION: "☀️ Diskussion",
-  DAY_VOTE: "🗳️ Abstimmung",
-  VOTE_RESULT: "📜 Ergebnis",
-};
-
-const NIGHT_PHASES = new Set(["NIGHT_WOLVES", "NIGHT_SEER", "NIGHT_WITCH"]);
-
 export default function Game() {
-  const { state, isHost, hostSkipPhase, leaveRoom } = useGame();
+  const { state, me, isHost, hostSkipPhase } = useGame();
   const [showPlayers, setShowPlayers] = useState(false);
   const { phase } = state;
 
   if (phase === "GAME_OVER") return <GameOver />;
+  const info = PHASES[phase] || { em: "", label: phase };
+  const alive = state.players.filter((p) => p.alive && !p.isNarrator).length;
 
   return (
-    <div className={`screen phase-${NIGHT_PHASES.has(phase) ? "night" : "day"}`}>
+    <div className="screen">
       <header className="game-header">
         <div>
-          <p className="eyebrow">
-            Tag {state.day} · Raum {state.roomCode}
+          <p className="day-chip">
+            {info.day ? "☀️" : "🌙"} <b>{info.day ? `Tag ${state.day}` : `Nacht ${state.day}`}</b> · Raum {state.roomCode}
           </p>
-          <h1 className="phase-title">{PHASE_LABELS[phase] || phase}</h1>
+          <h1 className="phase-title" key={phase}>
+            <span className="em">{info.em}</span>
+            {info.label}
+          </h1>
         </div>
         <Timer endsAt={state.phaseEndsAt} />
       </header>
 
-      <main className="game-main">
+      <main className="game-main" key={phase}>
         <PhaseContent phase={phase} />
       </main>
 
       <footer className="game-footer">
         <RoleBadge />
-        <button className="btn btn-link" onClick={() => setShowPlayers((v) => !v)}>
-          {showPlayers
-            ? "Spieler ausblenden"
-            : `Spieler (${state.players.filter((p) => p.alive && !p.isNarrator).length} leben)`}
+        <button className="chip-btn" onClick={() => setShowPlayers((v) => !v)} aria-expanded={showPlayers}>
+          👥 {showPlayers ? "Ausblenden" : `${alive} leben`}
         </button>
         {isHost && (
-          <button className="btn btn-link" onClick={hostSkipPhase}>
-            ⏭ Phase überspringen
+          <button className="chip-btn" onClick={hostSkipPhase}>
+            ⏭ Weiter
           </button>
         )}
       </footer>
 
       {showPlayers && (
         <div className="card player-sheet">
-          <PlayerList players={state.players} mayorId={state.mayorId} />
+          <PlayerList players={state.players} mayorId={state.mayorId} meId={me?.id} />
         </div>
       )}
     </div>
@@ -77,25 +67,15 @@ export default function Game() {
 
 function PhaseContent({ phase }) {
   switch (phase) {
-    case "NIGHT_WOLVES":
-      return <NightWolves />;
-    case "NIGHT_SEER":
-      return <NightSeer />;
-    case "NIGHT_WITCH":
-      return <NightWitch />;
-    case "HUNTER_SHOT":
-      return <HunterShot />;
-    case "DAY_REVEAL":
-      return <DayReveal />;
-    case "MAYOR_ELECTION":
-      return <MayorElection />;
-    case "DAY_DISCUSSION":
-      return <Discussion />;
-    case "DAY_VOTE":
-      return <Vote />;
-    case "VOTE_RESULT":
-      return <VoteResult />;
-    default:
-      return null;
+    case "NIGHT_WOLVES": return <NightWolves />;
+    case "NIGHT_SEER": return <NightSeer />;
+    case "NIGHT_WITCH": return <NightWitch />;
+    case "HUNTER_SHOT": return <HunterShot />;
+    case "DAY_REVEAL": return <DayReveal />;
+    case "MAYOR_ELECTION": return <MayorElection />;
+    case "DAY_DISCUSSION": return <Discussion />;
+    case "DAY_VOTE": return <Vote />;
+    case "VOTE_RESULT": return <VoteResult />;
+    default: return null;
   }
 }

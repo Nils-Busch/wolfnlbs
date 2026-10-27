@@ -27,7 +27,7 @@ body.rt, .vh-area-raetsel {
 .rt-card:nth-child(2) { animation-delay: .08s; }
 .rt-card:nth-child(3) { animation-delay: .16s; }
 @keyframes rt-deal { from { opacity: 0; transform: translateY(24px) rotate(-2deg); } }
-.rt-card:hover { transform: translateY(-5px) rotate(-.6deg); box-shadow: 0 11px 0 #c9cfdb; }
+.rt-card:hover { transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-5px); box-shadow: 0 11px 0 #c9cfdb; }
 .rt-card:active { transform: translateY(4px); box-shadow: 0 2px 0 #c9cfdb; }
 .rt-card h2 { margin: .3rem 0 0; font: 800 1.6rem/1 var(--display); font-stretch: 88%; letter-spacing: -.01em; }
 .rt-card p { margin: 0; color: #4a5470; font-size: .97rem; line-height: 1.45; }
@@ -90,8 +90,8 @@ body.rt, .vh-area-raetsel {
   border-radius: 22px; padding: clamp(6px, 2vw, 14px); box-shadow: inset 0 0 0 1px var(--line);
   max-width: 560px;
 }
-.st-svg { display: block; width: 100%; height: auto; max-height: 72vh; cursor: crosshair; touch-action: manipulation; overflow: visible; }
-.st-land { fill: #2f6f63; stroke: #172036; stroke-width: 1.2; stroke-linejoin: round; transition: fill .3s; }
+.st-svg { display: block; width: 100%; height: auto; max-height: 72vh; cursor: crosshair; touch-action: manipulation; overflow: hidden; border-radius: 14px; }
+.st-land { vector-effect: non-scaling-stroke; fill: #2f6f63; stroke: #172036; stroke-width: 1.2; stroke-linejoin: round; transition: fill .3s; }
 .st-land:hover { fill: #357a6d; }
 .st-land.hit { fill: #3f9c88; }
 .st-pin path { fill: var(--accent); stroke: #062a2a; stroke-width: 1.2; }
@@ -101,8 +101,9 @@ body.rt, .vh-area-raetsel {
 .st-pin { animation: st-drop .35s var(--ease-hop); }
 .st-pin.placing { animation: st-drop .25s var(--ease-hop); }
 @keyframes st-drop { from { transform: translateY(-14px); opacity: 0; } }
-.st-pin { transform-box: fill-box; }
-.st-line { stroke: #fff; stroke-width: 1.6; stroke-dasharray: 5 4; stroke-linecap: round; animation: st-dash .7s ease-out both; }
+.st-pin { transform-box: fill-box; transform-origin: 50% 100%; }
+.st-map { overflow: hidden; }
+.st-line { vector-effect: non-scaling-stroke; stroke: #fff; stroke-width: 2; stroke-dasharray: 5 4; stroke-linecap: round; animation: st-dash .7s ease-out both; }
 .st-line.cpu { stroke: #b9a6ff; }
 @keyframes st-dash { from { stroke-dashoffset: 60; opacity: 0; } }
 .st-target circle { fill: var(--yellow); stroke: #172036; stroke-width: 1.5; }
@@ -154,6 +155,10 @@ body.rt, .vh-area-raetsel {
 .nn-cell.on { background: #172036; }
 .nn-cell.x::after { content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; color: #9aa5bb; font-size: .8em; font-weight: 700; }
 .nn-cell.pop { animation: nn-pop .18s var(--ease-hop); }
+.nn-cell.flash { animation: nn-flash .6s ease-out; }
+.nn-clue.flash { animation: nn-clue .6s var(--ease-hop); }
+@keyframes nn-flash { 30% { filter: brightness(1.35); box-shadow: 0 0 0 2px var(--accent); } }
+@keyframes nn-clue { 40% { transform: scale(1.25); color: #fff; } }
 @keyframes nn-pop { from { transform: scale(.7); } }
 .nn-board.solved .nn-cell.on { background: var(--teal); animation: nn-wave .6s var(--ease-hop) both; }
 .nn-board.solved.static .nn-cell.on { animation: none; }

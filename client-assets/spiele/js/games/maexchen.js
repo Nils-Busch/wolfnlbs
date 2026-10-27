@@ -190,7 +190,28 @@
     }, reduced() ? 600 : 2600);
   }
 
+  // Verlorene Deckel fliegen sichtbar vom Platz weg
+  function flyCoasters(i, n) {
+    if (reduced()) return;
+    const dots = [...document.querySelectorAll(`#mxPlayers li:nth-child(${i + 1}) .lives i:not(.gone)`)].slice(-n);
+    dots.forEach((d, k) => {
+      const r = d.getBoundingClientRect();
+      const c = document.createElement('i');
+      c.className = 'mx-fly';
+      c.style.left = r.left + 'px';
+      c.style.top = r.top + 'px';
+      document.body.appendChild(c);
+      const dx = (Math.random() - 0.5) * 160;
+      c.animate([
+        { transform: 'translate(0,0) rotate(0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx * 0.5}px,-70px) rotate(${dx > 0 ? 200 : -200}deg) scale(1.8)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(${dx}px,40px) rotate(${dx > 0 ? 420 : -420}deg) scale(.6)`, opacity: 0 },
+      ], { duration: 950, delay: k * 120, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'both' }).finished.then(() => c.remove(), () => c.remove());
+    });
+  }
+
   function loseLives(i, n) {
+    flyCoasters(i, Math.min(n, G.players[i].lives));
     const p = G.players[i];
     p.lives = Math.max(0, p.lives - n);
     log(`<b>${esc(p.name)}</b> ${v(p, 'verliert', 'verlierst')} ${n === 2 ? 'zwei Deckel' : 'einen Deckel'}${p.lives ? '' : ` und ${v(p, 'ist', 'bist')} raus`}.`);

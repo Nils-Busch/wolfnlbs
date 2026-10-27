@@ -129,8 +129,26 @@
       b.disabled = P.done;
     });
     const filled = P.cells.map((v) => v === 1);
-    for (let r = 0; r < n; r++) document.querySelector(`.nn-clue.row[data-r="${r}"]`).classList.toggle('ok', same(runs(rowOf(filled, n, r)), P.rows[r]));
-    for (let c = 0; c < n; c++) document.querySelector(`.nn-clue.col[data-c="${c}"]`).classList.toggle('ok', same(runs(colOf(filled, n, c)), P.cols[c]));
+    const first = !P.okR;
+    P.okR = P.okR || [];
+    P.okC = P.okC || [];
+    // Frisch passende Zeile/Spalte kurz aufleuchten lassen
+    const flash = (sel, cells) => {
+      const clue = document.querySelector(sel);
+      [clue, ...cells].forEach((e) => { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); });
+    };
+    for (let r = 0; r < n; r++) {
+      const ok = same(runs(rowOf(filled, n, r)), P.rows[r]);
+      document.querySelector(`.nn-clue.row[data-r="${r}"]`).classList.toggle('ok', ok);
+      if (ok && !P.okR[r] && !first && !P.done) flash(`.nn-clue.row[data-r="${r}"]`, Array.from({ length: n }, (_, c) => document.querySelector(`.nn-cell[data-i="${r * n + c}"]`)));
+      P.okR[r] = ok;
+    }
+    for (let c = 0; c < n; c++) {
+      const ok = same(runs(colOf(filled, n, c)), P.cols[c]);
+      document.querySelector(`.nn-clue.col[data-c="${c}"]`).classList.toggle('ok', ok);
+      if (ok && !P.okC[c] && !first && !P.done) flash(`.nn-clue.col[data-c="${c}"]`, Array.from({ length: n }, (_, r) => document.querySelector(`.nn-cell[data-i="${r * n + c}"]`)));
+      P.okC[c] = ok;
+    }
   }
 
   function solved() {

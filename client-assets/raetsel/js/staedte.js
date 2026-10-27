@@ -116,8 +116,39 @@
     for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
     return n;
   }
+  // Kartenausschnitt: zoomt nach dem Tipp auf Nadel und Ziel, danach zurück aufs ganze Land.
+  let vb = [0, 0, M.w, M.h];
+  let zoomAnim = 0;
+  let zoom = 1;
+  function fitBox(points) {
+    let x0 = Math.min(...points.map((p) => p[0])), x1 = Math.max(...points.map((p) => p[0]));
+    let y0 = Math.min(...points.map((p) => p[1])), y1 = Math.max(...points.map((p) => p[1]));
+    const pad = 46, aspect = M.w / M.h;
+    let w = Math.max(x1 - x0 + pad * 2, 170), h = Math.max(y1 - y0 + pad * 2, 170 / aspect);
+    if (w / h > aspect) h = w / aspect; else w = h * aspect;
+    if (w >= M.w || h >= M.h) return [0, 0, M.w, M.h];
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    const x = Math.min(Math.max(cx - w / 2, 0), M.w - w), y = Math.min(Math.max(cy - h / 2, 0), M.h - h);
+    return [x, y, w, h];
+  }
+  function zoomTo(target, ms = 750) {
+    cancelAnimationFrame(zoomAnim);
+    const from = vb.slice();
+    const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = reduced ? 1 : Math.min(1, (t - t0) / ms);
+      const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      vb = from.map((v, i) => v + (target[i] - v) * e);
+      svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
+      if (k < 1) zoomAnim = requestAnimationFrame(step);
+    };
+    zoomAnim = requestAnimationFrame(step);
+  }
   function pin(x, y, cls, label) {
-    const g = el('g', { class: 'st-pin ' + cls, transform: `translate(${x.toFixed(1)} ${y.toFixed(1)})` });
+    const outer = el('g', { transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(1 / zoom).toFixed(3)})` });
+    const g = el('g', { class: 'st-pin ' + cls });
+    outer.appendChild(g);
     g.appendChild(el('path', { d: 'M0 0 C-3 -7 -9 -10 -9 -17 A9 9 0 1 1 9 -17 C9 -10 3 -7 0 0 Z' }));
     g.appendChild(el('circle', { cx: 0, cy: -17, r: 3.4, class: 'st-pin-dot' }));
     if (label) {
@@ -125,13 +156,23 @@
       t.textContent = label;
       g.appendChild(t);
     }
-    return g;
+    return outer;
   }
   function renderMarkers() {
     layer.innerHTML = '';
     svg.querySelectorAll('.st-land.hit').forEach((p) => p.classList.remove('hit'));
     if (!G) return;
     const c = G.cities[Math.min(G.round, ROUNDS - 1)];
+    // Ausschnitt bestimmen, bevor Nadeln gezeichnet werden (ihre Größe hängt vom Zoom ab)
+    let box = [0, 0, M.w, M.h];
+    if (G.phase === 'result' && G.guesses[G.round]) {
+      const g = G.guesses[G.round], cp = G.cpu && G.cpu[G.round];
+      const pts = [toXY(c.lat, c.lon), toXY(g.lat, g.lon)];
+      if (cp) pts.push(toXY(cp.lat, cp.lon));
+      box = fitBox(pts);
+    }
+    zoom = M.w / box[2];
+    if (box.some((v, i) => Math.abs(v - vb[i]) > 0.5)) zoomTo(box);
     if (G.phase === 'result' || G.phase === 'end') {
       const list = G.phase === 'end' ? G.cities.map((city, i) => ({ city, g: G.guesses[i], cpu: G.cpu && G.cpu[i] })) : [{ city: c, g: G.guesses[G.round], cpu: G.cpu && G.cpu[G.round] }];
       for (const { city, g, cpu } of list) {
@@ -146,7 +187,7 @@
         }
         layer.appendChild(el('line', { x1: gx, y1: gy, x2: tx, y2: ty, class: 'st-line' }));
         layer.appendChild(pin(gx, gy, 'you'));
-        const star = el('g', { class: 'st-target', transform: `translate(${tx.toFixed(1)} ${ty.toFixed(1)})` });
+        const star = el('g', { class: 'st-target', transform: `translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${(1 / zoom).toFixed(3)})` });
         star.appendChild(el('circle', { r: 7, class: 'st-target-ring' }));
         star.appendChild(el('circle', { r: 3.2 }));
         const t = el('text', { x: 0, y: -12, 'text-anchor': 'middle', class: 'st-target-label' });

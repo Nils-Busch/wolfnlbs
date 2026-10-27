@@ -140,7 +140,18 @@ const Versus = (() => {
         el.innerHTML = playerHtml(i);
         el.classList.toggle('active', !!live && state.turn === i);
       });
-      $('vsStatus').textContent = statusText();
+      // Statuszeile hüpft bei jeder Änderung kurz, Sieg/Niederlage bekommen eigene Farbe
+      const st = $('vsStatus'), text = statusText();
+      if (st.textContent !== text) {
+        st.textContent = text;
+        st.classList.remove('bump');
+        void st.offsetWidth;
+        st.classList.add('bump');
+      }
+      const over = state && Rules.isOver(state) && !notice;
+      const mine = mode === 'online' ? you : 0;
+      st.classList.toggle('win', !!over && !state.draw && (mode === 'local' || state.winner === mine));
+      st.classList.toggle('lose', !!over && !state.draw && mode !== 'local' && state.winner !== mine);
       $('vsInfo').innerHTML = cfg.info ? cfg.info(view, names, esc) : '';
       cfg.render($('vsBoard'), view, canMove(), move);
       $('vsRematch').hidden = !(state && Rules.isOver(state)) || !!notice;

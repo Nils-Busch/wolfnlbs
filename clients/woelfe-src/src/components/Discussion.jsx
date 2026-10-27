@@ -1,15 +1,17 @@
 import React from "react";
 import { useGame } from "../store.jsx";
+import PlayerList from "./PlayerList.jsx";
 
 export default function Discussion() {
-  const { state } = useGame();
+  const { state, me } = useGame();
+  const alive = state.players.filter((p) => !p.isNarrator);
   return (
-    <div className="card centered-note">
-      <h2>💬 Diskutiert!</h2>
-      <p>Wer verhält sich verdächtig? Redet darüber, bevor abgestimmt wird.</p>
-      <p className="hint">
-        {state.players.filter((p) => p.alive && !p.isNarrator).length} Spieler sind noch im Spiel.
-      </p>
+    <div className="card stack">
+      <div className="centered-note">
+        <h2>Wer ist verdächtig?</h2>
+        <p className="hint" style={{ margin: 0 }}>Redet miteinander, bevor abgestimmt wird. Wer lügt, wer schweigt auffällig?</p>
+      </div>
+      <PlayerList players={alive} mayorId={state.mayorId} meId={me?.id} />
     </div>
   );
 }

@@ -3,6 +3,12 @@
 // Freischaltung warten.
 (function () {
   'use strict';
+  // Handy: aktiven Menüpunkt in die sichtbare Leiste scrollen
+  const active = document.querySelector('.vh-header nav a.is-active');
+  if (active && active.parentElement.scrollWidth > active.parentElement.clientWidth) {
+    const nav = active.parentElement;
+    nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
+  }
   const header = document.querySelector('.vh-header');
   if (!header || header.querySelector('.vh-account')) return;
   const a = document.createElement('a');
