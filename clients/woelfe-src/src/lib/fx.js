@@ -32,9 +32,11 @@ export function confetti(colors) {
   if (typeof window !== "undefined" && window.VH && window.VH.confetti) window.VH.confetti(colors ? { colors } : undefined);
 }
 
-export const NIGHT_PHASES = new Set(["NIGHT_WOLVES", "NIGHT_SEER", "NIGHT_WITCH"]);
+export const NIGHT_PHASES = new Set(["NIGHT_AMOR", "NIGHT_WOLFDOG", "NIGHT_WOLVES", "NIGHT_SEER", "NIGHT_WITCH"]);
 
 export const PHASES = {
+  NIGHT_AMOR: { em: "💘", title: "Amor erwacht", sub: "Zwei Herzen werden verbunden.", label: "Amor" },
+  NIGHT_WOLFDOG: { em: "🐕", title: "Der Wolfshund erwacht", sub: "Dorf oder Rudel?", label: "Wolfshund" },
   NIGHT_WOLVES: { em: "🌙", title: "Die Nacht bricht herein", sub: "Alle schließen die Augen. Die Werwölfe erwachen.", label: "Werwölfe" },
   NIGHT_SEER: { em: "🔮", title: "Die Seherin erwacht", sub: "Sie blickt in eine fremde Seele.", label: "Seherin" },
   NIGHT_WITCH: { em: "🧪", title: "Die Hexe erwacht", sub: "Zwei Tränke, eine Entscheidung.", label: "Hexe" },

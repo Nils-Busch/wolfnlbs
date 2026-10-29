@@ -8,6 +8,8 @@ export default function RoleCard({ myRole, startOpen = false, requireOpen = fals
   const info = myRole.roleInfo;
   const wolf = myRole.role === "WOLF" || myRole.role === "URWOLF";
   const mates = myRole.wolfTeammates || [];
+  const lover = myRole.lover;
+  const couple = myRole.couple;
 
   return (
     <div className="role-modal" role="dialog" aria-modal="true" aria-label="Deine Rolle">
@@ -31,6 +33,8 @@ export default function RoleCard({ myRole, startOpen = false, requireOpen = fals
               <span className="team">{wolf ? "Team Werwölfe" : "Team Dorf"}</span>
               <span className="desc">{info.description}</span>
               {mates.length > 0 && <span className="desc mates">Dein Rudel: {mates.map((w) => w.name).join(", ")}</span>}
+              {lover && <span className="desc love">💘 Verliebt in {lover.name}</span>}
+              {couple && <span className="desc love">💘 Dein Paar: {couple.map((c) => c.name).join(" & ")}</span>}
             </span>
           </span>
         </button>

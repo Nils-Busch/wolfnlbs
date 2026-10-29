@@ -7,6 +7,8 @@ const ROLES = [
   { key: "seer", em: "🔮", name: "Seherin", note: "sieht jede Nacht eine Rolle" },
   { key: "witch", em: "🧪", name: "Hexe", note: "ein Heil- und ein Gifttrank" },
   { key: "hunter", em: "🏹", name: "Jäger", note: "nimmt beim Tod jemanden mit" },
+  { key: "amor", em: "💘", name: "Amor", note: "verkuppelt zwei – sterben gemeinsam" },
+  { key: "wolfdog", em: "🐕", name: "Wolfshund", note: "wählt: Dorf oder Rudel" },
   { key: "mayor", em: "🎗️", name: "Bürgermeister", note: "Wahl, Stimme zählt doppelt" },
 ];
 

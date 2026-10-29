@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tagesrätsel – Vereinsheim</title>
-<meta name="description" content="Jeden Tag neu: Wordle, Städteraten und Nonogramm mit Tagesbestenliste.">
+<meta name="description" content="Jeden Tag neu: Wordle, Städteraten, Connections und Nonogramm mit Tagesbestenliste.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
 <link rel="stylesheet" href="/spiele/css/style.css">
@@ -43,6 +43,12 @@
       <p>Fünf Städte, eine Karte: Tippe, wo sie liegen. Je näher dran, desto mehr Punkte.</p>
       <span class="rt-state">Heute spielen</span>
     </a>
+    <a class="rt-card" data-tilt id="rtConn" href="/raetsel/connections.html">
+      <span class="rt-art" aria-hidden="true"><span class="conn-art"><i class="y"></i><i class="y"></i><i class="g"></i><i class="b"></i><i class="g"></i><i class="p"></i><i class="y"></i><i class="b"></i><i class="p"></i><i class="b"></i><i class="g"></i><i class="y"></i><i class="b"></i><i class="g"></i><i class="p"></i><i class="p"></i></span></span>
+      <h2>Connections</h2>
+      <p>16 Begriffe, vier versteckte Gruppen. Aber Vorsicht: Manches passt scheinbar überall.</p>
+      <span class="rt-state">Heute verbinden</span>
+    </a>
     <a class="rt-card" data-tilt id="rtNono" href="/raetsel/nonogramm.html">
       <span class="rt-art" aria-hidden="true"><span class="nono"><i class="f"></i><i></i><i class="f"></i><i class="f"></i><i></i><i class="f"></i><i class="f"></i><i></i><i class="f"></i><i></i><i></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i class="f"></i><i></i><i></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i class="f"></i></span></span>
       <h2>Nonogramm</h2>
@@ -50,13 +56,14 @@
       <span class="rt-state">Heute lösen</span>
     </a>
   </div>
+  <a class="rt-lb-link" href="/raetsel/bestenliste.html">🏆 Ewige Bestenliste – Punkte, Serien und Rekorde</a>
 </main>
 <footer class="vh-footer">Wordle-Wortliste: german-pos-dict (CC BY-SA 4.0). Städte: GeoNames (CC BY 4.0), Karte: Natural Earth.</footer>
 <script src="/raetsel/js/daily.js"></script>
 <script>
   (() => {
     const today = Daily.today();
-    document.getElementById('rtDate').textContent = `${Daily.longDate(today)}: drei Rätsel, für alle dieselben. Wer ist heute am schnellsten?`;
+    document.getElementById('rtDate').textContent = `${Daily.longDate(today)}: vier Rätsel, für alle dieselben. Wer ist heute am schnellsten?`;
     const clock = document.getElementById('rtClock');
     const tick = () => { clock.textContent = Daily.fmtCountdown(Daily.untilMidnight()); };
     tick();
@@ -72,6 +79,8 @@
     if (w && w.lastCounted === today) mark('rtWordle', true, w.last === today ? 'Heute gelöst' : 'Heute gespielt');
     const s = Daily.store.get('staedte-day');
     if (s && s.date === today && s.guesses.length >= 5) mark('rtStaedte', true, `Heute: ${s.guesses.reduce((a, g) => a + g.pts, 0).toLocaleString('de-DE')} Punkte`);
+    const c = Daily.store.get('conn-day');
+    if (c && c.date === today && c.over) mark('rtConn', true, c.won ? `Gelöst mit ${c.mistakes} Fehler${c.mistakes === 1 ? '' : 'n'}` : 'Heute gespielt');
     const n = Daily.store.get('nono-day');
     if (n && n.date === today && n.done) mark('rtNono', true, `Gelöst in ${Math.floor(n.elapsed / 60)}:${String(n.elapsed % 60).padStart(2, '0')}`);
   })();

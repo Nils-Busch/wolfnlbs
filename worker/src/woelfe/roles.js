@@ -1,6 +1,7 @@
 // Rollen-Definitionen und Zuteilungslogik für "Was für Wölfe".
 // Basis-Rollenset (v1): Werwolf, Dorfbewohner, Seherin, Hexe, Jäger.
 // v2: zusätzlich der Urwolf (Sonderrolle im Wolfs-Team).
+// v3: Amor (verkuppelt zwei Spieler) und Wolfshund (wählt sein Team in der ersten Nacht).
 
 export const ROLES = {
   WOLF: "WOLF",
@@ -9,11 +10,14 @@ export const ROLES = {
   SEER: "SEER",
   WITCH: "WITCH",
   HUNTER: "HUNTER",
+  AMOR: "AMOR",
+  WOLFDOG: "WOLFDOG",
 };
 
 export const TEAMS = {
   WOLVES: "WOLVES",
   VILLAGE: "VILLAGE",
+  LOVERS: "LOVERS",
 };
 
 export const ROLE_INFO = {
@@ -59,7 +63,38 @@ export const ROLE_INFO = {
     description:
       "Wenn du stirbst (egal ob nachts oder durch Abstimmung), darfst du sofort noch einen weiteren Spieler mit dir in den Tod reißen.",
   },
+  [ROLES.AMOR]: {
+    name: "Amor",
+    team: TEAMS.VILLAGE,
+    emoji: "💘",
+    description:
+      "In der ersten Nacht verkuppelst du zwei Mitspieler (gern auch dich selbst). Die beiden erfahren voneinander. Stirbt einer, stirbt der andere aus Liebeskummer mit. Gehören sie zu verschiedenen Teams, gewinnen sie nur, wenn sie als Letzte übrig bleiben.",
+  },
+  [ROLES.WOLFDOG]: {
+    name: "Wolfshund",
+    team: TEAMS.VILLAGE,
+    emoji: "🐕",
+    description:
+      "In der ersten Nacht entscheidest du dich: Bleibst du ein treuer Hund im Dorf oder läufst du zum Rudel über und wirst zum Werwolf? Niemand erfährt deine Wahl.",
+  },
 };
+
+// Anzeige-Infos für einen Spieler. Der Wolfshund zeigt nach seiner Wahl, wohin er gegangen ist.
+export function roleInfoOf(player) {
+  if (!player || !player.role) return null;
+  if (player.origin === ROLES.WOLFDOG) {
+    const wolf = player.role !== ROLES.VILLAGER;
+    return {
+      ...ROLE_INFO[ROLES.WOLFDOG],
+      name: wolf ? "Wolfshund (Rudel)" : "Wolfshund (Dorf)",
+      team: wolf ? TEAMS.WOLVES : TEAMS.VILLAGE,
+      description: wolf
+        ? "Du bist zum Rudel übergelaufen und jagst jetzt nachts mit den Werwölfen. Tagsüber tarnst du dich."
+        : "Du bist dem Dorf treu geblieben und hilfst, die Werwölfe zu finden.",
+    };
+  }
+  return ROLE_INFO[player.role];
+}
 
 // Prüft, ob eine Rolle zum Wolfsrudel gehört (Werwolf oder Urwolf).
 export function isWolfTeam(role) {
@@ -76,7 +111,7 @@ export function suggestWolfCount(playerCount) {
 // playerCount zählt nur die tatsächlich mitspielenden Personen (ohne Erzähler).
 export function validateConfig(playerCount, config) {
   const errors = [];
-  const { wolves, seer, witch, hunter, urwolf } = config;
+  const { wolves, seer, witch, hunter, urwolf, amor, wolfdog } = config;
 
   if (!Number.isInteger(wolves) || wolves < 1) {
     errors.push("Es muss mindestens 1 Werwolf geben.");
@@ -86,7 +121,7 @@ export function validateConfig(playerCount, config) {
     errors.push("Der Urwolf braucht mindestens 2 Werwölfe insgesamt (Urwolf + mind. 1 normaler Werwolf).");
   }
 
-  const specialRoles = (seer ? 1 : 0) + (witch ? 1 : 0) + (hunter ? 1 : 0);
+  const specialRoles = (seer ? 1 : 0) + (witch ? 1 : 0) + (hunter ? 1 : 0) + (amor ? 1 : 0) + (wolfdog ? 1 : 0);
   const totalAssigned = wolves + specialRoles;
 
   if (playerCount < 4) {
@@ -135,6 +170,8 @@ export function assignRoles(players, config) {
   if (config.seer) assignment.set(ids[cursor++], ROLES.SEER);
   if (config.witch) assignment.set(ids[cursor++], ROLES.WITCH);
   if (config.hunter) assignment.set(ids[cursor++], ROLES.HUNTER);
+  if (config.amor) assignment.set(ids[cursor++], ROLES.AMOR);
+  if (config.wolfdog) assignment.set(ids[cursor++], ROLES.WOLFDOG);
 
   for (; cursor < ids.length; cursor++) {
     assignment.set(ids[cursor], ROLES.VILLAGER);

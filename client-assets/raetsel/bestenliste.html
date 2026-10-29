@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ewige Bestenliste – Tagesrätsel</title>
+<meta name="description" content="Wer ist am besten in Wordle, Städteraten und Nonogramm? Punkte, Serien und Rekorde über alle Tage.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+<link rel="stylesheet" href="/shared/vereinsheim.css">
+<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="stylesheet" href="/raetsel/raetsel.css">
+</head>
+<body class="vh-body vh-area-raetsel rt">
+<header class="vh-header">
+  <a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a>
+  <nav>
+    <a href="/woelfe/">Was für Wölfe</a>
+    <a href="/quiz/">Quiz</a>
+    <a href="/spiele/">Spielegalerie</a>
+    <a href="/raetsel/" class="is-active">Tagesrätsel</a>
+    <a href="/tischtennis/">Turniere</a>
+  </nav>
+</header>
+<main class="gallery lb">
+  <section class="rt-hero">
+    <div>
+      <a class="back" href="/raetsel/">← Tagesrätsel</a>
+      <h1>Ewige Bestenliste</h1>
+      <p>Wordle, Städteraten, Nonogramm und Connections bringen jeden Tag Punkte. Wer dranbleibt, klettert nach oben.</p>
+    </div>
+    <div class="levels lb-range" id="range" role="tablist" aria-label="Zeitraum">
+      <button data-range="all" role="tab">Gesamt</button>
+      <button data-range="30" role="tab">30 Tage</button>
+      <button data-range="7" role="tab">7 Tage</button>
+    </div>
+  </section>
+
+  <section class="podium" id="podium" aria-label="Die besten drei"></section>
+
+  <section class="lb-mine" id="mine" aria-live="polite"></section>
+
+  <section class="lb-records" id="records" aria-label="Rekorde"></section>
+
+  <section class="panel lb-table-wrap">
+    <table class="lb-table" id="table">
+      <thead>
+        <tr><th>#</th><th>Name</th><th class="num">Punkte</th><th class="num hide-s">Tage</th><th class="num">Serie</th><th class="num hide-s">Tagessiege</th><th class="hide-m">Bestwerte</th></tr>
+      </thead>
+      <tbody><tr><td colspan="7" class="muted">Lade …</td></tr></tbody>
+    </table>
+  </section>
+
+  <details class="panel lb-how">
+    <summary>So werden die Punkte berechnet</summary>
+    <ul>
+      <li><b>Wordle:</b> 600 Punkte bei einem Versuch, 100 weniger pro weiterem Versuch (6 Versuche = 100).</li>
+      <li><b>Städteraten:</b> ein Zehntel deiner Punkte, also bis zu 500.</li>
+      <li><b>Nonogramm:</b> 600 Punkte minus einen halben Punkt pro Sekunde, mindestens 100.</li>
+      <li><b>Connections:</b> 600 Punkte, 100 weniger pro Fehler und bis zu 100 weniger für die Zeit (eine Sekunde = ein Sechstel Punkt), mindestens 200.</li>
+      <li><b>Serie:</b> Tage am Stück mit mindestens einem eingetragenen Rätsel. <b>Tagessieg:</b> höchste Tagessumme eines abgeschlossenen Tages.</li>
+      <li><b>Mit Konto</b> (✓ hinter dem Namen) gehören deine Punkte fest zu dir, und niemand sonst kann unter deinem Namen eintragen. Ohne Konto zählt der Name, mit dem du dich einträgst. Pro Rätsel und Tag zählt der erste Eintrag.</li>
+    </ul>
+  </details>
+</main>
+<script src="/shared/motion.js"></script>
+<script src="/raetsel/js/daily.js"></script>
+<script src="/raetsel/js/bestenliste.js"></script>
+<script src="/shared/account-link.js"></script>
+</body>
+</html>

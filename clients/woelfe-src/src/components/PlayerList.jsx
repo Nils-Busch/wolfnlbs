@@ -5,7 +5,7 @@ import { colorFor, initials } from "../lib/fx.js";
 //   selectable/onSelect/highlightId – Auswahl
 //   counts      – { [spielerId]: Anzahl Stimmen } für Stimmsteine
 //   tone        – "wolf" | "hunter" für die Farbe der Auswahl
-export default function PlayerList({ players, highlightId, onSelect, selectable, excludeId, mayorId, meId, counts, tone, voteTone }) {
+export default function PlayerList({ players, highlightId, highlightIds, onSelect, selectable, excludeId, mayorId, meId, loverId, counts, tone, voteTone }) {
   const max = counts ? Math.max(0, ...Object.values(counts)) : 0;
   return (
     <ul className="pgrid">
@@ -17,7 +17,7 @@ export default function PlayerList({ players, highlightId, onSelect, selectable,
           "ptile",
           !p.alive && "dead",
           !p.connected && "offline",
-          highlightId === p.id && "selected",
+          (highlightId === p.id || highlightIds?.includes(p.id)) && "selected",
           clickable && "clickable",
           meId === p.id && "me",
           tone && `target-${tone}`,
@@ -25,7 +25,7 @@ export default function PlayerList({ players, highlightId, onSelect, selectable,
         ]
           .filter(Boolean)
           .join(" ");
-        const tags = [p.isHost && "👑", p.isNarrator && "🎙️", mayorId && p.id === mayorId && "🎗️"].filter(Boolean).join("");
+        const tags = [p.isHost && "👑", p.isNarrator && "🎙️", mayorId && p.id === mayorId && "🎗️", ((loverId && p.id === loverId) || p.lover) && "💘"].filter(Boolean).join("");
         const Tag = clickable ? "button" : "div";
         return (
           <li key={p.id}>
@@ -33,7 +33,7 @@ export default function PlayerList({ players, highlightId, onSelect, selectable,
               className={cls}
               onClick={clickable ? () => onSelect(p.id) : undefined}
               type={clickable ? "button" : undefined}
-              aria-pressed={clickable ? highlightId === p.id : undefined}
+              aria-pressed={clickable ? highlightId === p.id || !!highlightIds?.includes(p.id) : undefined}
               style={{ animationDelay: `${Math.min(i, 12) * 0.035}s` }}
             >
               {n > 0 && (

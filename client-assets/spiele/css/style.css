@@ -590,3 +590,7 @@ button.flagmode.on { background: var(--p1); color: var(--on-accent); border-colo
   .mx-table { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   .mx-opt { grid-template-columns: 1fr; gap: .4rem; }
 }
+
+/* Namensfeld, das über das Konto ausgefüllt wird (shared/me.js) */
+input.vh-locked-name { background: #1c2742; border-color: var(--accent); color: var(--text); cursor: default; }
+.vh-account-hint { display: block; width: 100%; margin-top: .35rem; color: var(--accent); font-size: .8rem; font-weight: 700; }

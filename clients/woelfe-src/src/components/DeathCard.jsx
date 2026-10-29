@@ -1,10 +1,13 @@
 import React from "react";
 
 // Eine Karte pro Toten; die Rolle wird umgedreht sichtbar.
+const CAUSES = { love: "starb aus Liebeskummer 💔", hunter: "vom Jäger erschossen" };
+
 export default function DeathCard({ d, how, delay = 0 }) {
   const wolf = d.role === "WOLF" || d.role === "URWOLF";
+  how = CAUSES[d.cause] || how;
   return (
-    <li className={`death-card ${wolf ? "wolf" : ""}`} style={{ animationDelay: `${delay}s` }}>
+    <li className={`death-card ${wolf ? "wolf" : ""} ${d.cause === "love" ? "love" : ""}`} style={{ animationDelay: `${delay}s` }}>
       <span className="grave" aria-hidden="true">🪦</span>
       <span className="who">
         <b>{d.name}</b>

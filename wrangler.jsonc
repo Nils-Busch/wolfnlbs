@@ -25,8 +25,8 @@
     "run_worker_first": ["/api/*", "/tischtennis/t/*"]
   },
 
-  // Ein Durable Object pro Werwolf-Spielraum, pro Spielegalerie-Duell-Raum und
-  // pro laufendem Quiz, plus je ein einzelnes, global adressiertes Objekt für
+  // Ein Durable Object pro Werwolf-Spielraum, pro Spielegalerie-Duell-Raum,
+  // pro laufendem Quiz und pro Gruppenspiel-Raum (Wer würde eher, Stadt-Land-Fluss), plus je ein einzelnes, global adressiertes Objekt für
   // die Spielegalerie-Bestenlisten und für Wordle.
   "durable_objects": {
     "bindings": [
@@ -34,7 +34,8 @@
       { "name": "DUEL_ROOM", "class_name": "DuelRoom" },
       { "name": "LEADERBOARD", "class_name": "Leaderboard" },
       { "name": "QUIZ_ROOM", "class_name": "QuizRoom" },
-      { "name": "WORDLE", "class_name": "Wordle" }
+      { "name": "WORDLE", "class_name": "Wordle" },
+      { "name": "PARTY_ROOM", "class_name": "PartyRoom" }
     ]
   },
   // SQLite-basierte Durable Objects laufen auch im kostenlosen Workers-Plan.
@@ -42,7 +43,8 @@
   // Eintrag mit neuem "tag" hinten anhängen.
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["GameRoom", "DuelRoom", "Leaderboard"] },
-    { "tag": "v2", "new_sqlite_classes": ["QuizRoom", "Wordle"] }
+    { "tag": "v2", "new_sqlite_classes": ["QuizRoom", "Wordle"] },
+    { "tag": "v3", "new_sqlite_classes": ["PartyRoom"] }
   ],
 
   // D1-Datenbank für Konten, Quizze und das Tischtennis-Turnier.

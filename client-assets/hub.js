@@ -6,9 +6,9 @@
   const today = document.getElementById('hubDaily');
   if (today && typeof Daily !== 'undefined') {
     const d = Daily.today();
-    const w = Daily.store.get('wordle-stats'), s = Daily.store.get('staedte-day'), n = Daily.store.get('nono-day');
-    const solved = [w && w.lastCounted === d, s && s.date === d && s.guesses.length >= 5, n && n.date === d && n.done].filter(Boolean).length;
-    today.textContent = solved === 3 ? 'Heute alle gelöst' : solved ? `Heute ${solved} von 3 gelöst` : `${Daily.longDate(d)}`;
+    const w = Daily.store.get('wordle-stats'), s = Daily.store.get('staedte-day'), n = Daily.store.get('nono-day'), c = Daily.store.get('conn-day');
+    const solved = [w && w.lastCounted === d, s && s.date === d && s.guesses.length >= 5, n && n.date === d && n.done, c && c.date === d && c.over].filter(Boolean).length;
+    today.textContent = solved === 4 ? 'Heute alle gelöst' : solved ? `Heute ${solved} von 4 gelöst` : `${Daily.longDate(d)}`;
   }
   const die = document.querySelector('.die');
   const msg = document.querySelector('.die-msg');

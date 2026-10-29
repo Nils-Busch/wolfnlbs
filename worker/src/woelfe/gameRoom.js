@@ -11,7 +11,6 @@
 
 import { DurableObject } from "cloudflare:workers";
 import { Room, PHASES } from "./gameManager.js";
-import { ROLE_INFO, isWolfTeam } from "./roles.js";
 
 const ROOM_CLEANUP_MS = 60 * 60 * 1000; // 1h ohne jede Verbindung
 const MAX_MESSAGE_BYTES = 8 * 1024;
@@ -252,14 +251,7 @@ export class GameRoom extends DurableObject {
 
       // Falls das Spiel schon läuft, Rolle erneut privat zusenden (Reconnect).
       if (room.phase !== PHASES.LOBBY && player.role) {
-        const wolves = room.playersArray.filter((p) => isWolfTeam(p.role));
-        room.emitTo(player, "yourRole", {
-          role: player.role,
-          roleInfo: ROLE_INFO[player.role],
-          wolfTeammates: isWolfTeam(player.role)
-            ? wolves.filter((w) => w.id !== player.id).map((w) => ({ id: w.id, name: w.name }))
-            : [],
-        });
+        room.sendRoleTo(player);
       }
 
       room.broadcastState();
@@ -290,6 +282,16 @@ export class GameRoom extends DurableObject {
     setNarrator(ws, { isNarrator }) {
       const { room } = this.requireHost(ws);
       room.setHostNarrator(isNarrator);
+    },
+
+    amorChoose(ws, { targetIds }) {
+      const { room, playerId } = this.requirePlayer(ws);
+      room.submitAmor(playerId, targetIds);
+    },
+
+    wolfdogChoose(ws, { side }) {
+      const { room, playerId } = this.requirePlayer(ws);
+      room.submitWolfdog(playerId, side);
     },
 
     wolfVote(ws, { targetId }) {

@@ -26,7 +26,7 @@ export default function VoteResult() {
         <ul className="reveal-cards" style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {result.eliminated && <DeathCard d={result.eliminated} how="wurde verbannt" delay={0.3} />}
           {result.extraDeaths?.map((d, i) => (
-            <DeathCard key={d.id} d={d} how="vom Jäger mitgenommen" delay={1.1 + i * 0.8} />
+            <DeathCard key={d.id} d={d} how="ist gestorben" delay={1.1 + i * 0.8} />
           ))}
         </ul>
       )}

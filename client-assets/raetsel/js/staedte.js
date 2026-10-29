@@ -338,7 +338,7 @@
     const st = store.get('staedte-stats') || { played: 0, best: 0, total: 0, streak: 0 };
     side.innerHTML = `
       <div class="panel"><h2>🏆 Tagesbestenliste</h2><p class="muted st-date">${esc(Daily.longDate(today))}</p>
-        <div id="stForm"></div><div id="stBoard"><p class="muted">Lade …</p></div></div>
+        <div id="stForm"></div><div id="stBoard"><p class="muted">Lade …</p></div><a class="side-lb-link" href="/raetsel/bestenliste.html">🏆 Ewige Bestenliste</a></div>
       <div class="panel st-stats"><h2>📊 Deine Statistik</h2>
         <div class="nums"><div><b>${st.played}</b><span>gespielt</span></div><div><b>${st.played ? fmtPts(Math.round(st.total / st.played)) : 0}</b><span>Schnitt</span></div><div><b>${fmtPts(st.best)}</b><span>Rekord</span></div><div><b>${st.streak}</b><span>Serie</span></div></div>
         <p class="hint">Nur Tageskarten, gespeichert auf diesem Gerät.</p></div>`;

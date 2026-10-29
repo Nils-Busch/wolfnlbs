@@ -243,6 +243,8 @@ export function GameProvider({ children }) {
     hunterShot: (targetId) => call("hunterShot", { targetId }),
     dayVote: (targetId) => call("dayVote", { targetId }),
     mayorVote: (targetId) => call("mayorVote", { targetId }),
+    amorChoose: (targetIds) => call("amorChoose", { targetIds }),
+    wolfdogChoose: (side) => call("wolfdogChoose", { side }),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

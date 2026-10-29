@@ -1,8 +1,10 @@
-import { ROLES, ROLE_INFO, TEAMS, assignRoles, suggestWolfCount, validateConfig, isWolfTeam } from "./roles.js";
+import { ROLES, ROLE_INFO, TEAMS, assignRoles, suggestWolfCount, validateConfig, isWolfTeam, roleInfoOf } from "./roles.js";
 import { makeId } from "./ids.js";
 
 export const PHASES = {
   LOBBY: "LOBBY",
+  NIGHT_AMOR: "NIGHT_AMOR",
+  NIGHT_WOLFDOG: "NIGHT_WOLFDOG",
   NIGHT_WOLVES: "NIGHT_WOLVES",
   NIGHT_SEER: "NIGHT_SEER",
   NIGHT_WITCH: "NIGHT_WITCH",
@@ -16,6 +18,8 @@ export const PHASES = {
 };
 
 const NIGHT_DURATIONS = {
+  [PHASES.NIGHT_AMOR]: 30,
+  [PHASES.NIGHT_WOLFDOG]: 25,
   [PHASES.NIGHT_WOLVES]: 45,
   [PHASES.NIGHT_SEER]: 25,
   [PHASES.NIGHT_WITCH]: 30,
@@ -60,6 +64,8 @@ export class Room {
       seer: true,
       witch: true,
       hunter: true,
+      amor: false,
+      wolfdog: false,
       mayor: false,
       discussionSeconds: 180,
       voteSeconds: 60,
@@ -82,6 +88,11 @@ export class Room {
 
     this.mayorId = null;
     this.mayorVotes = new Map(); // voterId -> targetId|null
+
+    // Amor & Wolfshund: Entscheidungen der ersten Nacht, gelten das ganze Spiel
+    this.lovers = null; // [idA, idB]
+    this.amorDone = false;
+    this.wolfdogDone = false;
 
     this.emptyRoomSince = null;
   }
@@ -228,7 +239,22 @@ export class Room {
     this.witchSaveUsed = false;
     this.witchPoisonUsed = false;
     this.mayorId = null;
+    this.lovers = null;
+    this.amorDone = false;
+    this.wolfdogDone = false;
+    for (const p of this.players.values()) delete p.origin;
     this.sendRolesPrivately();
+    this.startNight();
+  }
+
+  // Erste Nacht: erst Amor, dann Wolfshund, dann die Werwölfe. Danach nur noch Werwölfe.
+  startNight() {
+    if (this.day === 1) {
+      const amor = alive(this.playersArray).find((p) => p.role === ROLES.AMOR);
+      if (this.config.amor && amor && !this.amorDone) return this.enterPhase(PHASES.NIGHT_AMOR);
+      const dog = alive(this.playersArray).find((p) => p.role === ROLES.WOLFDOG);
+      if (this.config.wolfdog && dog && !this.wolfdogDone) return this.enterPhase(PHASES.NIGHT_WOLFDOG);
+    }
     this.enterPhase(PHASES.NIGHT_WOLVES);
   }
 
@@ -252,23 +278,39 @@ export class Room {
     this.witchPoisonUsed = false;
     this.mayorId = null;
     this.mayorVotes = new Map();
+    this.lovers = null;
+    this.amorDone = false;
+    this.wolfdogDone = false;
+    for (const p of this.players.values()) delete p.origin;
     this.clearTimer();
     this.broadcastState();
   }
 
   sendRolesPrivately() {
-    const wolves = this.playersArray.filter((p) => isWolfTeam(p.role));
     for (const p of this.players.values()) {
       if (p.isNarrator) continue; // Erzähler bekommt keine Rolle zugewiesen.
-      const payload = {
-        role: p.role,
-        roleInfo: ROLE_INFO[p.role],
-        wolfTeammates: isWolfTeam(p.role)
-          ? wolves.filter((w) => w.id !== p.id).map((w) => ({ id: w.id, name: w.name }))
-          : [],
-      };
-      this.emitTo(p, "yourRole", payload);
+      this.sendRoleTo(p);
     }
+  }
+
+  // Private Rolleninfo inkl. Rudel, Verliebtem Partner und (für Amor) dem Paar.
+  sendRoleTo(p) {
+    if (!p || !p.role) return;
+    const wolves = this.playersArray.filter((w) => isWolfTeam(w.role));
+    const partnerId = this.lovers && this.lovers.includes(p.id) ? this.lovers.find((id) => id !== p.id) : null;
+    const partner = partnerId ? this.players.get(partnerId) : null;
+    this.emitTo(p, "yourRole", {
+      role: p.role,
+      roleInfo: roleInfoOf(p),
+      wolfTeammates: isWolfTeam(p.role)
+        ? wolves.filter((w) => w.id !== p.id).map((w) => ({ id: w.id, name: w.name }))
+        : [],
+      lover: partner ? { id: partner.id, name: partner.name } : null,
+      couple:
+        p.role === ROLES.AMOR && this.lovers
+          ? this.lovers.map((id) => ({ id, name: this.players.get(id)?.name }))
+          : null,
+    });
   }
 
   // ---------- Phase engine ----------
@@ -319,6 +361,12 @@ export class Room {
 
   onPhaseTimeout() {
     switch (this.phase) {
+      case PHASES.NIGHT_AMOR:
+        this.resolveAmor(null, true);
+        break;
+      case PHASES.NIGHT_WOLFDOG:
+        this.resolveWolfdog(null);
+        break;
       case PHASES.NIGHT_WOLVES:
         this.resolveWolfVote(true);
         break;
@@ -354,6 +402,77 @@ export class Room {
   // Host kann die aktuelle Phase manuell vorzeitig beenden (z. B. falls jemand offline ist).
   hostSkipPhase() {
     this.onPhaseTimeout();
+  }
+
+  // ---------- Erste Nacht: Amor ----------
+
+  submitAmor(playerId, ids) {
+    const amor = this.players.get(playerId);
+    if (!amor || amor.role !== ROLES.AMOR || !amor.alive) throw new Error("Nur Amor darf verkuppeln.");
+    if (this.phase !== PHASES.NIGHT_AMOR) throw new Error("Nicht die Phase von Amor.");
+    if (!Array.isArray(ids) || ids.length !== 2 || ids[0] === ids[1]) throw new Error("Bitte genau zwei verschiedene Personen wählen.");
+    for (const id of ids) {
+      const t = this.players.get(id);
+      if (!t || !t.alive || t.isNarrator) throw new Error("Ungültiges Ziel.");
+    }
+    this.resolveAmor(ids, false);
+  }
+
+  resolveAmor(ids, isTimeout) {
+    let pair = ids;
+    if (!pair && isTimeout) {
+      const pool = alive(this.playersArray).map((p) => p.id);
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      pair = pool.length >= 2 ? pool.slice(0, 2) : null;
+    }
+    this.lovers = pair;
+    this.amorDone = true;
+    if (pair) {
+      for (const id of pair) this.sendRoleTo(this.players.get(id));
+      this.sendRoleTo(alive(this.playersArray).find((p) => p.role === ROLES.AMOR));
+    }
+    this.startNight();
+  }
+
+  // ---------- Erste Nacht: Wolfshund ----------
+
+  submitWolfdog(playerId, side) {
+    const dog = this.players.get(playerId);
+    if (!dog || dog.role !== ROLES.WOLFDOG || !dog.alive) throw new Error("Nur der Wolfshund darf das.");
+    if (this.phase !== PHASES.NIGHT_WOLFDOG) throw new Error("Nicht die Phase des Wolfshunds.");
+    this.resolveWolfdog(side === "WOLVES" ? "WOLVES" : "VILLAGE");
+  }
+
+  resolveWolfdog(side) {
+    const dog = alive(this.playersArray).find((p) => p.role === ROLES.WOLFDOG);
+    if (dog) {
+      dog.origin = ROLES.WOLFDOG;
+      dog.role = side === "WOLVES" ? ROLES.WOLF : ROLES.VILLAGER; // ohne Wahl bleibt er im Dorf
+      this.sendRolesPrivately(); // Rudel erfährt vom neuen Mitglied
+    }
+    this.wolfdogDone = true;
+    this.startNight();
+  }
+
+  // ---------- Verliebte ----------
+
+  // Ergänzt eine Todesliste um den Partner aus Liebeskummer (falls noch am Leben).
+  addHeartbreak(deaths) {
+    if (!this.lovers) return [];
+    const extra = [];
+    for (const d of [...deaths]) {
+      if (!this.lovers.includes(d.id)) continue;
+      const partner = this.players.get(this.lovers.find((id) => id !== d.id));
+      if (partner && partner.alive && !deaths.includes(partner) && !extra.includes(partner)) extra.push(partner);
+    }
+    return extra;
+  }
+
+  record(p, cause) {
+    return { id: p.id, name: p.name, role: p.role, roleInfo: roleInfoOf(p), cause: cause || null };
   }
 
   // ---------- Night: Werwölfe ----------
@@ -505,7 +624,7 @@ export class Room {
       targetId: target.id,
       targetName: target.name,
       role: target.role,
-      roleInfo: ROLE_INFO[target.role],
+      roleInfo: roleInfoOf(target),
     });
 
     this.proceedAfterSeer();
@@ -582,14 +701,15 @@ export class Room {
       if (poisoned && !deaths.includes(poisoned)) deaths.push(poisoned);
     }
 
-    for (const d of deaths) d.alive = false;
+    const broken = this.addHeartbreak(deaths);
+    for (const d of [...deaths, ...broken]) d.alive = false;
 
     this.nightResult = {
-      deaths: deaths.map((d) => ({ id: d.id, name: d.name, role: d.role, roleInfo: ROLE_INFO[d.role] })),
+      deaths: [...deaths.map((d) => this.record(d)), ...broken.map((d) => this.record(d, "love"))],
       saved: saved && victim ? { id: victim.id, name: victim.name } : null,
     };
 
-    this.startHunterQueueOrContinue(deaths, "NIGHT");
+    this.startHunterQueueOrContinue([...deaths, ...broken], "NIGHT");
   }
 
   // ---------- Jäger ----------
@@ -628,16 +748,18 @@ export class Room {
     }
 
     if (target) {
+      const broken = this.addHeartbreak([target]);
       target.alive = false;
-      const record = { id: target.id, name: target.name, role: target.role, roleInfo: ROLE_INFO[target.role] };
+      for (const b of broken) b.alive = false;
+      const records = [this.record(target, "hunter"), ...broken.map((b) => this.record(b, "love"))];
       if (this.pendingHunterContext === "NIGHT" && this.nightResult) {
-        this.nightResult.deaths.push(record);
+        this.nightResult.deaths.push(...records);
       } else if (this.pendingHunterContext === "DAY" && this.voteResult) {
         this.voteResult.extraDeaths = this.voteResult.extraDeaths || [];
-        this.voteResult.extraDeaths.push(record);
+        this.voteResult.extraDeaths.push(...records);
       }
-      if (target.role === ROLES.HUNTER) {
-        this.pendingHunterQueue.push(target.id);
+      for (const d of [target, ...broken]) {
+        if (d.role === ROLES.HUNTER) this.pendingHunterQueue.push(d.id);
       }
     }
 
@@ -660,6 +782,12 @@ export class Room {
   }
 
   checkWin() {
+    // Verliebte aus verschiedenen Teams gewinnen, wenn nur noch sie beide leben
+    if (this.lovers) {
+      const [a, b] = this.lovers.map((id) => this.players.get(id));
+      const living = alive(this.playersArray);
+      if (a?.alive && b?.alive && isWolfTeam(a.role) !== isWolfTeam(b.role) && living.length === 2) return TEAMS.LOVERS;
+    }
     const wolves = aliveWolves(this.playersArray);
     const village = aliveVillageTeam(this.playersArray);
     if (wolves.length === 0) return TEAMS.VILLAGE;
@@ -765,19 +893,20 @@ export class Room {
     }));
 
     const deaths = [];
+    let broken = [];
     if (eliminated) {
+      broken = this.addHeartbreak([eliminated]);
       eliminated.alive = false;
-      deaths.push(eliminated);
+      for (const b of broken) b.alive = false;
+      deaths.push(eliminated, ...broken);
     }
 
     this.voteResult = {
-      eliminated: eliminated
-        ? { id: eliminated.id, name: eliminated.name, role: eliminated.role, roleInfo: ROLE_INFO[eliminated.role] }
-        : null,
+      eliminated: eliminated ? this.record(eliminated) : null,
       tie,
       tally,
       votes: votesByName,
-      extraDeaths: [],
+      extraDeaths: broken.map((b) => this.record(b, "love")),
     };
 
     this.dayVotes = new Map();
@@ -823,7 +952,8 @@ export class Room {
       isHost: p.id === this.hostId,
       isNarrator: p.isNarrator,
       role: !p.alive || revealAll ? p.role : null,
-      roleInfo: !p.alive || revealAll ? ROLE_INFO[p.role] : null,
+      roleInfo: !p.alive || revealAll ? roleInfoOf(p) : null,
+      lover: revealAll && this.lovers ? this.lovers.includes(p.id) : undefined,
     }));
   }
 
@@ -903,6 +1033,9 @@ export class Room {
       winner: this.winner,
       mayorId: this.mayorId,
       mayorVotes: [...this.mayorVotes.entries()],
+      lovers: this.lovers,
+      amorDone: this.amorDone,
+      wolfdogDone: this.wolfdogDone,
       emptyRoomSince: this.emptyRoomSince,
     };
   }
@@ -928,6 +1061,9 @@ export class Room {
     room.winner = data.winner;
     room.mayorId = data.mayorId;
     room.mayorVotes = new Map(data.mayorVotes);
+    room.lovers = data.lovers || null;
+    room.amorDone = !!data.amorDone;
+    room.wolfdogDone = !!data.wolfdogDone;
     room.emptyRoomSince = data.emptyRoomSince ?? null;
     return room;
   }

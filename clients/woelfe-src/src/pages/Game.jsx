@@ -5,6 +5,8 @@ import PlayerList from "../components/PlayerList.jsx";
 import RoleBadge from "../components/RoleBadge.jsx";
 import { PHASES } from "../lib/fx.js";
 
+import NightAmor from "../components/NightAmor.jsx";
+import NightWolfdog from "../components/NightWolfdog.jsx";
 import NightWolves from "../components/NightWolves.jsx";
 import NightSeer from "../components/NightSeer.jsx";
 import NightWitch from "../components/NightWitch.jsx";
@@ -17,7 +19,7 @@ import VoteResult from "../components/VoteResult.jsx";
 import GameOver from "../components/GameOver.jsx";
 
 export default function Game() {
-  const { state, me, isHost, hostSkipPhase } = useGame();
+  const { state, me, myRole, isHost, hostSkipPhase } = useGame();
   const [showPlayers, setShowPlayers] = useState(false);
   const { phase } = state;
 
@@ -46,6 +48,7 @@ export default function Game() {
 
       <footer className="game-footer">
         <RoleBadge />
+        {myRole?.lover && <span className="chip-btn love" aria-label={`Verliebt in ${myRole.lover.name}`}>💘 {myRole.lover.name}</span>}
         <button className="chip-btn" onClick={() => setShowPlayers((v) => !v)} aria-expanded={showPlayers}>
           👥 {showPlayers ? "Ausblenden" : `${alive} leben`}
         </button>
@@ -58,7 +61,7 @@ export default function Game() {
 
       {showPlayers && (
         <div className="card player-sheet">
-          <PlayerList players={state.players} mayorId={state.mayorId} meId={me?.id} />
+          <PlayerList players={state.players} mayorId={state.mayorId} meId={me?.id} loverId={myRole?.lover?.id} />
         </div>
       )}
     </div>
@@ -67,6 +70,8 @@ export default function Game() {
 
 function PhaseContent({ phase }) {
   switch (phase) {
+    case "NIGHT_AMOR": return <NightAmor />;
+    case "NIGHT_WOLFDOG": return <NightWolfdog />;
     case "NIGHT_WOLVES": return <NightWolves />;
     case "NIGHT_SEER": return <NightSeer />;
     case "NIGHT_WITCH": return <NightWitch />;

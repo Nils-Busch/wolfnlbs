@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connections · Tagesrätsel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
+<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="stylesheet" href="/raetsel/raetsel.css">
+</head>
+<body class="rt">
+<header class="top"><a href="/raetsel/" class="back">← Tagesrätsel</a><h1>🔗 Connections <span class="rt-num" id="cnNum"></span></h1></header>
+<main class="solo cn">
+  <div class="cn-main">
+    <div class="st-modes">
+      <div class="levels" id="cnModes" role="tablist">
+        <button data-mode="daily" role="tab">Tagesrätsel</button>
+        <button data-mode="free" role="tab">Freies Spiel</button>
+      </div>
+      <span class="nn-time">⏱ <b id="cnTime">0:00</b></span>
+    </div>
+    <p class="cn-intro">Finde vier Gruppen zu je vier Begriffen. Vorsicht: Manche Wörter passen scheinbar in mehrere Gruppen.</p>
+    <div class="cn-board">
+      <div id="cnSolved" class="cn-solved"></div>
+      <div id="cnGrid" class="cn-grid"></div>
+      <div class="cn-msg" id="cnMsg" role="status" aria-live="polite"></div>
+    </div>
+    <div class="cn-under" id="cnControls">
+      <div class="cn-mistakes"><span>Fehler übrig</span><span class="dots" id="cnMistakes"></span></div>
+      <div class="cn-buttons">
+        <button class="ghost" id="cnShuffle">Mischen</button>
+        <button class="ghost" id="cnClear">Auswahl aufheben</button>
+        <button id="cnSubmit">Prüfen</button>
+      </div>
+    </div>
+    <div class="cn-end" id="cnEnd" hidden></div>
+    <details class="cn-levels-help">
+      <summary>Was bedeuten die Farben?</summary>
+      <p><span class="sw y"></span> leicht <span class="sw g"></span> mittel <span class="sw b"></span> Wortteile <span class="sw p"></span> um die Ecke gedacht</p>
+    </details>
+  </div>
+  <aside class="st-side" id="side"></aside>
+</main>
+<script src="/shared/motion.js"></script>
+<script src="/raetsel/js/daily.js"></script>
+<script src="/raetsel/js/connections-data.js"></script>
+<script src="/raetsel/js/connections.js"></script>
+<script src="/shared/me.js"></script>
+</body>
+</html>

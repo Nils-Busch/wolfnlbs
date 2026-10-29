@@ -7,6 +7,7 @@ import Toast from "./components/Toast.jsx";
 import Sky from "./components/Sky.jsx";
 import PhaseCurtain from "./components/PhaseCurtain.jsx";
 import RoleCard from "./components/RoleCard.jsx";
+import LoverCard from "./components/LoverCard.jsx";
 import { PHASES, buzz } from "./lib/fx.js";
 
 const ACK_KEY = "wfw-role-seen";
@@ -21,6 +22,8 @@ const writeAck = (v) => {
 function myTurn(state, me, myRole) {
   if (!state || !me || !me.alive || me.isNarrator) return false;
   switch (state.phase) {
+    case "NIGHT_AMOR": return myRole?.role === "AMOR";
+    case "NIGHT_WOLFDOG": return myRole?.role === "WOLFDOG";
     case "NIGHT_WOLVES": return myRole?.role === "WOLF" || myRole?.role === "URWOLF";
     case "NIGHT_SEER": return myRole?.role === "SEER";
     case "NIGHT_WITCH": return myRole?.role === "WITCH";
@@ -59,11 +62,19 @@ export default function App() {
   useEffect(() => {
     if (phase === "LOBBY") { prevRole.current = null; return; }
     if (!myRole) return;
-    if (prevRole.current && prevRole.current !== myRole.role && myRole.role === "WOLF") setConvertedKey(roleKey);
+    if (prevRole.current && prevRole.current !== myRole.role) {
+      if (prevRole.current === "WOLFDOG") setConvertedKey("dog:" + roleKey);
+      else if (myRole.role === "WOLF") setConvertedKey(roleKey);
+    }
     prevRole.current = myRole.role;
   }, [myRole, roleKey, phase]);
   const converted = convertedKey === roleKey && !!roleKey;
+  const dogChoice = convertedKey === "dog:" + roleKey && !!roleKey;
   const showRole = !!(state && phase !== "LOBBY" && phase !== "GAME_OVER" && myRole && roleKey !== ack);
+  // Amor hat mich verkuppelt: einmal anzeigen
+  const loverKey = myRole?.lover && state ? `${state.roomCode}:lover:${myRole.lover.id}` : "";
+  const [loverAck, setLoverAck] = useState(() => { try { return sessionStorage.getItem("wfw-lover-seen") || ""; } catch { return ""; } });
+  const showLover = !!(loverKey && loverKey !== loverAck && !showRole && phase !== "GAME_OVER");
 
   const isDay = state ? (phase === "GAME_OVER" ? state.winner !== "WOLVES" : !!PHASES[phase]?.day) : false;
 
@@ -94,9 +105,18 @@ export default function App() {
           <RoleCard
             myRole={myRole}
             requireOpen
-            title={converted ? "Du wurdest verwandelt!" : "Deine Rolle für diese Runde"}
+            title={dogChoice ? "Deine Wahl steht fest" : converted ? "Du wurdest verwandelt!" : "Deine Rolle für diese Runde"}
             note="Schau heimlich nach. Du findest die Karte später unten unter „Meine Rolle“."
             onClose={() => { writeAck(roleKey); setAck(roleKey); }}
+          />
+        )}
+        {showLover && (
+          <LoverCard
+            partner={myRole.lover}
+            onClose={() => {
+              try { sessionStorage.setItem("wfw-lover-seen", loverKey); } catch { /* egal */ }
+              setLoverAck(loverKey);
+            }}
           />
         )}
         <Toast />

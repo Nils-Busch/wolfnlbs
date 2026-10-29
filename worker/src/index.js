@@ -6,12 +6,12 @@
 // für Tischtennis-Turniere.
 
 import { handleWoelfe, GameRoom } from "./woelfe/router.js";
-import { handleSpiele, DuelRoom, Leaderboard, Wordle } from "./spiele/router.js";
+import { handleSpiele, DuelRoom, Leaderboard, Wordle, PartyRoom } from "./spiele/router.js";
 import { handleTischtennisApi, resolveVisitorLink } from "./tischtennis/router.js";
 import { handleKontoApi } from "./konto/auth.js";
 import { handleQuiz, QuizRoom } from "./quiz/router.js";
 
-export { GameRoom, DuelRoom, Leaderboard, Wordle, QuizRoom };
+export { GameRoom, DuelRoom, Leaderboard, Wordle, QuizRoom, PartyRoom };
 
 export default {
   async fetch(request, env) {
