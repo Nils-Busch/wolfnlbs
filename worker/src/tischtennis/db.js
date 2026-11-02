@@ -63,6 +63,17 @@ const SCHEMA_STATEMENTS = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_matches_t ON matches(tournament_id)`,
   `CREATE INDEX IF NOT EXISTS idx_players_t ON players(tournament_id)`,
+  // Tippspiel: Besucher tippen auf den Sieger offener Spiele (ein Tipp pro Gerät und Spiel).
+  `CREATE TABLE IF NOT EXISTS tips (
+    match_id      INTEGER NOT NULL,
+    tournament_id INTEGER NOT NULL,
+    device        TEXT NOT NULL,
+    name          TEXT NOT NULL,
+    pick          INTEGER NOT NULL CHECK (pick IN (0,1,2)),
+    created_at    INTEGER NOT NULL,
+    PRIMARY KEY (match_id, device)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_tips_t ON tips(tournament_id)`,
 ];
 
 let initialized = false;
@@ -78,6 +89,8 @@ export async function init(env) {
   // Migrationen für ältere Datenbanken (Spalten nachrüsten, falls sie fehlen).
   await addColumnIfMissing(env, "tournaments", "sport", "TEXT NOT NULL DEFAULT 'tabletennis'");
   await addColumnIfMissing(env, "matches", "extra", "TEXT NOT NULL DEFAULT '{}'");
+  // Liveticker: Zwischenstand eines laufenden Spiels als JSON ({ sets: [[a,b], …], since }) oder NULL.
+  await addColumnIfMissing(env, "matches", "live", "TEXT");
   initialized = true;
 }
 
@@ -94,7 +107,7 @@ export const SPORTS = ["tabletennis", "football"];
 /* ---------- kleine Hilfsfunktionen für Zeilen mit JSON-Feldern ---------- */
 export function parseMatch(row) {
   if (!row) return row;
-  return { ...row, sets: JSON.parse(row.sets || "[]"), extra: JSON.parse(row.extra || "{}") };
+  return { ...row, sets: JSON.parse(row.sets || "[]"), extra: JSON.parse(row.extra || "{}"), live: row.live ? JSON.parse(row.live) : null };
 }
 export function parsePlayer(row) {
   if (!row) return row;
@@ -104,6 +117,7 @@ export function parsePlayer(row) {
 /** Kaskadierendes Löschen eines Turniers (Matches + Spieler zuerst). */
 export async function deleteTournamentCascade(env, id) {
   await env.DB.batch([
+    env.DB.prepare("DELETE FROM tips WHERE tournament_id = ?").bind(id),
     env.DB.prepare("DELETE FROM matches WHERE tournament_id = ?").bind(id),
     env.DB.prepare("DELETE FROM players WHERE tournament_id = ?").bind(id),
     env.DB.prepare("DELETE FROM tournaments WHERE id = ?").bind(id),

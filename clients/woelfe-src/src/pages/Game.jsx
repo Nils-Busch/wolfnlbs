@@ -17,6 +17,7 @@ import Discussion from "../components/Discussion.jsx";
 import Vote from "../components/Vote.jsx";
 import VoteResult from "../components/VoteResult.jsx";
 import GameOver from "../components/GameOver.jsx";
+import NarratorPanel from "../components/NarratorPanel.jsx";
 
 export default function Game() {
   const { state, me, myRole, isHost, hostSkipPhase } = useGame();
@@ -43,7 +44,7 @@ export default function Game() {
       </header>
 
       <main className="game-main" key={phase}>
-        <PhaseContent phase={phase} />
+        {me?.isNarrator ? <NarratorPanel /> : <PhaseContent phase={phase} />}
       </main>
 
       <footer className="game-footer">

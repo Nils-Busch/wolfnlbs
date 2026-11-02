@@ -80,7 +80,7 @@ function renderFootballStandings(data) {
       <div class="scroll"><table class="standings">
         <thead><tr><th>Platz</th><th class="left">Team</th><th title="Spiele">Sp</th><th title="Siege">S</th><th title="Unentschieden">U</th><th title="Niederlagen">N</th><th>Tore</th><th title="Tordifferenz">Diff</th><th>Punkte</th></tr></thead>
         <tbody>${g.rows.map((r, i) => `
-          <tr class="${data.tournament.format === 'group' && i < data.tournament.advance_per_group ? 'qualified' : ''}">
+          <tr class="${data.tournament.format === 'group' && i < data.tournament.advance_per_group ? 'qualified' : ''}" data-key="s${r.player_id}" data-pid="${r.player_id}">
             <td class="num">${i + 1}</td><td class="left">${playerLabel(P[r.player_id])}</td>
             <td class="num">${r.played}</td><td class="num">${r.won}</td><td class="num">${r.drawn}</td><td class="num">${r.lost}</td>
             <td class="num">${r.goalsFor}:${r.goalsAgainst}</td><td class="num">${r.goalsFor - r.goalsAgainst > 0 ? '+' : ''}${r.goalsFor - r.goalsAgainst}</td>
@@ -124,7 +124,7 @@ function renderStandings(data) {
       <div class="scroll"><table class="standings">
         <thead><tr><th>Platz</th><th class="left">Spieler</th><th title="Spiele">Sp</th><th title="Siege">S</th><th title="Niederlagen">N</th><th>Sätze</th><th>Bälle</th><th>Punkte</th></tr></thead>
         <tbody>${g.rows.map((r, i) => `
-          <tr class="${data.tournament.format === 'group' && i < data.tournament.advance_per_group ? 'qualified' : ''}">
+          <tr class="${data.tournament.format === 'group' && i < data.tournament.advance_per_group ? 'qualified' : ''}" data-key="s${r.player_id}" data-pid="${r.player_id}">
             <td class="num">${i + 1}</td><td class="left">${playerLabel(P[r.player_id])}</td>
             <td class="num">${r.played}</td><td class="num">${r.won}</td><td class="num">${r.lost}</td>
             <td class="num">${r.setsFor}:${r.setsAgainst}</td><td class="num">${r.ballsFor}:${r.ballsAgainst}</td>
@@ -143,11 +143,11 @@ function renderBracketSection(ms, names, P, extra, sideTag) {
       <h3>${esc((names || {})[r] || `Runde ${r}`)}</h3>
       <div class="round-matches">${ms.filter(m => m.round === r).sort((a, b) => a.position - b.position).map(m => {
         const side = (pid, idx) => `
-          <div class="side ${m.winner_id && m.winner_id === pid ? 'win' : ''}">
+          <div class="side ${m.winner_id && m.winner_id === pid ? 'win' : ''} ${m.winner_id && pid && m.winner_id !== pid ? 'lose' : ''}" ${pid ? `data-pid="${pid}"` : ''}>
             <span class="pname">${m.status === 'bye' && !pid ? '<span class="muted">Freilos</span>' : playerLabel(P[pid])}${sideTag ? sideTag(idx) : ''}</span>
-            <span class="sets">${m.status !== 'done' ? '' : m.fb ? (m.sets[0] || [])[idx - 1] ?? '' : m.sets.filter(([a, b]) => (idx === 1 ? a > b : b > a)).length}</span>
+            <span class="sets">${m.live && m.status === 'pending' ? liveSide(m, idx) : m.status !== 'done' ? '' : m.fb ? (m.sets[0] || [])[idx - 1] ?? '' : m.sets.filter(([a, b]) => (idx === 1 ? a > b : b > a)).length}</span>
           </div>`;
-        return `<div class="bmatch ${m.status}">${side(m.player1_id, 1)}${side(m.player2_id, 2)}${extra(m)}</div>`;
+        return `<div class="bmatch ${m.status} ${m.live && m.status === 'pending' ? 'is-live' : ''}" data-key="b${m.id}" data-mid="${m.id}" ${m.next_match_id ? `data-next="${m.next_match_id}"` : ''} ${m.winner_id && m.status === 'done' ? `data-w="${m.winner_id}"` : ''}>${side(m.player1_id, 1)}${side(m.player2_id, 2)}${extra(m)}</div>`;
       }).join('')}</div>
     </div>`).join('')}</div>`;
 }
@@ -190,4 +190,94 @@ function setDetail(m) {
 function renderTabs(tabs, active) {
   return `<nav class="tabs" role="tablist">${tabs.map(([key, label]) =>
     `<button role="tab" data-tab="${key}" aria-selected="${key === active}">${esc(label)}</button>`).join('')}</nav>`;
+}
+
+
+/* ---------- Liveticker ---------- */
+/** Zwischenstand eines laufenden Spiels. Tischtennis: Sätze + aktueller Satz, Fußball: Tore. */
+function liveParts(m) {
+  const sets = (m.live && m.live.sets) || [[0, 0]];
+  if (m.fb) return { main: sets[0] || [0, 0], cur: null };
+  const done = sets.slice(0, -1);
+  const won = [0, 0];
+  done.forEach(([a, b]) => { if (a > b) won[0]++; else if (b > a) won[1]++; });
+  return { main: won, cur: sets[sets.length - 1] || [0, 0], setNo: sets.length };
+}
+function liveSide(m, idx) {
+  const p = liveParts(m);
+  return p.cur ? `${p.main[idx - 1]}<small class="lp">${p.cur[idx - 1]}</small>` : `${p.main[idx - 1]}`;
+}
+/** Kurztext, z. B. "1:0 · 7:5 im 2. Satz" oder "2:1". */
+function liveText(m) {
+  const p = liveParts(m);
+  return p.cur ? `${p.main[0]}:${p.main[1]} · ${p.cur[0]}:${p.cur[1]} im ${p.setNo}. Satz` : `${p.main[0]}:${p.main[1]}`;
+}
+
+/* ---------- Tippspiel: Geräte-Kennung und Name ---------- */
+const Tip = {
+  device() {
+    try {
+      let d = localStorage.getItem('tt-device');
+      if (!d) { d = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('tt-device', d); }
+      return d;
+    } catch { return Tip._mem ||= Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''); }
+  },
+  name() { try { return localStorage.getItem('tt-tipname') || ''; } catch { return ''; } },
+  setName(n) { try { localStorage.setItem('tt-tipname', n); } catch {} },
+};
+
+/* ---------- Sanfte Aktualisierung ----------
+   Ersetzt den Inhalt eines Containers und
+   - behält horizontale Scrollpositionen (Turnierbaum) bei,
+   - lässt Elemente mit gleichem data-key von ihrer alten an die neue Stelle gleiten (FLIP),
+   - markiert Elemente, deren data-val sich geändert hat, mit .bump (kurzer Puls). */
+const prefersReduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function morph(el, html) {
+  const scrolls = [...el.querySelectorAll('.scroll')].map((x) => x.scrollLeft);
+  const before = new Map();
+  const vals = new Map();
+  el.querySelectorAll('[data-key]').forEach((n) => { before.set(n.dataset.key, n.getBoundingClientRect()); });
+  el.querySelectorAll('[data-val]').forEach((n) => vals.set(n.dataset.vkey || '', n.dataset.val));
+  el.innerHTML = html;
+  el.querySelectorAll('.scroll').forEach((x, i) => { if (scrolls[i]) x.scrollLeft = scrolls[i]; });
+  if (prefersReduced()) return;
+  el.querySelectorAll('[data-key]').forEach((n) => {
+    const old = before.get(n.dataset.key);
+    if (!old) return;
+    const now = n.getBoundingClientRect();
+    const dy = old.top - now.top, dx = old.left - now.left;
+    if (Math.abs(dy) < 2 && Math.abs(dx) < 2) return;
+    n.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+  });
+  el.querySelectorAll('[data-val]').forEach((n) => {
+    const k = n.dataset.vkey || '';
+    if (vals.has(k) && vals.get(k) !== n.dataset.val) {
+      n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump');
+    }
+  });
+}
+
+/* ---------- Turnierbaum: Verbindungslinien ----------
+   Zeichnet pro Baum ein SVG hinter die Spiele: von jedem Spiel zu seinem Folgespiel.
+   Linien von entschiedenen Spielen sind rot (Weg des Siegers). */
+function drawConnectors(root) {
+  (root || document).querySelectorAll('.bracket').forEach((br) => {
+    br.querySelector(':scope > svg.links')?.remove();
+    const box = br.getBoundingClientRect();
+    const W = br.scrollWidth, H = br.scrollHeight;
+    const byId = {};
+    br.querySelectorAll('.bmatch[data-mid]').forEach((n) => (byId[n.dataset.mid] = n));
+    let paths = '';
+    for (const n of Object.values(byId)) {
+      const to = byId[n.dataset.next];
+      if (!to) continue;
+      const a = n.getBoundingClientRect(), b = to.getBoundingClientRect();
+      const x1 = a.right - box.left + br.scrollLeft, y1 = a.top + a.height / 2 - box.top + br.scrollTop;
+      const x2 = b.left - box.left + br.scrollLeft, y2 = b.top + b.height / 2 - box.top + br.scrollTop;
+      const mx = x1 + (x2 - x1) / 2;
+      paths += `<path d="M${x1} ${y1}H${mx}V${y2}H${x2}" class="${n.dataset.w ? 'won' : ''}" ${n.dataset.w ? `data-w="${n.dataset.w}"` : ''}/>`;
+    }
+    if (!paths) return;
+    br.insertAdjacentHTML('afterbegin', `<svg class="links" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${paths}</svg>`);
+  });
 }

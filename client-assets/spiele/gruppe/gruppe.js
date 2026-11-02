@@ -1,5 +1,5 @@
 /**
- * Gruppenspiele: „Wer würde eher …?“ und Stadt-Land-Fluss.
+ * Gruppenspiele: „Wer würde eher …?“, Stadt-Land-Fluss und Kniffel.
  *   /spiele/gruppe/            Start: Spiel wählen oder mit Code beitreten
  *   /spiele/gruppe/#host=CODE  Bildschirm/Spielleitung (Fernseher oder Laptop)
  *   /spiele/gruppe/?room=CODE  Handy einer mitspielenden Person
@@ -19,6 +19,26 @@
   const av = (p, cls = '') => `<span class="gp-av ${cls}" style="--c:${colorFor(p.name)}">${esc(initials(p.name))}</span>`;
   const normCode = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
   const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ICON = { wwe: '🫵', slf: '🔤', kniffel: '🎲' };
+
+  /* ---------- Kniffel-Würfel ---------- */
+  const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+  const die = (v, { held = false, roll = false, i = 0, btn = false, dis = false } = {}) => {
+    const pips = Array.from({ length: 9 }, (_, k) => `<i class="${PIPS[v].includes(k) ? 'on' : ''}"></i>`).join('');
+    const cls = `kn-die ${held ? 'held' : ''} ${roll ? 'roll' : ''}`;
+    const st = roll ? ` style="--d:${(i * 0.06).toFixed(2)}s; --r:${(Math.random() * 60 - 30).toFixed(0)}deg"` : '';
+    return btn
+      ? `<button class="${cls}" data-hold="${i}" ${dis ? 'disabled' : ''} aria-pressed="${held}" aria-label="Würfel ${v}${held ? ', gehalten' : ''}"${st}>${pips}</button>`
+      : `<span class="${cls}" role="img" aria-label="Würfel ${v}${held ? ', gehalten' : ''}"${st}>${pips}</span>`;
+  };
+  // Würfel nur animieren, wenn wirklich neu geworfen wurde
+  function knDice(kn, btn, canHold) {
+    const rolled = kn.rollId !== G.knRoll;
+    G.knRoll = kn.rollId;
+    const first = kn.rollsLeft === 3;
+    return `<div class="kn-dice ${first ? 'idle' : ''}">${kn.dice.map((v, i) => die(v, { held: kn.held[i], roll: rolled && !kn.held[i] && !first && !reduced(), i, btn, dis: !canHold })).join('')}</div>`;
+  }
+  const rollDots = (kn) => `<span class="kn-rolls" aria-label="Noch ${kn.rollsLeft} Würfe">${[0, 1, 2].map((k) => `<i class="${k < kn.rollsLeft ? 'on' : ''}"></i>`).join('')}</span>`;
 
   function toast(msg) {
     let t = document.getElementById('gpToast');
@@ -96,6 +116,12 @@
           <h2>Stadt-Land-Fluss</h2>
           <p>Der Bildschirm würfelt einen Buchstaben, alle schreiben am Handy. Gleiche Antworten geben weniger Punkte, Unsinn wird gemeinsam rausgewählt.</p>
           <button data-create="slf">Raum eröffnen</button>
+        </article>
+        <article class="gp-game kn" data-tilt>
+          <span class="gp-icon">🎲</span>
+          <h2>Kniffel</h2>
+          <p>Wer dran ist, würfelt am eigenen Handy, hält Würfel fest und trägt ein. Der Bildschirm zeigt die Würfel groß und den Block aller.</p>
+          <button data-create="kniffel">Raum eröffnen</button>
         </article>
       </div>
       <form class="panel gp-join" id="joinForm">
@@ -179,7 +205,7 @@
     const key = `${s.phase}-${s.round}`;
     const fresh = key !== G.lastPhaseKey;
     G.lastPhaseKey = key;
-    const head = `<header class="gp-bar"><span class="t">${s.game === 'wwe' ? '🫵' : '🔤'} ${esc(s.gameName)}</span>${s.round ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
+    const head = `<header class="gp-bar"><span class="t">${ICON[s.game] || ''} ${esc(s.gameName)}</span>${s.round ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
     let body = '';
     let foot = '';
     if (s.phase === 'LOBBY') {
@@ -210,6 +236,36 @@
         const a = s.awards;
         body = `<div class="gp-end"><h2>Die Titel des Abends</h2>${podium(a.players)}
           <ol class="wwe-hist">${a.history.map((h) => `<li><span>Wer würde eher ${esc(h.q.replace(/^… ?/, ''))}</span><b>${h.winners.length ? h.winners.map(esc).join(' & ') : '–'}</b></li>`).join('')}</ol></div>`;
+        foot = `<button data-host="restart">Nochmal spielen</button>`;
+      }
+    } else if (s.game === 'kniffel') {
+      if (s.phase === 'PLAYING') {
+        const kn = s.kn;
+        const byId = Object.fromEntries(s.players.map((p) => [p.id, p]));
+        const cur = byId[kn.current] || { name: '?' };
+        const order = kn.order.filter((id) => byId[id]);
+        const lastP = kn.last && byId[kn.last.player];
+        const lastCat = kn.last && s.cats.find((c) => c.key === kn.last.key);
+        body = `<div class="kn-host">
+          <section class="kn-turn">
+            <p class="kn-who">${av(cur)} <b>${esc(cur.name)}</b> ist dran ${rollDots(kn)}</p>
+            ${knDice(kn, false, false)}
+            <p class="kn-last" aria-live="polite">${lastP ? `${esc(lastP.name)} trägt <b>${kn.last.points}</b> bei ${esc(lastCat?.name || '')} ein` : kn.rollsLeft === 3 ? 'Am Handy auf „Würfeln“ tippen' : `Noch ${kn.rollsLeft} ${kn.rollsLeft === 1 ? 'Wurf' : 'Würfe'}`}</p>
+          </section>
+          <div class="kn-sheet-wrap"><table class="kn-sheet"><thead><tr><th></th>${order.map((id) => `<th class="${id === kn.current ? 'cur' : ''}">${av(byId[id])}<span>${esc(byId[id].name)}</span></th>`).join('')}</tr></thead><tbody>
+            ${s.cats.map((c, ci) => `${ci === 6 ? `<tr class="sub"><th>Oben + Bonus</th>${order.map((id) => { const t = kn.totals[id]; return `<td class="${id === kn.current ? 'cur' : ''}">${t.upper}${t.bonus ? ' <em>+35</em>' : ` <small>/63</small>`}</td>`; }).join('')}</tr>` : ''}<tr><th>${esc(c.name)}</th>${order.map((id) => {
+              const v = kn.sheets[id]?.[c.key];
+              const isCur = id === kn.current;
+              const fresh2 = kn.last && kn.last.player === id && kn.last.key === c.key;
+              if (v != null) return `<td class="${isCur ? 'cur' : ''} ${fresh2 ? 'just' : ''} ${v === 0 ? 'zero' : ''}">${v}</td>`;
+              const opt = isCur ? kn.options[c.key] : undefined;
+              return `<td class="${isCur ? 'cur' : ''} open">${opt !== undefined ? `<span class="opt ${opt ? '' : 'z'}">${opt}</span>` : ''}</td>`;
+            }).join('')}</tr>`).join('')}
+            <tr class="total"><th>Gesamt</th>${order.map((id) => `<td class="${id === kn.current ? 'cur' : ''}">${kn.totals[id].total}</td>`).join('')}</tr>
+          </tbody></table></div></div>`;
+        foot = `<button class="ghost" data-host="next" title="Trägt für die Person den besten freien Wert ein">Zug überspringen</button>`;
+      } else if (s.phase === 'END') {
+        body = `<div class="gp-end"><h2>Endstand</h2>${podium([...s.players].sort((a, b) => b.score - a.score).map((p) => ({ name: p.name, score: p.score })))}</div>`;
         foot = `<button data-host="restart">Nochmal spielen</button>`;
       }
     } else {
@@ -246,6 +302,7 @@
     runTimer();
     if (s.phase === 'END' && fresh && window.VH) setTimeout(() => VH.confetti(), 600);
     if (s.phase === 'RESULT' && fresh && s.result.winners.length && window.VH) setTimeout(() => VH.confetti({ count: 50 }), 500);
+    if (s.game === 'kniffel' && s.kn?.last && s.kn.last.key === 'kniffel' && s.kn.last.points === 50 && G.knParty !== s.kn.rollId && window.VH) { G.knParty = s.kn.rollId; VH.confetti({ count: 80 }); }
   }
 
   function podium(list) {
@@ -255,6 +312,7 @@
   }
 
   function settingsHtml(s) {
+    if (s.game === 'kniffel') return `<p class="muted center">13 Runden, alle Felder einmal. Wer dran ist, würfelt am Handy bis zu drei Mal.</p>`;
     if (s.game === 'wwe') {
       return `<form class="gp-settings" id="setForm"><label>Fragen <input type="number" name="rounds" min="3" max="30" value="${s.settings.rounds}"></label>
         <label>Sekunden pro Frage <input type="number" name="seconds" min="10" max="90" value="${s.settings.seconds}"></label></form>`;
@@ -334,6 +392,36 @@
       } else {
         body = endPhone(s.awards.players);
       }
+    } else if (s.game === 'kniffel') {
+      if (s.phase === 'PLAYING') {
+        const kn = s.kn;
+        const mine = kn.current === s.me.id;
+        const sheet = kn.sheets[s.me.id] || {};
+        const tot = kn.totals[s.me.id] || { total: 0, upper: 0, bonus: 0 };
+        if (mine) {
+          const canHold = kn.rollsLeft > 0 && kn.rollsLeft < 3;
+          const opts = kn.options;
+          const best = Math.max(0, ...Object.values(opts));
+          body = `<p class="kick">Du bist dran ${rollDots(kn)}</p>
+            ${knDice(kn, true, canHold)}
+            <p class="muted small center">${kn.rollsLeft === 3 ? 'Los geht’s: würfeln!' : canHold ? `Tippe Würfel an, um sie festzuhalten. Noch ${kn.rollsLeft} ${kn.rollsLeft === 1 ? 'Wurf' : 'Würfe'}.` : 'Keine Würfe mehr – trag ein Ergebnis ein.'}</p>
+            <button class="big kn-roll" data-roll ${kn.rollsLeft ? '' : 'disabled'}>🎲 Würfeln</button>
+            <div class="kn-opts">${s.cats.map((c) => {
+              const v = sheet[c.key];
+              if (v != null) return `<div class="kn-opt done"><span>${esc(c.name)}</span><b>${v}</b></div>`;
+              const o = opts[c.key];
+              return `<button class="kn-opt ${o !== undefined && o === best && best > 0 ? 'best' : ''} ${o === 0 ? 'zero' : ''}" data-score="${c.key}" ${o === undefined ? 'disabled' : ''}><span>${esc(c.name)}</span><b>${o !== undefined ? o : ''}</b></button>`;
+            }).join('')}</div>
+            <p class="muted small center">Oben ${tot.upper}/63${tot.bonus ? ' ✓ Bonus' : ''} · Gesamt ${tot.total}</p>`;
+        } else {
+          const cur = s.players.find((p) => p.id === kn.current) || { name: '?' };
+          body = `<div class="gp-wait"><p class="kick">${av(cur)} ${esc(cur.name)} ist dran ${rollDots(kn)}</p>${knDice(kn, false, false)}
+            <p class="big">${tot.total} Punkte</p><p class="muted">Oben ${tot.upper}/63${tot.bonus ? ' ✓ Bonus' : ''} · Runde ${s.round} von 13</p>
+            <div class="kn-opts mini">${s.cats.map((c) => `<div class="kn-opt ${sheet[c.key] != null ? 'done' : ''}"><span>${esc(c.name)}</span><b>${sheet[c.key] ?? ''}</b></div>`).join('')}</div></div>`;
+        }
+      } else {
+        body = endPhone([...s.players].sort((a, b) => b.score - a.score));
+      }
     } else {
       if (s.phase === 'WRITING') {
         const vals = s.myAnswers || {};
@@ -399,6 +487,25 @@
         await act('stop');
       };
     }
+    app.querySelectorAll('[data-hold]').forEach((b) => (b.onclick = () => {
+      b.classList.toggle('held');
+      if (navigator.vibrate) try { navigator.vibrate(15); } catch {}
+      act('hold', { index: +b.dataset.hold });
+    }));
+    const rb = app.querySelector('[data-roll]');
+    if (rb) rb.onclick = async () => {
+      rb.disabled = true;
+      app.querySelectorAll('.kn-die:not(.held)').forEach((d) => d.classList.add('shake'));
+      if (navigator.vibrate) try { navigator.vibrate([20, 40, 20]); } catch {}
+      const r = await act('roll');
+      if (!r.ok) rb.disabled = false;
+    };
+    app.querySelectorAll('[data-score]').forEach((b) => (b.onclick = async () => {
+      app.querySelectorAll('[data-score]').forEach((x) => (x.disabled = true));
+      b.classList.add('chosen');
+      const r = await act('score', { key: b.dataset.score });
+      if (!r.ok) app.querySelectorAll('[data-score]').forEach((x) => (x.disabled = false));
+    }));
     app.querySelectorAll('[data-flag]').forEach((b) => (b.onclick = () => act('flag', { playerId: b.dataset.flag, cat: b.dataset.cat })));
   }
 

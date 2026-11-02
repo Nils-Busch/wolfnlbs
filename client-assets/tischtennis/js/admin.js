@@ -122,6 +122,7 @@ async function tournamentView() {
     ${renderTabs(tabs, S.tab)}
     <div class="tab-body">${body}</div>`);
   app.querySelectorAll('form.fbform').forEach(syncScorerFields);
+  drawConnectors(app);
 }
 
 function setInputs(m, bestOf) {
@@ -151,6 +152,7 @@ function adminMatches(d) {
       <div class="am-players"><span class="${m.winner_id && m.winner_id === m.player1_id ? 'win' : ''}">${playerLabel(P[m.player1_id])}</span>
         <span class="m-score">${setScore(m) || 'gegen'}</span>
         <span class="right ${m.winner_id && m.winner_id === m.player2_id ? 'win' : ''}">${playerLabel(P[m.player2_id])}</span></div>
+      ${enter && ready && m.status === 'pending' ? livePanel(m, fb) : ''}
       ${edit ? `<form class="setform${fb ? ' fbform' : ''}" data-form="result" data-id="${m.id}">${fb ? footballInputs(m, P) : setInputs(m, d.tournament.best_of)}
           <button class="primary">Ergebnis speichern</button>${m.status === 'done' ? '<button type="button" class="link" data-action="cancel-edit" data-id="' + m.id + '">Abbrechen</button>' : ''}</form>`
       : m.status === 'done' ? `<div class="am-done"><span class="m-sets">${[setDetail(m), scorerLine(m)].filter(Boolean).join(' · ')}</span>
@@ -164,6 +166,61 @@ function adminMatches(d) {
     <p class="hint">${fb
       ? 'Tore von links nach rechts eintragen, z. B. 3:1. Für jedes Tor erscheint ein Feld für den Torschützen (optional, Vorschläge aus dem Kader). Unentschieden in der K.-o.-Runde: zusätzlich das Elfmeterschießen eintragen.'
       : 'Ergebnis von links nach rechts eintragen, z.B. 11:7. Leere Sätze werden ignoriert. Ein Satz endet bei 11 Punkten mit 2 Punkten Abstand – bei 10:10 geht es auf Entscheidung (Stechen) weiter.'}</p>`;
+}
+
+/* ---------- Liveticker: Zwischenstand während des Spiels ---------- */
+S.live = {};
+function livePanel(m, fb) {
+  if (!m.live) return `<div class="livepanel off"><button class="small" data-action="live-start" data-id="${m.id}">▶ Live schalten</button><span class="hint">Zeigt den Spielstand in Besucher- und Liveansicht.</span></div>`;
+  const sets = S.live[m.id] || (S.live[m.id] = m.live.sets.map(x => x.slice()));
+  const cur = sets[sets.length - 1];
+  const done = sets.slice(0, -1);
+  const side = i => `<div class="lv-side"><button type="button" class="lv-btn" data-lv="${i}-" aria-label="Punkt abziehen">−</button><b class="lv-n" data-lvn="${i}">${cur[i]}</b><button type="button" class="lv-btn plus" data-lv="${i}+" aria-label="Punkt dazu">+</button></div>`;
+  return `<div class="livepanel" data-live="${m.id}">
+    <div class="lv-head"><span class="livetag">Live</span>${fb ? 'Tore' : `<span data-lvset>${sets.length}. Satz</span>${done.length ? ` <span class="hint" data-lvdone>(${done.map(x => x.join(':')).join(', ')})</span>` : '<span class="hint" data-lvdone></span>'}`}</div>
+    <div class="lv-score">${side(0)}<span class="lv-colon">:</span>${side(1)}</div>
+    <div class="lv-actions">${fb ? '' : `<button type="button" class="small" data-lv="set">Satz abschließen</button>`}
+      <button type="button" class="small" data-action="live-fill" data-id="${m.id}">In Ergebnis übernehmen</button>
+      <button type="button" class="link danger" data-action="live-stop" data-id="${m.id}">Live beenden</button></div>
+  </div>`;
+}
+function liveClick(btn) {
+  const panel = btn.closest('[data-live]');
+  const id = Number(panel.dataset.live);
+  const sets = S.live[id];
+  if (!sets) return;
+  const op = btn.dataset.lv;
+  const cur = sets[sets.length - 1];
+  if (op === 'set') {
+    if (cur[0] === cur[1]) return toast('Ein Satz kann nicht unentschieden enden.', true);
+    if (sets.length >= S.data.tournament.best_of) return toast('Alle Sätze sind gespielt – jetzt das Ergebnis übernehmen.', true);
+    sets.push([0, 0]);
+    panel.querySelector('[data-lvset]').textContent = `${sets.length}. Satz`;
+    panel.querySelector('[data-lvdone]').textContent = `(${sets.slice(0, -1).map(x => x.join(':')).join(', ')})`;
+  } else {
+    const i = Number(op[0]);
+    cur[i] = Math.max(0, Math.min(99, cur[i] + (op[1] === '+' ? 1 : -1)));
+  }
+  const last = sets[sets.length - 1];
+  panel.querySelectorAll('[data-lvn]').forEach(n => {
+    const v = last[Number(n.dataset.lvn)];
+    if (n.textContent !== String(v)) { n.textContent = v; n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
+  });
+  clearTimeout(liveClick.t);
+  liveClick.t = setTimeout(() => api(`/api/matches/${id}/live`, { method: 'POST', body: { sets } }).catch(e => toast(e.message, true)), 350);
+}
+function liveFill(id) {
+  const sets = S.live[id];
+  const f = app.querySelector(`form[data-form="result"][data-id="${id}"]`);
+  if (!sets || !f) return;
+  if (isFb(S.data)) {
+    f.g1.value = sets[0][0]; f.g2.value = sets[0][1];
+    syncScorerFields(f);
+  } else {
+    sets.filter(x => x[0] !== x[1] || x[0] > 0).forEach((x, i) => { if (f['a' + i]) { f['a' + i].value = x[0]; f['b' + i].value = x[1]; } });
+  }
+  f.querySelector('button.primary')?.focus();
+  toast('Spielstand eingetragen – bitte prüfen und speichern.');
 }
 
 /* ---------- Fußball: Tore, Elfmeter, Torschützen ---------- */
@@ -351,6 +408,8 @@ app.addEventListener('submit', e => {
 });
 
 app.addEventListener('click', e => {
+  const lv = e.target.closest('[data-lv]');
+  if (lv) return liveClick(lv);
   const tab = e.target.closest('[data-tab]');
   if (tab) { S.tab = tab.dataset.tab; return render(); }
   const el = e.target.closest('[data-action]');
@@ -371,6 +430,9 @@ app.addEventListener('click', e => {
       run(async () => { await api(`/api/tournaments/${S.tid}`, { method: 'DELETE' }); S.view = 'list'; }, 'Turnier gelöscht.'),
     'del-player': () => run(() => api(`/api/players/${id}`, { method: 'DELETE' }), 'Teilnehmer entfernt.'),
     'edit-result': () => { S.editing.add(Number(id)); render(); },
+    'live-start': () => run(async () => { delete S.live[id]; await api(`/api/matches/${id}/live`, { method: 'POST', body: { sets: [[0, 0]] } }); }, 'Spiel ist live.'),
+    'live-stop': () => confirm('Liveticker für dieses Spiel beenden? Der Zwischenstand verschwindet.') && run(async () => { delete S.live[id]; await api(`/api/matches/${id}/live`, { method: 'DELETE' }); }, 'Liveticker beendet.'),
+    'live-fill': () => liveFill(Number(id)),
     'cancel-edit': () => { S.editing.delete(Number(id)); render(); },
     'clear-result': () => confirm('Ergebnis löschen?') && run(() => api(`/api/matches/${id}/result`, { method: 'DELETE' }), 'Ergebnis gelöscht.'),
     'visitor-qr': async () => {

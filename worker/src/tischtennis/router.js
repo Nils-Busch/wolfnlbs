@@ -57,8 +57,40 @@ async function loadTournament(env, id) {
   const lbNames = {};
   lbMatches.forEach((m) => { lbNames[m.round] = m.round === lbLastRound ? "Verliererbaum-Finale" : `Verliererbaum Runde ${m.round}`; });
   const roundNames = { wb: wbNames, lb: lbNames, gf: { 1: "Finale", 2: "Entscheidungsspiel" } };
-  return { tournament: t, players, matches, standings, koRoundNames: roundNames, scorers: football ? L.topScorers(matches) : null };
+  const tips = await tipSummary(env, id, matches);
+  return { tournament: t, players, matches, standings, koRoundNames: roundNames, scorers: football ? L.topScorers(matches) : null, tips };
 }
+
+/* ---------- Tippspiel ---------- */
+// Pro Spiel: wie viele auf Seite 1 / Unentschieden / Seite 2 getippt haben.
+// Bestenliste: richtige Tipps je Gerät (Name = zuletzt benutzter Name), ohne Geräte-IDs.
+async function tipSummary(env, tid, matches) {
+  const rows = (await env.DB.prepare("SELECT match_id, device, name, pick, created_at FROM tips WHERE tournament_id = ?").bind(tid).all()).results;
+  const counts = {};
+  const people = new Map();
+  const byId = Object.fromEntries(matches.map((m) => [m.id, m]));
+  for (const r of rows) {
+    const c = (counts[r.match_id] ||= [0, 0, 0]);
+    c[r.pick === 1 ? 0 : r.pick === 0 ? 1 : 2]++;
+    const m = byId[r.match_id];
+    const p = people.get(r.device) || { name: r.name, at: 0, correct: 0, settled: 0, total: 0 };
+    if (r.created_at >= p.at) { p.name = r.name; p.at = r.created_at; }
+    p.total++;
+    if (m && m.status === "done") {
+      p.settled++;
+      const win = m.winner_id == null ? 0 : m.winner_id === m.player1_id ? 1 : 2;
+      if (win === r.pick) p.correct++;
+    }
+    people.set(r.device, p);
+  }
+  const board = [...people.values()]
+    .filter((p) => p.settled > 0)
+    .sort((a, b) => b.correct - a.correct || a.settled - b.settled || a.name.localeCompare(b.name, "de"))
+    .slice(0, 25)
+    .map(({ name, correct, settled, total }) => ({ name, correct, settled, total }));
+  return { counts, board, people: people.size };
+}
+const DEVICE_RE = /^[A-Za-z0-9_-]{16,48}$/;
 
 function tournamentFields(b, t = {}) {
   const out = {
@@ -445,6 +477,7 @@ export async function handleTischtennisApi(request, env, path) {
       const t = await env.DB.prepare("SELECT id FROM tournaments WHERE id = ?").bind(id).first();
       if (!t) fail(404, "Turnier nicht gefunden.");
       await env.DB.prepare("UPDATE tournaments SET status = 'draft' WHERE id = ?").bind(id).run();
+      await env.DB.prepare("DELETE FROM tips WHERE tournament_id = ?").bind(id).run();
       await env.DB.prepare("DELETE FROM matches WHERE tournament_id = ?").bind(id).run();
       await env.DB.prepare("UPDATE players SET group_no = NULL WHERE tournament_id = ?").bind(id).run();
       return securityHeaders(json({ ok: true }));
@@ -555,7 +588,7 @@ export async function handleTischtennisApi(request, env, path) {
       }
       const winner = winnerSide === 1 ? mm.player1_id : winnerSide === 2 ? mm.player2_id : null;
       const loser = winnerSide === 1 ? mm.player2_id : winnerSide === 2 ? mm.player1_id : null;
-      await env.DB.prepare("UPDATE matches SET sets=?, extra=?, winner_id=?, status='done', updated_at=? WHERE id=?")
+      await env.DB.prepare("UPDATE matches SET sets=?, extra=?, winner_id=?, status='done', live=NULL, updated_at=? WHERE id=?")
         .bind(JSON.stringify(sets), JSON.stringify(extra), winner, Date.now(), id).run();
       if (winner) {
         await placeWinner(env, mm, winner);
@@ -570,7 +603,7 @@ export async function handleTischtennisApi(request, env, path) {
       requirePerm("results.enter");
       const id = intId(m[1]);
       const mm = await lockMatch(env, id);
-      await env.DB.prepare("UPDATE matches SET sets='[]', extra='{}', winner_id=NULL, status='pending', updated_at=? WHERE id=?").bind(Date.now(), id).run();
+      await env.DB.prepare("UPDATE matches SET sets='[]', extra='{}', winner_id=NULL, status='pending', live=NULL, updated_at=? WHERE id=?").bind(Date.now(), id).run();
       if (mm.status === "done") {
         await placeWinner(env, mm, null);
         await placeLoser(env, mm, null);
@@ -578,6 +611,67 @@ export async function handleTischtennisApi(request, env, path) {
       }
       await updateStatus(env, mm.tournament_id);
       return securityHeaders(json({ ok: true }));
+    }
+
+    /* ---------- Liveticker ---------- */
+    if ((m = path.match(/^\/matches\/(\d+)\/live$/)) && method === "POST") {
+      requirePerm("results.enter");
+      const id = intId(m[1]);
+      const mm = await env.DB.prepare("SELECT m.*, t.status AS t_status, t.best_of FROM matches m JOIN tournaments t ON t.id = m.tournament_id WHERE m.id = ?").bind(id).first();
+      if (!mm) fail(404, "Spiel nicht gefunden.");
+      if (mm.t_status !== "running") fail(409, "Das Turnier läuft gerade nicht.");
+      if (mm.status !== "pending" || !mm.player1_id || !mm.player2_id) fail(409, "Nur offene Spiele mit feststehender Paarung können live laufen.");
+      const b = await readBody();
+      const sets = Array.isArray(b.sets) && b.sets.length ? b.sets : [[0, 0]];
+      if (sets.length > Math.max(1, mm.best_of)) fail(400, "Zu viele Sätze.");
+      const clean = sets.map((x) => {
+        if (!Array.isArray(x) || x.length !== 2) fail(400, "Ungültiger Spielstand.");
+        return x.map((n) => {
+          const v = Number(n);
+          if (!Number.isInteger(v) || v < 0 || v > 99) fail(400, "Spielstand 0–99.");
+          return v;
+        });
+      });
+      const prev = mm.live ? JSON.parse(mm.live) : null;
+      const live = { sets: clean, since: prev?.since || Date.now() };
+      await env.DB.prepare("UPDATE matches SET live = ?, updated_at = ? WHERE id = ?").bind(JSON.stringify(live), Date.now(), id).run();
+      return securityHeaders(json({ ok: true, live }));
+    }
+    if ((m = path.match(/^\/matches\/(\d+)\/live$/)) && method === "DELETE") {
+      requirePerm("results.enter");
+      const id = intId(m[1]);
+      const res = await env.DB.prepare("UPDATE matches SET live = NULL, updated_at = ? WHERE id = ?").bind(Date.now(), id).run();
+      if (!res.meta.changes) fail(404, "Spiel nicht gefunden.");
+      return securityHeaders(json({ ok: true }));
+    }
+
+    /* ---------- Tippspiel (öffentlich, ohne Anmeldung) ---------- */
+    if ((m = path.match(/^\/matches\/(\d+)\/tip$/)) && method === "POST") {
+      const id = intId(m[1]);
+      const b = await readBody();
+      const device = String(b.device || "");
+      if (!DEVICE_RE.test(device)) fail(400, "Ungültige Geräte-Kennung.");
+      const name = str(b.name, 24);
+      if (!name) fail(400, "Bitte einen Namen für die Tipp-Tabelle angeben.");
+      const pick = Number(b.pick);
+      const mm = await env.DB.prepare("SELECT m.*, t.status AS t_status, t.sport FROM matches m JOIN tournaments t ON t.id = m.tournament_id WHERE m.id = ?").bind(id).first();
+      if (!mm) fail(404, "Spiel nicht gefunden.");
+      const drawOk = mm.sport === "football" && mm.phase === "group";
+      if (!(pick === 1 || pick === 2 || (pick === 0 && drawOk))) fail(400, "Ungültiger Tipp.");
+      if (mm.t_status !== "running" || mm.status !== "pending" || !mm.player1_id || !mm.player2_id) fail(409, "Auf dieses Spiel kann man nicht (mehr) tippen.");
+      if (mm.live) fail(409, "Das Spiel läuft schon – Tipps sind geschlossen.");
+      await env.DB.prepare(
+        `INSERT INTO tips (match_id, tournament_id, device, name, pick, created_at) VALUES (?,?,?,?,?,?)
+         ON CONFLICT(match_id, device) DO UPDATE SET pick = excluded.pick, name = excluded.name, created_at = excluded.created_at`
+      ).bind(id, mm.tournament_id, device, name, pick, Date.now()).run();
+      return securityHeaders(json({ ok: true }));
+    }
+    if ((m = path.match(/^\/tournaments\/(\d+)\/tips$/)) && method === "GET") {
+      const id = intId(m[1]);
+      const device = new URL(request.url).searchParams.get("device") || "";
+      if (!DEVICE_RE.test(device)) return securityHeaders(json({ picks: {} }));
+      const rows = (await env.DB.prepare("SELECT match_id, pick FROM tips WHERE tournament_id = ? AND device = ?").bind(id, device).all()).results;
+      return securityHeaders(json({ picks: Object.fromEntries(rows.map((r) => [r.match_id, r.pick])) }));
     }
 
     if ((m = path.match(/^\/matches\/(\d+)$/)) && method === "PATCH") {

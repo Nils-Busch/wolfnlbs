@@ -573,6 +573,7 @@ export class Room {
         urwolfAvailable: this.urwolfAvailable(),
       });
     }
+    this.emitNarrator();
   }
 
   resolveWolfVote(isTimeout) {
@@ -1003,6 +1004,47 @@ export class Room {
 
   broadcastState() {
     this.transport.broadcast("state", this.toPublicState());
+    this.emitNarrator();
+  }
+
+  // Erzähler (Spielleitung ohne Rolle) sehen alles, was gerade passiert
+  emitNarrator() {
+    if (this.phase === PHASES.LOBBY) return;
+    const narrators = this.playersArray.filter((p) => p.isNarrator);
+    if (!narrators.length) return;
+    const info = this.narratorInfo();
+    for (const n of narrators) this.emitTo(n, "narratorInfo", info);
+  }
+
+  // Alles, was die Spielleitung wissen muss – bewusst nur an Erzähler.
+  narratorInfo() {
+    const name = (id) => (id ? this.players.get(id)?.name || null : null);
+    const n = this.night;
+    const playing = this.playersArray.filter((p) => !p.isNarrator);
+    return {
+      phase: this.phase,
+      day: this.day,
+      players: playing.map((p) => ({
+        id: p.id,
+        name: p.name,
+        alive: p.alive,
+        connected: p.connected,
+        role: p.role,
+        roleInfo: roleInfoOf(p),
+        lover: !!(this.lovers && this.lovers.includes(p.id)),
+        mayor: p.id === this.mayorId,
+      })),
+      wolfVotes: [...n.wolfVotes.entries()].map(([v, t]) => ({ voter: name(v), target: name(t) })),
+      victim: name(n.victimId),
+      converted: name(n.convertedId),
+      seer: n.seerTarget ? { target: name(n.seerTarget), role: roleInfoOf(this.players.get(n.seerTarget))?.name || null } : null,
+      witch: { saved: name(n.savedId), poisoned: name(n.poisonedId), done: n.witchDone, saveUsed: this.witchSaveUsed, poisonUsed: this.witchPoisonUsed },
+      lovers: this.lovers ? this.lovers.map(name) : null,
+      urwolfUsed: this.urwolfUsed,
+      dayVotes: [...this.dayVotes.entries()].map(([v, t]) => ({ voter: name(v), target: name(t) })),
+      mayorVotes: [...this.mayorVotes.entries()].map(([v, t]) => ({ voter: name(v), target: name(t) })),
+      hunter: this.pendingHunterQueue.length ? name(this.pendingHunterQueue[0]) : null,
+    };
   }
 
   // ---------- Speichern / Laden (Durable Object Storage) ----------

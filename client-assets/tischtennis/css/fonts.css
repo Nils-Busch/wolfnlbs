@@ -1,0 +1,17 @@
+/* Turnierschriften selbst gehostet (keine Anfragen an Google, DSGVO).
+   Roboto Condensed und Open Sans als variable Schriften, Lizenz: SIL OFL 1.1
+   (siehe /shared/fonts/OFL-*.txt). */
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/shared/fonts/roboto-condensed.woff2") format("woff2-variations"), url("/shared/fonts/roboto-condensed.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("/shared/fonts/open-sans.woff2") format("woff2-variations"), url("/shared/fonts/open-sans.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}

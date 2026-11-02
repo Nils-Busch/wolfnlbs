@@ -2,7 +2,9 @@
 
 Eine gemeinsame Seite für die Party- und Vereins-Apps:
 
-- **🐺 Was für Wölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy
+- **🐺 Was für Wölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy. Mit Rollen-Vorlagen
+  (Einsteiger, Klassisch, Liebesdrama, Chaos) und einer **Erzähleransicht**: Wer „Ich leite nur“
+  ankreuzt, sieht Vorlesetexte für jede Phase, alle Rollen (verdeckbar) und was nachts passiert.
 - **❓ Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
 - **🎮 Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores, **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**)
 - **🧩 Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections** und **Nonogramm**, dazu eine **ewige Bestenliste**
@@ -22,7 +24,7 @@ client-assets/          Alles, was der Browser direkt lädt (HTML/CSS/JS)
   quiz/                    Quiz-Übersicht + Editor, Bildschirm (screen), Handy (play)
   spiele/                  Spielegalerie (inkl. games/wordle.html), js/ai.js = Computergegner
   raetsel/                 Tagesrätsel: Übersicht, Städteraten, Connections, Nonogramm, ewige Bestenliste
-  spiele/gruppe/           Gruppenspiele mit Bildschirm + Handys (Wer würde eher, Stadt-Land-Fluss)
+  spiele/gruppe/           Gruppenspiele mit Bildschirm + Handys (Wer würde eher, Stadt-Land-Fluss, Kniffel)
   tischtennis/             Turniere (Tischtennis + Fußball): Besucheransicht, Turnierleitung, Liveansicht
   woelfe/                  Gebaute Werwolf-Oberfläche (entsteht automatisch beim Deploy)
 clients/woelfe-src/     Quellcode der Werwolf-Oberfläche (React), wird vorm Deploy gebaut
@@ -95,6 +97,10 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
     „Stopp!“ verkürzt auf 10 Sekunden. Antworten mit falschem Anfangsbuchstaben zählen
     automatisch nicht, Unsinn wird am Handy angezweifelt (ab der Hälfte der Stimmen ungültig).
     Punkte: 20 als Einzige, 10 eigene Idee, 5 doppelt.
+  - **Kniffel** – reihum würfelt die Person, die dran ist, am eigenen Handy (bis zu drei Würfe,
+    Würfel antippen = festhalten) und trägt in eines der 13 Felder ein. Der Bildschirm zeigt die
+    Würfel groß und den Block aller. Bonus 35 ab 63 Punkten oben. „Zug überspringen“ trägt für
+    abwesende Personen den besten freien Wert ein.
   - Läuft im Durable Object `PartyRoom` (Migration `v3` in wrangler.jsonc).
 
 ## Tagesrätsel
@@ -152,6 +158,20 @@ Beim Anlegen eines Turniers wählt man die **Sportart**. Die Adresse bleibt
   mit Vorschlägen aus dem Kader. „Max“ zweimal eintragen = zwei Tore von Max.
 - Bestehende Turniere sind automatisch Tischtennis-Turniere.
 
+### Liveticker, Tippspiel, Spielerprofile
+
+- **Liveticker**: In der Turnierleitung bei einem offenen Spiel auf „▶ Live schalten“ – dann
+  zählt man mit großen +/−-Knöpfen mit (Tischtennis mit „Satz abschließen“). Besucher- und
+  Liveansicht zeigen den Stand fast in Echtzeit. „In Ergebnis übernehmen“ füllt das
+  Ergebnisformular, das Speichern beendet den Liveticker.
+- **Tippspiel**: Besucher tippen ohne Konto auf den Sieger offener Spiele (Fußball-Gruppenspiele
+  auch Remis). Läuft ein Spiel live, ist der Tipp gesperrt. Reiter „Tippspiel“ mit Tipp-Tabelle.
+- **Spielerprofil**: Ein Klick auf einen Namen zeigt Bilanz, Form der letzten Spiele, nächsten
+  Gegner und alle Partien.
+- **Turnierbaum** mit Verbindungslinien; Maus über einen Namen zeigt dessen Weg durch den Baum.
+- Schriften (Roboto Condensed, Open Sans) liegen jetzt selbst unter `/shared/fonts` – keine
+  Anfragen mehr an Google.
+
 ### Besucher-Link mit QR-Code
 
 In der Turnierleitung beim Turnier auf **„🔗 Besucher-Link & QR-Code“** klicken:
@@ -163,8 +183,13 @@ Es erscheint ein QR-Code mit dem festen Link zum Turnier, dazu „Link kopieren�
 Für einen Fernseher in der Halle: **`/tischtennis/live`** (auch verlinkt in
 Besucheransicht und Turnierleitung). Zeigt groß, was an welchem Tisch läuft, die
 nächsten Spiele, Tabellen bzw. die aktuelle K.-o.-Runde und die letzten Ergebnisse.
-Aktualisiert sich alle 10 Sekunden, die rechte Spalte blättert automatisch weiter,
-am Ende erscheint der Turniersieg. Knopf „Vollbild“ unten rechts.
+Aktualisiert sich alle 5 Sekunden, die rechte Spalte blättert automatisch weiter,
+am Ende erscheint der Turniersieg mit Konfetti. Knopf „Vollbild“ unten rechts.
+
+- Bekommt ein Spiel eine Tischnummer, blendet der Bildschirm einen **Aufruf** ein:
+  „Bitte an Tisch 4 – Clara Wolf gegen Hugo Feld“.
+- Live geschaltete Spiele zeigen den **Spielstand** direkt auf der Tischkarte.
+- Unten läuft eine **Laufschrift** mit den letzten Ergebnissen.
 
 Tipp: Tisch- bzw. Platznummern in der Turnierleitung eintragen – dann erscheinen
 die Spiele unter „An den Tischen“ bzw. „Auf den Plätzen“.

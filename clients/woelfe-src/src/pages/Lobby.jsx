@@ -12,6 +12,30 @@ const ROLES = [
   { key: "mayor", em: "🎗️", name: "Bürgermeister", note: "Wahl, Stimme zählt doppelt" },
 ];
 
+// Vorlagen: stellen Werwölfe und Sonderrollen passend zur Spielerzahl ein.
+const OFF = { urwolf: false, seer: false, witch: false, hunter: false, amor: false, wolfdog: false, mayor: false };
+const PRESETS = [
+  {
+    key: "start", em: "🌱", name: "Einsteiger", note: "Wölfe, Seherin, Dorf – zum Reinkommen",
+    make: (n, w) => ({ ...OFF, wolves: w, seer: true }),
+  },
+  {
+    key: "classic", em: "📜", name: "Klassisch", note: "Seherin, Hexe, Jäger, Bürgermeister",
+    make: (n, w) => ({ ...OFF, wolves: w, seer: true, witch: n >= 6, hunter: n >= 5, mayor: true }),
+  },
+  {
+    key: "love", em: "💘", name: "Liebesdrama", note: "Amor mischt mit, Hexe und Seherin dabei",
+    make: (n, w) => ({ ...OFF, wolves: w, seer: true, witch: n >= 6, amor: true, mayor: n >= 7 }),
+  },
+  {
+    key: "chaos", em: "🌪️", name: "Chaos", note: "Alles, was geht – ab 8 Personen am besten",
+    make: (n, w) => {
+      const wolves = Math.max(w, n >= 8 ? 2 : 1);
+      return { ...OFF, wolves, urwolf: wolves >= 2, seer: true, witch: true, hunter: true, amor: n >= 6, wolfdog: n >= 7, mayor: true };
+    },
+  },
+];
+
 export default function Lobby() {
   const { state, isHost, me, updateConfig, setNarrator, startGame, leaveRoom } = useGame();
   const { config, players, roomCode, suggestedWolves } = state;
@@ -95,6 +119,16 @@ export default function Lobby() {
                 +
               </button>
             </div>
+          </div>
+
+          <div className="presets" role="group" aria-label="Vorlagen">
+            {PRESETS.map((pr) => (
+              <button key={pr.key} type="button" className="preset" onClick={() => set(pr.make(playableCount, suggestedWolves))}>
+                <span className="em">{pr.em}</span>
+                <b>{pr.name}</b>
+                <small>{pr.note}</small>
+              </button>
+            ))}
           </div>
 
           <div className="role-toggles" role="group" aria-label="Sonderrollen">

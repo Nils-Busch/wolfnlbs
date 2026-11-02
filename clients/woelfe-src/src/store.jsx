@@ -39,6 +39,7 @@ export function GameProvider({ children }) {
   const [wolfProgress, setWolfProgress] = useState(null);
   const [witchInfo, setWitchInfo] = useState(null);
   const [wolfChat, setWolfChat] = useState([]);
+  const [narratorInfo, setNarratorInfo] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
@@ -91,6 +92,9 @@ export function GameProvider({ children }) {
     function onWolfChatHistory(entries) {
       setWolfChat(entries || []);
     }
+    function onNarratorInfo(payload) {
+      setNarratorInfo(payload);
+    }
     function onErrorMsg(payload) {
       showToast(payload.message);
     }
@@ -112,6 +116,7 @@ export function GameProvider({ children }) {
     socket.on("wolfChatMessage", onWolfChatMessage);
     socket.on("wolfChatHistory", onWolfChatHistory);
     socket.on("errorMsg", onErrorMsg);
+    socket.on("narratorInfo", onNarratorInfo);
     socket.on("roomGone", onRoomGone);
 
     // Gespeicherte Sitzung (z. B. nach Neuladen der Seite) → direkt wieder verbinden.
@@ -128,6 +133,7 @@ export function GameProvider({ children }) {
       socket.off("wolfProgress", onWolfProgress);
       socket.off("witchNightInfo", onWitchInfo);
       socket.off("wolfChatMessage", onWolfChatMessage);
+      socket.off("narratorInfo", onNarratorInfo);
       socket.off("wolfChatHistory", onWolfChatHistory);
       socket.off("errorMsg", onErrorMsg);
       socket.off("roomGone", onRoomGone);
@@ -226,6 +232,7 @@ export function GameProvider({ children }) {
     wolfProgress,
     witchInfo,
     wolfChat,
+    narratorInfo,
     toast,
     createRoom,
     joinRoom,

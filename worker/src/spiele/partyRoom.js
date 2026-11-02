@@ -13,7 +13,49 @@ const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_PLAYERS = 30;
 const MAX_MESSAGE_BYTES = 8 * 1024;
 
-export const GAMES = { wwe: "Wer würde eher …?", slf: "Stadt-Land-Fluss" };
+export const GAMES = { wwe: "Wer würde eher …?", slf: "Stadt-Land-Fluss", kniffel: "Kniffel" };
+
+// ---------- Kniffel ----------
+export const KN_CATS = [
+  { key: "ones", name: "Einer", upper: 1 },
+  { key: "twos", name: "Zweier", upper: 2 },
+  { key: "threes", name: "Dreier", upper: 3 },
+  { key: "fours", name: "Vierer", upper: 4 },
+  { key: "fives", name: "Fünfer", upper: 5 },
+  { key: "sixes", name: "Sechser", upper: 6 },
+  { key: "three", name: "Dreierpasch" },
+  { key: "four", name: "Viererpasch" },
+  { key: "full", name: "Full House" },
+  { key: "small", name: "Kleine Straße" },
+  { key: "large", name: "Große Straße" },
+  { key: "kniffel", name: "Kniffel" },
+  { key: "chance", name: "Chance" },
+];
+export function knScore(key, dice) {
+  const counts = [0, 0, 0, 0, 0, 0, 0];
+  for (const d of dice) counts[d]++;
+  const sum = dice.reduce((a, b) => a + b, 0);
+  const max = Math.max(...counts);
+  const has = (run) => run.every((v) => counts[v] > 0);
+  const cat = KN_CATS.find((c) => c.key === key);
+  if (cat?.upper) return counts[cat.upper] * cat.upper;
+  switch (key) {
+    case "three": return max >= 3 ? sum : 0;
+    case "four": return max >= 4 ? sum : 0;
+    case "full": return counts.includes(3) && counts.includes(2) ? 25 : max === 5 ? 25 : 0;
+    case "small": return has([1, 2, 3, 4]) || has([2, 3, 4, 5]) || has([3, 4, 5, 6]) ? 30 : 0;
+    case "large": return has([1, 2, 3, 4, 5]) || has([2, 3, 4, 5, 6]) ? 40 : 0;
+    case "kniffel": return max === 5 ? 50 : 0;
+    case "chance": return sum;
+    default: return 0;
+  }
+}
+export function knTotals(sheet) {
+  const upper = KN_CATS.filter((c) => c.upper).reduce((a, c) => a + (sheet[c.key] || 0), 0);
+  const bonus = upper >= 63 ? 35 : 0;
+  const lower = KN_CATS.filter((c) => !c.upper).reduce((a, c) => a + (sheet[c.key] || 0), 0);
+  return { upper, bonus, lower, total: upper + bonus + lower };
+}
 
 // ---------- „Wer würde eher …?“ ----------
 const WWE_QUESTIONS = [
@@ -134,7 +176,11 @@ export class PartyRoom extends DurableObject {
       settings:
         game === "wwe"
           ? { rounds: 10, seconds: 25 }
-          : { rounds: 5, seconds: 90, categories: ["Stadt", "Land", "Fluss", "Name", "Tier", "Beruf"] },
+          : game === "kniffel"
+            ? { rounds: 13 }
+            : { rounds: 5, seconds: 90, categories: ["Stadt", "Land", "Fluss", "Name", "Tier", "Beruf"] },
+      // Kniffel
+      kn: null,
       // Wer würde eher
       questions: [],
       votes: {},
@@ -209,6 +255,24 @@ export class PartyRoom extends DurableObject {
       }
       if (s.phase === "RESULT") v.result = s.result;
       if (s.phase === "END") v.awards = this.wweAwards();
+    } else if (s.game === "kniffel") {
+      v.cats = KN_CATS;
+      if (s.kn) {
+        const kn = s.kn;
+        const cur = kn.order[kn.turn];
+        v.kn = {
+          order: kn.order,
+          current: cur,
+          dice: kn.dice,
+          held: kn.held,
+          rollsLeft: kn.rollsLeft,
+          rollId: kn.rollId,
+          last: kn.last,
+          sheets: kn.sheets,
+          totals: Object.fromEntries(Object.entries(kn.sheets).map(([id, sh]) => [id, knTotals(sh)])),
+          options: kn.rollsLeft < 3 ? Object.fromEntries(KN_CATS.filter((c) => kn.sheets[cur]?.[c.key] == null).map((c) => [c.key, knScore(c.key, kn.dice)])) : {},
+        };
+      }
     } else {
       v.letter = s.letter;
       v.stoppedBy = s.stoppedBy ? s.players[s.stoppedBy]?.name || null : null;
@@ -292,6 +356,71 @@ export class PartyRoom extends DurableObject {
     if (s.phase !== "QUESTION") return;
     const on = this.online();
     if (on.length && on.every((p) => s.votes[p.id])) this.wweReveal();
+  }
+
+  /* ---------- Kniffel ---------- */
+  knStart() {
+    const s = this.s;
+    const order = shuffle(this.playersArr().map((p) => p.id));
+    s.kn = {
+      order,
+      turn: 0,
+      dice: [1, 2, 3, 4, 5],
+      held: [false, false, false, false, false],
+      rollsLeft: 3,
+      rollId: 0,
+      last: null,
+      sheets: Object.fromEntries(order.map((id) => [id, {}])),
+    };
+    s.round = 1;
+    s.phase = "PLAYING";
+    s.endsAt = null;
+  }
+  knCurrent() {
+    return this.s.kn.order[this.s.kn.turn];
+  }
+  knAdvance() {
+    const s = this.s;
+    const kn = s.kn;
+    // nächste Person, die noch in diesem Spiel ist
+    for (let k = 1; k <= kn.order.length; k++) {
+      const idx = (kn.turn + k) % kn.order.length;
+      if (idx === 0) s.round++;
+      if (s.players[kn.order[idx]]) {
+        kn.turn = idx;
+        break;
+      }
+    }
+    kn.held = [false, false, false, false, false];
+    kn.rollsLeft = 3;
+    const live = kn.order.filter((id) => s.players[id]);
+    if (live.every((id) => KN_CATS.every((c) => kn.sheets[id]?.[c.key] != null))) {
+      for (const id of live) s.players[id].score = knTotals(kn.sheets[id]).total;
+      s.phase = "END";
+    }
+  }
+  knEnter(pid, key) {
+    const kn = this.s.kn;
+    const sheet = kn.sheets[pid];
+    if (!KN_CATS.some((c) => c.key === key)) throw new Error("Unbekanntes Feld.");
+    if (sheet[key] != null) throw new Error("Dieses Feld ist schon belegt.");
+    const pts = knScore(key, kn.dice);
+    sheet[key] = pts;
+    kn.last = { player: pid, key, points: pts };
+    this.s.players[pid].score = knTotals(sheet).total;
+    this.knAdvance();
+  }
+  // Host überspringt: bester freier Wert wird eingetragen (ohne Wurf: Würfel werden einmal geworfen)
+  knSkip() {
+    const kn = this.s.kn;
+    const pid = this.knCurrent();
+    if (kn.rollsLeft === 3) {
+      kn.dice = kn.dice.map(() => 1 + Math.floor(Math.random() * 6));
+      kn.rollId++;
+    }
+    const free = KN_CATS.filter((c) => kn.sheets[pid][c.key] == null);
+    const best = free.reduce((b, c) => (knScore(c.key, kn.dice) > knScore(b.key, kn.dice) ? c : b), free[free.length - 1]);
+    this.knEnter(pid, best.key);
   }
 
   /* ---------- Stadt-Land-Fluss ---------- */
@@ -478,6 +607,8 @@ export class PartyRoom extends DurableObject {
       const seconds = Math.round(Number(settings?.seconds));
       if (s.game === "wwe") {
         s.settings = { rounds: Math.min(30, Math.max(3, rounds || 10)), seconds: Math.min(90, Math.max(10, seconds || 25)) };
+      } else if (s.game === "kniffel") {
+        s.settings = { rounds: 13 };
       } else {
         const cats = Array.isArray(settings?.categories) ? settings.categories.filter((c) => SLF_CATEGORIES.includes(c)) : [];
         if (cats.length < 3) throw new Error("Bitte mindestens 3 Kategorien wählen.");
@@ -496,6 +627,7 @@ export class PartyRoom extends DurableObject {
       for (const p of this.playersArr()) p.score = 0;
       s.round = 0;
       if (s.game === "wwe") this.wweStart();
+      else if (s.game === "kniffel") this.knStart();
       else {
         s.usedLetters = [];
         this.slfStartRound();
@@ -507,6 +639,8 @@ export class PartyRoom extends DurableObject {
       if (s.game === "wwe") {
         if (s.phase === "QUESTION") this.wweReveal();
         else if (s.phase === "RESULT") this.wweNext();
+      } else if (s.game === "kniffel") {
+        if (s.phase === "PLAYING") this.knSkip();
       } else {
         if (s.phase === "WRITING") this.slfToReview();
         else if (s.phase === "REVIEW") this.slfScore();
@@ -522,7 +656,7 @@ export class PartyRoom extends DurableObject {
       this.requireHost(ws);
       const s = this.s;
       for (const p of this.playersArr()) p.score = 0;
-      Object.assign(s, { phase: "LOBBY", round: 0, endsAt: null, votes: {}, result: null, history: [], answers: {}, flags: {}, roundScores: null, letter: null, usedLetters: [], stoppedBy: null });
+      Object.assign(s, { phase: "LOBBY", round: 0, endsAt: null, votes: {}, result: null, history: [], answers: {}, flags: {}, roundScores: null, letter: null, usedLetters: [], stoppedBy: null, kn: null });
     },
     kick(ws, { playerId }) {
       this.requireHost(ws);
@@ -530,6 +664,10 @@ export class PartyRoom extends DurableObject {
       delete this.s.players[playerId];
       delete this.s.votes[playerId];
       delete this.s.answers[playerId];
+      if (this.s.game === "kniffel" && this.s.phase === "PLAYING" && this.s.kn) {
+        if (this.knCurrent() === playerId) this.knAdvance();
+        else if (this.s.kn.order.every((id) => !this.s.players[id])) this.s.phase = "END";
+      }
       for (const o of this.sockets()) {
         if (this.att(o).playerId === playerId) {
           this.send(o, { t: "evt", event: "kicked", payload: {} });
@@ -600,6 +738,38 @@ export class PartyRoom extends DurableObject {
       if (s.flags[key][pid]) delete s.flags[key][pid];
       else s.flags[key][pid] = true;
     },
+    // Kniffel: nur wer dran ist
+    roll(ws) {
+      const pid = this.requirePlayer(ws);
+      const s = this.s;
+      if (s.game !== "kniffel" || s.phase !== "PLAYING") throw new Error("Gerade wird nicht gewürfelt.");
+      if (this.knCurrent() !== pid) throw new Error("Du bist nicht dran.");
+      const kn = s.kn;
+      if (kn.rollsLeft <= 0) throw new Error("Keine Würfe mehr – trag ein Ergebnis ein.");
+      if (kn.rollsLeft === 3) kn.held = [false, false, false, false, false];
+      kn.dice = kn.dice.map((d, i) => (kn.held[i] ? d : 1 + Math.floor(Math.random() * 6)));
+      kn.rollsLeft--;
+      kn.rollId++;
+      kn.last = null;
+    },
+    hold(ws, { index }) {
+      const pid = this.requirePlayer(ws);
+      const s = this.s;
+      if (s.game !== "kniffel" || s.phase !== "PLAYING" || this.knCurrent() !== pid) throw new Error("Du bist nicht dran.");
+      const kn = s.kn;
+      if (kn.rollsLeft === 3 || kn.rollsLeft === 0) throw new Error("Jetzt kann nichts festgehalten werden.");
+      const i = Number(index);
+      if (!Number.isInteger(i) || i < 0 || i > 4) throw new Error("Ungültiger Würfel.");
+      kn.held[i] = !kn.held[i];
+    },
+    score(ws, { key }) {
+      const pid = this.requirePlayer(ws);
+      const s = this.s;
+      if (s.game !== "kniffel" || s.phase !== "PLAYING" || this.knCurrent() !== pid) throw new Error("Du bist nicht dran.");
+      if (s.kn.rollsLeft === 3) throw new Error("Erst würfeln.");
+      this.knEnter(pid, key);
+    },
+
     leave(ws) {
       const { playerId } = this.att(ws);
       const s = this.s;

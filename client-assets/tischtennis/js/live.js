@@ -1,12 +1,13 @@
 'use strict';
 /* Liveansicht für einen Bildschirm: laufende Tische, nächste Spiele, Tabellen
-   bzw. Turnierbaum und letzte Ergebnisse. Aktualisiert sich alle 10 Sekunden,
+   bzw. Turnierbaum und letzte Ergebnisse. Aktualisiert sich alle 5 Sekunden,
    die rechte Spalte blättert alle 12 Sekunden weiter. */
 
 const app = document.getElementById('app');
-const REFRESH_MS = 10000;
+const REFRESH_MS = 5000;
 const ROTATE_MS = 12000;
-const L = { id: null, data: null, page: 0, pages: [], lastOk: 0, timers: [] };
+const L = { id: null, data: null, page: 0, pages: [], lastOk: 0, timers: [], turned: false, seenTables: null, calls: [], calling: false, champShown: null };
+const isLive = (m) => !!m.live && m.status === 'pending';
 
 function currentId() {
   const m = location.hash.match(/t=(\d+)/) || location.search.match(/[?&]t=(\d+)/);
@@ -49,7 +50,7 @@ function buildPages(d) {
         title,
         html: `<table class="standings"><thead><tr><th>#</th><th class="l">Team</th><th>Sp</th><th>S-U-N</th><th>Tore</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>${g.rows
           .map(
-            (r, i) => `<tr class="${d.tournament.format === 'group' && i < d.tournament.advance_per_group ? 'q' : ''}">
+            (r, i) => `<tr class="${d.tournament.format === 'group' && i < d.tournament.advance_per_group ? 'q' : ''}" data-key="r${r.player_id}">
               <td>${i + 1}</td><td class="l">${nameOf(P, r.player_id)}</td><td>${r.played}</td><td>${r.won}-${r.drawn}-${r.lost}</td>
               <td>${r.goalsFor}:${r.goalsAgainst}</td><td>${r.goalsFor - r.goalsAgainst > 0 ? '+' : ''}${r.goalsFor - r.goalsAgainst}</td><td class="pts">${r.points}</td></tr>`
           )
@@ -61,7 +62,7 @@ function buildPages(d) {
       title,
       html: `<table class="standings"><thead><tr><th>#</th><th class="l">Spieler</th><th>Sp</th><th>S:N</th><th>Sätze</th><th>Pkt</th></tr></thead><tbody>${g.rows
         .map(
-          (r, i) => `<tr class="${d.tournament.format === 'group' && i < d.tournament.advance_per_group ? 'q' : ''}">
+          (r, i) => `<tr class="${d.tournament.format === 'group' && i < d.tournament.advance_per_group ? 'q' : ''}" data-key="r${r.player_id}">
             <td>${i + 1}</td><td class="l">${nameOf(P, r.player_id)}</td><td>${r.played}</td><td>${r.won}:${r.lost}</td>
             <td>${r.setsFor}:${r.setsAgainst}</td><td class="pts">${r.points}</td></tr>`
         )
@@ -134,8 +135,8 @@ function render() {
   const champ = winnerId(d);
 
   const ready = d.matches.filter((m) => m.status === 'pending' && m.player1_id && m.player2_id);
-  const atTables = ready.filter((m) => m.table_no).sort((a, b) => a.table_no - b.table_no);
-  const next = ready.filter((m) => !m.table_no).sort(sortMatches);
+  const atTables = ready.filter((m) => m.table_no || isLive(m)).sort((a, b) => (a.table_no || 99) - (b.table_no || 99));
+  const next = ready.filter((m) => !m.table_no && !isLive(m)).sort(sortMatches);
   const waiting = d.matches.filter((m) => m.status === 'pending' && !(m.player1_id && m.player2_id)).length;
   const maxTables = 6;
   const maxNext = 7;
@@ -156,9 +157,13 @@ function render() {
             ? atTables
                 .slice(0, maxTables)
                 .map(
-                  (m) => `<div class="tablecard"><div class="no"><small>${W.table}</small>${m.table_no}</div>
-                    <div class="who"><span class="round">${esc(matchTitle(m, d))}</span>
-                      <span class="pname">${nameOf(P, m.player1_id)}</span><span class="vs">gegen</span><span class="pname">${nameOf(P, m.player2_id)}</span></div></div>`
+                  (m) => {
+                    const lp = isLive(m) ? liveParts(m) : null;
+                    return `<div class="tablecard ${lp ? 'is-live' : ''}" data-key="tc${m.id}"><div class="no">${m.table_no ? `<small>${W.table}</small>${m.table_no}` : '<small>Live</small>●'}</div>
+                    <div class="who"><span class="round">${lp ? '<span class="lt">Live</span>' : ''}${esc(matchTitle(m, d))}</span>
+                      <span class="pname">${nameOf(P, m.player1_id)}</span><span class="vs">gegen</span><span class="pname">${nameOf(P, m.player2_id)}</span></div>
+                    ${lp ? `<div class="ls"><span class="sc"><b data-val="${lp.main[0]}" data-vkey="a${m.id}">${lp.main[0]}</b>:<b data-val="${lp.main[1]}" data-vkey="b${m.id}">${lp.main[1]}</b></span>${lp.cur ? `<small>${lp.setNo}. Satz <em data-val="${lp.cur.join(':')}" data-vkey="c${m.id}">${lp.cur[0]}:${lp.cur[1]}</em></small>` : ''}</div>` : ''}</div>`;
+                  }
                 )
                 .join('') + (atTables.length > maxTables ? `<p class="more">+ ${atTables.length - maxTables} weitere</p>` : '')
             : `<p class="more">Gerade ${isFb(d) ? 'läuft auf keinem Platz ein Spiel' : 'ist kein Tisch belegt'}.${next.length ? ' Die nächsten Spiele stehen rechts daneben.' : ''}</p>`
@@ -170,27 +175,70 @@ function render() {
           next.length
             ? `<ul class="next">${next
                 .slice(0, maxNext)
-                .map((m) => `<li><span class="round">${esc(matchTitle(m, d))}</span><span class="pair">${nameOf(P, m.player1_id)} – ${nameOf(P, m.player2_id)}</span></li>`)
+                .map((m) => `<li data-key="n${m.id}"><span class="round">${esc(matchTitle(m, d))}</span><span class="pair">${nameOf(P, m.player1_id)} – ${nameOf(P, m.player2_id)}</span></li>`)
                 .join('')}</ul>${next.length > maxNext ? `<p class="more">+ ${next.length - maxNext} weitere Spiele</p>` : ''}`
             : '<p class="more">Keine weiteren Spiele bereit.</p>'
         }
         ${waiting ? `<p class="more">${waiting} Spiel${waiting === 1 ? '' : 'e'} warten noch auf Sieger aus der Vorrunde.</p>` : ''}
       </section>
       <section class="col">
-        ${page ? `<h2>${esc(page.title)}${L.pages.length > 1 ? `<span class="page">${L.page + 1}/${L.pages.length}</span>` : ''}</h2>${page.html}` : '<h2>Tabelle</h2><p class="more">Noch keine Ergebnisse.</p>'}
+        ${page ? `<div class="pagebox ${L.turned ? 'turn' : ''}"><h2>${esc(page.title)}${L.pages.length > 1 ? `<span class="page">${L.pages.map((_, i) => `<i class="${i === L.page ? 'on' : ''}"></i>`).join('')}</span>` : ''}</h2>${page.html}</div>` : '<h2>Tabelle</h2><p class="more">Noch keine Ergebnisse.</p>'}
       </section>
     </div>`;
   }
 
   const stale = Date.now() - L.lastOk > REFRESH_MS * 3;
-  app.innerHTML = `
+  const recent = d.matches.filter((m) => m.status === 'done').sort((a, b) => b.updated_at - a.updated_at).slice(0, 8);
+  const tick = recent.map((m) => `<span class="ti"><b class="${m.winner_id === m.player1_id ? 'w' : ''}">${nameOf(P, m.player1_id)}</b> ${esc(setScore(m))} <b class="${m.winner_id === m.player2_id ? 'w' : ''}">${nameOf(P, m.player2_id)}</b></span>`).join('');
+  const html = `
     <header class="bar"><span class="logo">${W.icon} Live</span><h1>${esc(t.name)}</h1>
       <span class="meta">${esc(modeParts(t).slice(1).join(' · '))}</span>
       <span class="clock">${clock()}</span></header>
     ${main}
-    <footer class="ticker ${stale ? 'stale' : ''}"><span><span class="dot"></span>${stale ? 'Verbindung unterbrochen – versuche es weiter …' : 'Live – aktualisiert sich automatisch'}</span>
-      <span>${esc(location.host)}/tischtennis</span></footer>
+    <footer class="ticker ${stale ? 'stale' : ''}"><span class="st"><span class="dot"></span>${stale ? 'Verbindung unterbrochen …' : 'Live'}</span>
+      <span class="marq">${tick ? `<span class="marq-in" style="--n:${recent.length}">${tick}${tick}</span>` : '<span class="ti">Die ersten Ergebnisse erscheinen hier.</span>'}</span>
+      <span class="host">${esc(location.host)}/tischtennis</span></footer>
     ${champ ? `<div class="champ"><div class="cup">🏆</div><div class="label">Turniersieg</div><div class="name">${esc(P[champ]?.name || '')}</div><div class="t">${esc(t.name)}</div></div>` : ''}`;
+  // Laufschrift nicht bei jeder Aktualisierung neu starten
+  const oldMarq = app.querySelector('.marq-in');
+  const sameTick = oldMarq && oldMarq.dataset.sig === tick;
+  const pos = sameTick ? oldMarq.getAnimations()[0]?.currentTime : null;
+  morph(app, html);
+  L.turned = false;
+  const mq = app.querySelector('.marq-in');
+  if (mq) { mq.dataset.sig = tick; if (pos != null && mq.getAnimations()[0]) mq.getAnimations()[0].currentTime = pos; }
+  if (champ && L.champShown !== champ && window.VH) {
+    L.champShown = champ;
+    VH.confetti({ colors: ['#ff2b08', '#3ec2dc', '#ffffff', '#f1c40f'], count: 140 });
+  }
+  detectCalls(d, P, W);
+}
+
+/* ---------- Aufruf: „Jetzt an Tisch 3“ ---------- */
+function detectCalls(d, P, W) {
+  const now = new Map(d.matches.filter((m) => m.status === 'pending' && m.table_no && m.player1_id && m.player2_id).map((m) => [m.id, m.table_no]));
+  if (L.seenTables) {
+    for (const [id, tn] of now) {
+      if (L.seenTables.get(id) !== tn) {
+        const m = d.matches.find((x) => x.id === id);
+        L.calls.push({ tn, title: matchTitle(m, d), a: P[m.player1_id]?.name || '', b: P[m.player2_id]?.name || '' });
+      }
+    }
+  }
+  L.seenTables = now;
+  showCall(W);
+}
+function showCall(W) {
+  if (L.calling || !L.calls.length) return;
+  const c = L.calls.shift();
+  L.calling = true;
+  const el = document.createElement('div');
+  el.className = 'callup';
+  el.setAttribute('role', 'alert');
+  el.innerHTML = `<div class="cu-no"><small>${esc(W.table)}</small>${c.tn}</div><div class="cu-txt"><span class="cu-k">Bitte an ${esc(W.table)} ${c.tn} · ${esc(c.title)}</span><span class="cu-p">${esc(c.a)} <i>gegen</i> ${esc(c.b)}</span></div>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.classList.add('out'), 8000);
+  setTimeout(() => { el.remove(); L.calling = false; showCall(W); }, 8600);
 }
 
 async function refresh() {
@@ -232,6 +280,9 @@ function route() {
   L.id = currentId();
   L.page = 0;
   L.data = null;
+  L.seenTables = null;
+  L.calls = [];
+  L.champShown = null;
   if (!L.id) return pickView();
   app.innerHTML = '<p class="live-empty">Lädt …</p>';
   refresh();
@@ -240,6 +291,7 @@ function route() {
     setInterval(() => {
       if (L.pages.length > 1) {
         L.page = (L.page + 1) % L.pages.length;
+        L.turned = true;
         render();
       }
     }, ROTATE_MS)
