@@ -2,7 +2,7 @@
 
 Eine gemeinsame Seite für die Party- und Vereins-Apps:
 
-- **🐺 Was für Wölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy. Mit Rollen-Vorlagen
+- **🐺 WoWölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy. Mit Rollen-Vorlagen
   (Einsteiger, Klassisch, Liebesdrama, Chaos) und einer **Erzähleransicht**: Wer „Ich leite nur“
   ankreuzt, sieht Vorlesetexte für jede Phase, alle Rollen (verdeckbar) und was nachts passiert.
 - **❓ Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto

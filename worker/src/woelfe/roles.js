@@ -1,4 +1,4 @@
-// Rollen-Definitionen und Zuteilungslogik für "Was für Wölfe".
+// Rollen-Definitionen und Zuteilungslogik für "WoWölfe".
 // Basis-Rollenset (v1): Werwolf, Dorfbewohner, Seherin, Hexe, Jäger.
 // v2: zusätzlich der Urwolf (Sonderrolle im Wolfs-Team).
 // v3: Amor (verkuppelt zwei Spieler) und Wolfshund (wählt sein Team in der ersten Nacht).

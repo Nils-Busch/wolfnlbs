@@ -52,7 +52,7 @@ export default function Lobby() {
   async function share() {
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Was für Wölfe", text: `Komm in meinen Werwolf-Raum: ${roomCode}`, url: link });
+        await navigator.share({ title: "WoWölfe", text: `Komm in meinen Werwolf-Raum: ${roomCode}`, url: link });
         return;
       }
       await navigator.clipboard.writeText(link);

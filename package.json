@@ -2,7 +2,7 @@
   "name": "vereinsheim",
   "private": true,
   "version": "1.0.0",
-  "description": "Hub + Was für Wölfe + Spielegalerie + Tischtennis-Turnier, alles auf Cloudflare Workers/D1/Durable Objects.",
+  "description": "Hub + WoWölfe + Spielegalerie + Tischtennis-Turnier, alles auf Cloudflare Workers/D1/Durable Objects.",
   "type": "module",
   "workspaces": [
     "clients/woelfe-src"

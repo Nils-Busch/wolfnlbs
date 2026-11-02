@@ -62,7 +62,7 @@ export default function Home() {
       <a className="hub-back" href="/">← Vereinsheim</a>
       <div className="home-hero enter">
         <WolfMark />
-        <h1 className="home-title">Was für Wölfe</h1>
+        <h1 className="home-title">WoWölfe</h1>
         <p className="subtitle">Werwolf für die ganze Runde. Jede*r spielt mit dem eigenen Handy.</p>
       </div>
 

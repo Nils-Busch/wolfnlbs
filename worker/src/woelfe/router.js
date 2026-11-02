@@ -1,4 +1,4 @@
-// API-Teil von "Was für Wölfe" – unverändert aus dem eigenständigen
+// API-Teil von "WoWölfe" – unverändert aus dem eigenständigen
 // Cloudflare-Projekt übernommen, nur die Pfade laufen jetzt unter /api/woelfe/*,
 // weil sich der Worker die Domain mit Spielegalerie und Tischtennis-Turnier teilt.
 

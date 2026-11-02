@@ -1,5 +1,5 @@
 // Ein Durable Object = ein Duell-Raum (Tic-Tac-Toe, Vier gewinnt, Reversi, Käsekästchen, Gomoku).
-// Nach dem Vorbild von "Was für Wölfe": WebSocket-Hibernation, Zustand im Storage,
+// Nach dem Vorbild von "WoWölfe": WebSocket-Hibernation, Zustand im Storage,
 // Aufräum-Alarm nach einer Stunde Leerstand. Anders als bei Werwolf gibt es hier
 // keinen Reconnect-Token – verlässt eine Seite den Raum, ist die Partie vorbei
 // (genau wie im ursprünglichen ws-Server).

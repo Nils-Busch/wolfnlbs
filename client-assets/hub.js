@@ -20,7 +20,7 @@
     4: document.querySelector('.home-yellow'),
     5: document.querySelector('.cards'),
   };
-  const names = { 1: 'Was für Wölfe', 2: 'Party-Quiz', 3: 'die Spielegalerie', 4: 'ein Turnier', 5: 'die Tagesrätsel' };
+  const names = { 1: 'WoWölfe', 2: 'Party-Quiz', 3: 'die Spielegalerie', 4: 'ein Turnier', 5: 'die Tagesrätsel' };
   const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let busy = false;
 
