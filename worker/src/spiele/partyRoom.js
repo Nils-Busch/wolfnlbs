@@ -7,13 +7,14 @@
 
 import { DurableObject } from "cloudflare:workers";
 import { makeId } from "../woelfe/ids.js";
+import { SELF_HOST, extraMethods } from "./partyExtra.js";
 
 const EMPTY_CLEANUP_MS = 60 * 60 * 1000;
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_PLAYERS = 30;
 const MAX_MESSAGE_BYTES = 8 * 1024;
 
-export const GAMES = { wwe: "Wer würde eher …?", slf: "Stadt-Land-Fluss", kniffel: "Kniffel" };
+export const GAMES = { wwe: "Wer würde eher …?", slf: "Stadt-Land-Fluss", kniffel: "Kniffel", maexchen: "Mäxchen", draw: "Montagsmaler" };
 
 // ---------- Kniffel ----------
 export const KN_CATS = [
@@ -178,9 +179,16 @@ export class PartyRoom extends DurableObject {
           ? { rounds: 10, seconds: 25 }
           : game === "kniffel"
             ? { rounds: 13 }
-            : { rounds: 5, seconds: 90, categories: ["Stadt", "Land", "Fluss", "Name", "Tier", "Beruf"] },
-      // Kniffel
+            : game === "maexchen"
+              ? { lives: 3 }
+              : game === "draw"
+                ? { rounds: 2, seconds: 80 }
+                : { rounds: 5, seconds: 90, categories: ["Stadt", "Land", "Fluss", "Name", "Tier", "Beruf"] },
+      // Kniffel, Mäxchen, Montagsmaler
       kn: null,
+      mx: null,
+      dr: null,
+      hostPlayer: null,
       // Wer würde eher
       questions: [],
       votes: {},
@@ -228,7 +236,7 @@ export class PartyRoom extends DurableObject {
   }
 
   /* ---------- Ansicht (Handys sehen fremde Antworten erst in der Auswertung) ---------- */
-  view(role, playerId) {
+  view(role, playerId, isHost = false) {
     const s = this.s;
     const v = {
       role,
@@ -242,10 +250,21 @@ export class PartyRoom extends DurableObject {
       endsAt: s.endsAt,
       players: this.playersArr().map((p) => this.pub(p)),
       categoriesAll: SLF_CATEGORIES,
+      selfHost: SELF_HOST.has(s.game),
+      hostPlayer: s.hostPlayer,
     };
     if (role === "player") {
       const me = s.players[playerId];
-      v.me = me ? { id: me.id, name: me.name, score: me.score || 0 } : null;
+      v.me = me ? { id: me.id, name: me.name, score: me.score || 0, host: !!isHost } : null;
+    }
+    if (s.game === "maexchen") {
+      v.mx = this.mxView(role === "player" ? playerId : null);
+      return v;
+    }
+    if (s.game === "draw") {
+      v.dr = this.drView(role === "player" ? playerId : null);
+      v.timerTotal = s.dr ? s.dr.total : null;
+      return v;
     }
     if (s.game === "wwe") {
       if (s.phase === "QUESTION" || s.phase === "RESULT") {
@@ -305,7 +324,7 @@ export class PartyRoom extends DurableObject {
           ws.send(host);
         } catch {}
       } else if (a.role === "player") {
-        this.send(ws, { t: "evt", event: "state", payload: this.view("player", a.playerId) });
+        this.send(ws, { t: "evt", event: "state", payload: this.view("player", a.playerId, !!a.host) });
       }
     }
   }
@@ -500,7 +519,8 @@ export class PartyRoom extends DurableObject {
     else if (!s.emptySince) s.emptySince = Date.now();
     await this.ctx.storage.put("state", s);
     const times = [s.createdAt + MAX_AGE_MS];
-    if (s.endsAt && (s.phase === "QUESTION" || s.phase === "WRITING")) times.push(s.endsAt + 250);
+    if (s.endsAt && (s.phase === "QUESTION" || s.phase === "WRITING" || s.phase === "PLAYING" || s.phase === "CHOOSE" || s.phase === "DRAW" || s.phase === "REVEAL")) times.push(s.endsAt + 150);
+    if (s.game === "draw" && s.phase === "DRAW" && s.dr?.hintTimes?.length) times.push(s.dr.hintTimes[0] + 50);
     if (s.emptySince) times.push(s.emptySince + EMPTY_CLEANUP_MS);
     const next = Math.min(...times);
     if ((await this.ctx.storage.getAlarm()) !== next) await this.ctx.storage.setAlarm(next);
@@ -519,7 +539,14 @@ export class PartyRoom extends DurableObject {
       }
       return;
     }
-    if (s.endsAt && now >= s.endsAt) {
+    if (s.game === "draw") {
+      if (this.drTick(now)) this.broadcast();
+    } else if (s.game === "maexchen") {
+      if (s.endsAt && now >= s.endsAt && s.mx?.step === "reveal") {
+        this.mxLose(s.mx.reveal.loser, s.mx.reveal.amount);
+        this.broadcast();
+      }
+    } else if (s.endsAt && now >= s.endsAt) {
       if (s.phase === "QUESTION") this.wweReveal();
       else if (s.phase === "WRITING") this.slfToReview();
       this.broadcast();
@@ -552,8 +579,17 @@ export class PartyRoom extends DurableObject {
       const handler = this.handlers[event];
       if (!handler) throw new Error("Unbekannte Aktion.");
       const result = handler.call(this, ws, payload || {});
-      response = { ok: true, ...(result || {}) };
+      if (result?.ink) {
+        const msg = JSON.stringify({ t: "evt", event: "ink", payload: result.ink });
+        for (const o of this.sockets()) if (o !== ws) try { o.send(msg); } catch {}
+      }
+      response = { ok: true, ...(result?.reply || result || {}) };
+      delete response.ink;
       changed = result?.quiet ? false : true;
+      if (result?.noPersist) {
+        if (id != null) this.send(ws, { t: "res", id, res: response });
+        return;
+      }
     } catch (err) {
       response = { ok: false, error: err?.message || "Fehler." };
     }
@@ -585,7 +621,8 @@ export class PartyRoom extends DurableObject {
   }
 
   requireHost(ws) {
-    if (this.att(ws).role !== "host") throw new Error("Nur die Spielleitung darf das.");
+    const a = this.att(ws);
+    if (a.role !== "host" && !(a.role === "player" && a.host)) throw new Error("Nur die Spielleitung darf das.");
   }
   requirePlayer(ws) {
     const { role, playerId } = this.att(ws);
@@ -609,6 +646,11 @@ export class PartyRoom extends DurableObject {
         s.settings = { rounds: Math.min(30, Math.max(3, rounds || 10)), seconds: Math.min(90, Math.max(10, seconds || 25)) };
       } else if (s.game === "kniffel") {
         s.settings = { rounds: 13 };
+      } else if (s.game === "maexchen") {
+        const lives = Math.round(Number(settings?.lives));
+        s.settings = { lives: [3, 5, 7].includes(lives) ? lives : 3 };
+      } else if (s.game === "draw") {
+        s.settings = { rounds: Math.min(3, Math.max(1, rounds || 2)), seconds: [60, 80, 100, 120].includes(seconds) ? seconds : 80 };
       } else {
         const cats = Array.isArray(settings?.categories) ? settings.categories.filter((c) => SLF_CATEGORIES.includes(c)) : [];
         if (cats.length < 3) throw new Error("Bitte mindestens 3 Kategorien wählen.");
@@ -628,6 +670,8 @@ export class PartyRoom extends DurableObject {
       s.round = 0;
       if (s.game === "wwe") this.wweStart();
       else if (s.game === "kniffel") this.knStart();
+      else if (s.game === "maexchen") this.mxStart();
+      else if (s.game === "draw") this.drStart();
       else {
         s.usedLetters = [];
         this.slfStartRound();
@@ -641,6 +685,12 @@ export class PartyRoom extends DurableObject {
         else if (s.phase === "RESULT") this.wweNext();
       } else if (s.game === "kniffel") {
         if (s.phase === "PLAYING") this.knSkip();
+      } else if (s.game === "maexchen") {
+        if (s.phase === "PLAYING") this.mxSkip();
+      } else if (s.game === "draw") {
+        if (s.phase === "CHOOSE") this.drChoose(0);
+        else if (s.phase === "DRAW") this.drEndTurn("skip");
+        else if (s.phase === "REVEAL") this.drNextTurn();
       } else {
         if (s.phase === "WRITING") this.slfToReview();
         else if (s.phase === "REVIEW") this.slfScore();
@@ -656,7 +706,7 @@ export class PartyRoom extends DurableObject {
       this.requireHost(ws);
       const s = this.s;
       for (const p of this.playersArr()) p.score = 0;
-      Object.assign(s, { phase: "LOBBY", round: 0, endsAt: null, votes: {}, result: null, history: [], answers: {}, flags: {}, roundScores: null, letter: null, usedLetters: [], stoppedBy: null, kn: null });
+      Object.assign(s, { phase: "LOBBY", round: 0, endsAt: null, votes: {}, result: null, history: [], answers: {}, flags: {}, roundScores: null, letter: null, usedLetters: [], stoppedBy: null, kn: null, mx: null, dr: null });
     },
     kick(ws, { playerId }) {
       this.requireHost(ws);
@@ -664,6 +714,8 @@ export class PartyRoom extends DurableObject {
       delete this.s.players[playerId];
       delete this.s.votes[playerId];
       delete this.s.answers[playerId];
+      if (this.s.game === "maexchen") this.mxRemove(playerId);
+      if (this.s.game === "draw" && this.s.dr && this.s.dr.drawer === playerId && (this.s.phase === "CHOOSE" || this.s.phase === "DRAW")) this.drEndTurn("left");
       if (this.s.game === "kniffel" && this.s.phase === "PLAYING" && this.s.kn) {
         if (this.knCurrent() === playerId) this.knAdvance();
         else if (this.s.kn.order.every((id) => !this.s.players[id])) this.s.phase = "END";
@@ -677,7 +729,7 @@ export class PartyRoom extends DurableObject {
     },
 
     /* Handys */
-    join(ws, { name, token }) {
+    join(ws, { name, token, hostKey }) {
       const s = this.s;
       let p = typeof token === "string" && token ? this.playersArr().find((x) => x.token === token) : null;
       if (!p) {
@@ -689,8 +741,11 @@ export class PartyRoom extends DurableObject {
         s.players[p.id] = p;
       }
       p.connected = true;
-      ws.serializeAttachment({ role: "player", playerId: p.id });
-      return { playerId: p.id, token: p.token };
+      // Bei Mäxchen/Montagsmaler spielt die Spielleitung selbst mit (hostKey beim Beitreten)
+      const isHost = typeof hostKey === "string" && hostKey === s.hostKey;
+      if (isHost) s.hostPlayer = p.id;
+      ws.serializeAttachment({ role: "player", playerId: p.id, host: isHost });
+      return { playerId: p.id, token: p.token, host: isHost };
     },
     vote(ws, { targetId }) {
       const pid = this.requirePlayer(ws);
@@ -770,6 +825,48 @@ export class PartyRoom extends DurableObject {
       this.knEnter(pid, key);
     },
 
+    // Mäxchen
+    mx(ws, payload) {
+      const pid = this.requirePlayer(ws);
+      this.mxAct(pid, payload || {});
+    },
+    // Montagsmaler
+    choose(ws, { index }) {
+      const pid = this.requirePlayer(ws);
+      const s = this.s;
+      if (s.game !== "draw" || s.phase !== "CHOOSE" || s.dr.drawer !== pid) throw new Error("Du wählst gerade kein Wort.");
+      const i = Number(index);
+      if (![0, 1, 2].includes(i)) throw new Error("Ungültige Wahl.");
+      this.drChoose(i);
+    },
+    guess(ws, { text }) {
+      const pid = this.requirePlayer(ws);
+      return this.drGuess(pid, text);
+    },
+    ink(ws, payload) {
+      const pid = this.requirePlayer(ws);
+      const ink = this.drInk(pid, payload || {});
+      return { quiet: true, noPersist: true, ink: ink || undefined, reply: {} };
+    },
+    undo(ws) {
+      const pid = this.requirePlayer(ws);
+      const dr = this.s.dr;
+      if (this.s.game !== "draw" || this.s.phase !== "DRAW" || dr.drawer !== pid) throw new Error("Du zeichnest gerade nicht.");
+      dr.strokes.pop();
+      dr.rev++;
+    },
+    clear(ws) {
+      const pid = this.requirePlayer(ws);
+      const dr = this.s.dr;
+      if (this.s.game !== "draw" || this.s.phase !== "DRAW" || dr.drawer !== pid) throw new Error("Du zeichnest gerade nicht.");
+      dr.strokes = [];
+      dr.rev++;
+    },
+    strokes() {
+      const dr = this.s.dr;
+      return { quiet: true, noPersist: true, reply: { strokes: dr ? dr.strokes : [], rev: dr ? dr.rev : 0 } };
+    },
+
     leave(ws) {
       const { playerId } = this.att(ws);
       const s = this.s;
@@ -780,3 +877,5 @@ export class PartyRoom extends DurableObject {
     },
   };
 }
+
+Object.assign(PartyRoom.prototype, extraMethods);

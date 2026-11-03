@@ -24,7 +24,7 @@ client-assets/          Alles, was der Browser direkt lädt (HTML/CSS/JS)
   quiz/                    Quiz-Übersicht + Editor, Bildschirm (screen), Handy (play)
   spiele/                  Spielegalerie (inkl. games/wordle.html), js/ai.js = Computergegner
   raetsel/                 Tagesrätsel: Übersicht, Städteraten, Connections, Nonogramm, ewige Bestenliste
-  spiele/gruppe/           Gruppenspiele mit Bildschirm + Handys (Wer würde eher, Stadt-Land-Fluss, Kniffel)
+  spiele/gruppe/           Gruppenspiele mit Handys (Wer würde eher, Stadt-Land-Fluss, Kniffel, Mäxchen online, Montagsmaler)
   tischtennis/             Turniere (Tischtennis + Fußball): Besucheransicht, Turnierleitung, Liveansicht
   woelfe/                  Gebaute Werwolf-Oberfläche (entsteht automatisch beim Deploy)
 clients/woelfe-src/     Quellcode der Werwolf-Oberfläche (React), wird vorm Deploy gebaut
@@ -101,6 +101,16 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
     Würfel antippen = festhalten) und trägt in eines der 13 Felder ein. Der Bildschirm zeigt die
     Würfel groß und den Block aller. Bonus 35 ab 63 Punkten oben. „Zug überspringen“ trägt für
     abwesende Personen den besten freien Wert ein.
+  - **Mäxchen online** – jede Person am eigenen Handy, auch über die Ferne. Wer den Raum eröffnet,
+    spielt selbst mit und leitet das Spiel (Start, Deckelzahl, Entfernen, Zug überspringen).
+    Würfel verdeckt, Becher antippen zum heimlichen Schauen, ansagen, glauben oder aufdecken.
+    Auf der lokalen Mäxchen-Seite gibt es dafür den Knopf „Online spielen“.
+  - **Montagsmaler** – eine Person zeichnet am Handy (Farben, Stiftgrößen, Radierer, Rückgängig),
+    alle anderen sehen die Zeichnung live und raten. Schnelles Raten bringt mehr Punkte, die
+    zeichnende Person bekommt Punkte für jede richtige Antwort, nach der Hälfte der Zeit
+    erscheinen Buchstaben als Tipp. Ein Fernseher ist optional („Zusätzlich auf einem Fernseher zeigen“).
+  - Bildschirm und Handys aktualisieren sich per DOM-Abgleich: nur Geändertes wird neu gezeichnet,
+    nichts ploppt bei jedem Spielzug neu auf.
   - Läuft im Durable Object `PartyRoom` (Migration `v3` in wrangler.jsonc).
 
 ## Tagesrätsel

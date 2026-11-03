@@ -125,7 +125,7 @@ function partyStub(env, code) {
 async function handleParty(request, env, path) {
   if (path === "/party" && request.method === "POST") {
     const body = (await readJson(request)) || {};
-    const game = ["slf", "wwe", "kniffel"].includes(body.game) ? body.game : null;
+    const game = ["slf", "wwe", "kniffel", "maexchen", "draw"].includes(body.game) ? body.game : null;
     if (!game) return json({ error: "Unbekanntes Spiel" }, 400);
     const hostKey = randomCode(12) + randomCode(12);
     for (let attempt = 0; attempt < 30; attempt++) {
