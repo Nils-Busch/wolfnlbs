@@ -8,55 +8,20 @@
 import { DurableObject } from "cloudflare:workers";
 import { makeId } from "../woelfe/ids.js";
 import { SELF_HOST, extraMethods } from "./partyExtra.js";
+import { KN_CATS, knScore, knTotals } from "./kniffel.js";
+import { defaultSettings, placements, eveningSummary, TITLES, EVENING_POINTS } from "./evening.js";
+export { defaultSettings, placements, eveningSummary, TITLES, EVENING_POINTS };
+export { KN_CATS, knScore, knTotals };
 
 const EMPTY_CLEANUP_MS = 60 * 60 * 1000;
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_PLAYERS = 30;
 const MAX_MESSAGE_BYTES = 8 * 1024;
+const BOT_NAMES = ["Kalle", "Uschi", "Bernd", "Heike", "Jupp", "Gabi", "Rudi", "Moni"];
 
 export const GAMES = { wwe: "Wer würde eher …?", slf: "Stadt-Land-Fluss", kniffel: "Kniffel", maexchen: "Mäxchen", draw: "Montagsmaler" };
 
-// ---------- Kniffel ----------
-export const KN_CATS = [
-  { key: "ones", name: "Einer", upper: 1 },
-  { key: "twos", name: "Zweier", upper: 2 },
-  { key: "threes", name: "Dreier", upper: 3 },
-  { key: "fours", name: "Vierer", upper: 4 },
-  { key: "fives", name: "Fünfer", upper: 5 },
-  { key: "sixes", name: "Sechser", upper: 6 },
-  { key: "three", name: "Dreierpasch" },
-  { key: "four", name: "Viererpasch" },
-  { key: "full", name: "Full House" },
-  { key: "small", name: "Kleine Straße" },
-  { key: "large", name: "Große Straße" },
-  { key: "kniffel", name: "Kniffel" },
-  { key: "chance", name: "Chance" },
-];
-export function knScore(key, dice) {
-  const counts = [0, 0, 0, 0, 0, 0, 0];
-  for (const d of dice) counts[d]++;
-  const sum = dice.reduce((a, b) => a + b, 0);
-  const max = Math.max(...counts);
-  const has = (run) => run.every((v) => counts[v] > 0);
-  const cat = KN_CATS.find((c) => c.key === key);
-  if (cat?.upper) return counts[cat.upper] * cat.upper;
-  switch (key) {
-    case "three": return max >= 3 ? sum : 0;
-    case "four": return max >= 4 ? sum : 0;
-    case "full": return counts.includes(3) && counts.includes(2) ? 25 : max === 5 ? 25 : 0;
-    case "small": return has([1, 2, 3, 4]) || has([2, 3, 4, 5]) || has([3, 4, 5, 6]) ? 30 : 0;
-    case "large": return has([1, 2, 3, 4, 5]) || has([2, 3, 4, 5, 6]) ? 40 : 0;
-    case "kniffel": return max === 5 ? 50 : 0;
-    case "chance": return sum;
-    default: return 0;
-  }
-}
-export function knTotals(sheet) {
-  const upper = KN_CATS.filter((c) => c.upper).reduce((a, c) => a + (sheet[c.key] || 0), 0);
-  const bonus = upper >= 63 ? 35 : 0;
-  const lower = KN_CATS.filter((c) => !c.upper).reduce((a, c) => a + (sheet[c.key] || 0), 0);
-  return { upper, bonus, lower, total: upper + bonus + lower };
-}
+// Kniffel-Regeln liegen in ./kniffel.js (ohne Cloudflare-Abhängigkeit, damit sie testbar sind)
 
 // ---------- „Wer würde eher …?“ ----------
 const WWE_QUESTIONS = [
@@ -155,7 +120,7 @@ export class PartyRoom extends DurableObject {
       this.s = (await ctx.storage.get("state")) || null;
       if (this.s) {
         const online = new Set(this.sockets().map((ws) => this.att(ws).playerId).filter(Boolean));
-        for (const p of Object.values(this.s.players)) p.connected = online.has(p.id);
+        for (const p of Object.values(this.s.players)) p.connected = !!p.bot || online.has(p.id);
       }
     });
   }
@@ -174,16 +139,13 @@ export class PartyRoom extends DurableObject {
       endsAt: null,
       createdAt: Date.now(),
       emptySince: Date.now(),
-      settings:
-        game === "wwe"
-          ? { rounds: 10, seconds: 25 }
-          : game === "kniffel"
-            ? { rounds: 13 }
-            : game === "maexchen"
-              ? { lives: 3 }
-              : game === "draw"
-                ? { rounds: 2, seconds: 80 }
-                : { rounds: 5, seconds: 90, categories: ["Stadt", "Land", "Fluss", "Name", "Tier", "Beruf"] },
+      settings: defaultSettings(game),
+      // Spieleabend: Wertung über alle Spiele im Raum
+      evening: { scores: {}, played: [] },
+      runId: 0,
+      recorded: 0,
+      runPlayers: [],
+      gallery: [],
       // Kniffel, Mäxchen, Montagsmaler
       kn: null,
       mx: null,
@@ -232,7 +194,7 @@ export class PartyRoom extends DurableObject {
     return this.playersArr().filter((p) => p.connected);
   }
   pub(p) {
-    return { id: p.id, name: p.name, connected: p.connected, score: p.score || 0 };
+    return { id: p.id, name: p.name, connected: p.connected, score: p.score || 0, bot: !!p.bot };
   }
 
   /* ---------- Ansicht (Handys sehen fremde Antworten erst in der Auswertung) ---------- */
@@ -252,7 +214,16 @@ export class PartyRoom extends DurableObject {
       categoriesAll: SLF_CATEGORIES,
       selfHost: SELF_HOST.has(s.game),
       hostPlayer: s.hostPlayer,
+      games: GAMES,
+      evening: s.evening && s.evening.played.length ? eveningSummary(s.evening) : null,
+      galleryMeta: (s.gallery || []).map((g, i) => ({ i, word: g.word, drawer: g.drawer })),
     };
+    // Eigene Montagsmaler-Wörter sieht nur die Spielleitung
+    if (s.game === "draw") {
+      const words = s.settings.words || [];
+      v.settings = { ...s.settings, words: undefined, wordCount: words.length };
+      if (role === "host" || isHost) v.wordsText = words.join("\n");
+    }
     if (role === "player") {
       const me = s.players[playerId];
       v.me = me ? { id: me.id, name: me.name, score: me.score || 0, host: !!isHost } : null;
@@ -315,6 +286,7 @@ export class PartyRoom extends DurableObject {
 
   broadcast() {
     if (!this.s) return;
+    this.eveningRecord();
     let host = null;
     for (const ws of this.sockets()) {
       const a = this.att(ws);
@@ -511,14 +483,31 @@ export class PartyRoom extends DurableObject {
     s.phase = "SCORES";
   }
 
+  /* ---------- Spieleabend ---------- */
+  eveningRecord() {
+    const s = this.s;
+    if (s.phase !== "END" || !s.runId || s.recorded === s.runId) return;
+    s.recorded = s.runId;
+    const list = (s.runPlayers || []).map((id) => s.players[id]).filter(Boolean).map((p) => ({ id: p.id, name: p.name, score: p.score || 0 }));
+    if (list.length < 2) return;
+    s.evening.played.push({ game: s.game, name: GAMES[s.game], at: Date.now(), results: placements(list) });
+    if (s.evening.played.length > 60) s.evening.played.shift();
+  }
+
   /* ---------- Speichern & Alarm ---------- */
   async persist() {
     const s = this.s;
     if (!s) return;
     if (this.sockets().length) s.emptySince = null;
     else if (!s.emptySince) s.emptySince = Date.now();
+    if (s.game === "maexchen") this.mxBotPlan();
+    if (this.pendingImgs?.length) {
+      for (const [k, v] of this.pendingImgs.splice(0)) await this.ctx.storage.put(k, v);
+    }
+    if (this.dropImgs?.length) await this.ctx.storage.delete(this.dropImgs.splice(0));
     await this.ctx.storage.put("state", s);
     const times = [s.createdAt + MAX_AGE_MS];
+    if (s.game === "maexchen" && s.mx?.botAt) times.push(s.mx.botAt);
     if (s.endsAt && (s.phase === "QUESTION" || s.phase === "WRITING" || s.phase === "PLAYING" || s.phase === "CHOOSE" || s.phase === "DRAW" || s.phase === "REVEAL")) times.push(s.endsAt + 150);
     if (s.game === "draw" && s.phase === "DRAW" && s.dr?.hintTimes?.length) times.push(s.dr.hintTimes[0] + 50);
     if (s.emptySince) times.push(s.emptySince + EMPTY_CLEANUP_MS);
@@ -544,6 +533,10 @@ export class PartyRoom extends DurableObject {
     } else if (s.game === "maexchen") {
       if (s.endsAt && now >= s.endsAt && s.mx?.step === "reveal") {
         this.mxLose(s.mx.reveal.loser, s.mx.reveal.amount);
+        this.broadcast();
+      } else if (s.mx?.botAt && now >= s.mx.botAt) {
+        s.mx.botAt = null;
+        try { this.mxBotStep(); } catch (e) { console.error(e); }
         this.broadcast();
       }
     } else if (s.endsAt && now >= s.endsAt) {
@@ -578,7 +571,7 @@ export class PartyRoom extends DurableObject {
       if (!this.s) throw new Error("Raum nicht gefunden. Code prüfen?");
       const handler = this.handlers[event];
       if (!handler) throw new Error("Unbekannte Aktion.");
-      const result = handler.call(this, ws, payload || {});
+      const result = await handler.call(this, ws, payload || {});
       if (result?.ink) {
         const msg = JSON.stringify({ t: "evt", event: "ink", payload: result.ink });
         for (const o of this.sockets()) if (o !== ws) try { o.send(msg); } catch {}
@@ -648,9 +641,16 @@ export class PartyRoom extends DurableObject {
         s.settings = { rounds: 13 };
       } else if (s.game === "maexchen") {
         const lives = Math.round(Number(settings?.lives));
-        s.settings = { lives: [3, 5, 7].includes(lives) ? lives : 3 };
+        const lvl = ["easy", "medium", "hard"].includes(settings?.botLevel) ? settings.botLevel : s.settings.botLevel || "medium";
+        s.settings = { lives: [3, 5, 7].includes(lives) ? lives : 3, botLevel: lvl };
       } else if (s.game === "draw") {
-        s.settings = { rounds: Math.min(3, Math.max(1, rounds || 2)), seconds: [60, 80, 100, 120].includes(seconds) ? seconds : 80 };
+        // Eigene Wörter: eins pro Zeile oder mit Komma getrennt
+        let words = s.settings.words || [];
+        if (typeof settings?.words === "string") {
+          words = [...new Set(settings.words.split(/[\n,;]+/).map((w) => w.replace(/\s+/g, " ").trim().slice(0, 30)).filter((w) => w.length >= 2))].slice(0, 300);
+        }
+        const mode = ["mix", "only", "off"].includes(settings?.wordMode) ? settings.wordMode : s.settings.wordMode || "mix";
+        s.settings = { rounds: Math.min(3, Math.max(1, rounds || 2)), seconds: [60, 80, 100, 120].includes(seconds) ? seconds : 80, words, wordMode: mode };
       } else {
         const cats = Array.isArray(settings?.categories) ? settings.categories.filter((c) => SLF_CATEGORIES.includes(c)) : [];
         if (cats.length < 3) throw new Error("Bitte mindestens 3 Kategorien wählen.");
@@ -668,6 +668,8 @@ export class PartyRoom extends DurableObject {
       if (this.playersArr().length < 2) throw new Error("Es braucht mindestens 2 Mitspielende.");
       for (const p of this.playersArr()) p.score = 0;
       s.round = 0;
+      s.runId = (s.runId || 0) + 1;
+      s.runPlayers = this.playersArr().map((p) => p.id);
       if (s.game === "wwe") this.wweStart();
       else if (s.game === "kniffel") this.knStart();
       else if (s.game === "maexchen") this.mxStart();
@@ -708,6 +710,47 @@ export class PartyRoom extends DurableObject {
       for (const p of this.playersArr()) p.score = 0;
       Object.assign(s, { phase: "LOBBY", round: 0, endsAt: null, votes: {}, result: null, history: [], answers: {}, flags: {}, roundScores: null, letter: null, usedLetters: [], stoppedBy: null, kn: null, mx: null, dr: null });
     },
+    // Spieleabend: im selben Raum ein anderes Spiel wählen (Mitspielende bleiben)
+    switchGame(ws, { game }) {
+      this.requireHost(ws);
+      const s = this.s;
+      if (!Object.hasOwn(GAMES, game)) throw new Error("Unbekanntes Spiel.");
+      if (!["LOBBY", "END", "FINALE"].includes(s.phase)) throw new Error("Erst das laufende Spiel beenden.");
+      if (game !== "maexchen") for (const p of this.playersArr()) if (p.bot) delete s.players[p.id];
+      s.game = game;
+      s.settings = defaultSettings(game);
+      for (const p of this.playersArr()) p.score = 0;
+      Object.assign(s, { phase: "LOBBY", round: 0, endsAt: null, votes: {}, result: null, history: [], answers: {}, flags: {}, roundScores: null, letter: null, usedLetters: [], stoppedBy: null, kn: null, mx: null, dr: null });
+    },
+    finale(ws) {
+      this.requireHost(ws);
+      const s = this.s;
+      if (!["LOBBY", "END"].includes(s.phase)) throw new Error("Erst das laufende Spiel beenden.");
+      if (!s.evening.played.length) throw new Error("Es wurde noch kein Spiel zu Ende gespielt.");
+      s.phase = "FINALE";
+      s.endsAt = null;
+    },
+    // Mäxchen: Computer an den Tisch holen
+    addBot(ws) {
+      this.requireHost(ws);
+      const s = this.s;
+      if (s.game !== "maexchen" || s.phase !== "LOBBY") throw new Error("Computer gibt es nur im Mäxchen-Warteraum.");
+      const bots = this.playersArr().filter((p) => p.bot);
+      if (bots.length >= 6) throw new Error("Höchstens 6 Computer.");
+      if (this.playersArr().length >= MAX_PLAYERS) throw new Error("Der Raum ist voll.");
+      const taken = new Set(this.playersArr().map((p) => p.name.toLowerCase()));
+      const name = BOT_NAMES.find((n) => !taken.has(n.toLowerCase())) || `Computer ${bots.length + 1}`;
+      const p = { id: makeId(8), token: null, name, score: 0, connected: true, joined: ++s.order, bot: true };
+      s.players[p.id] = p;
+    },
+    // Montagsmaler-Galerie: ein Bild nachladen (Bilder liegen getrennt im Speicher)
+    async galleryItem(ws, { i }) {
+      const meta = this.s.gallery?.[Number(i)];
+      if (!meta) throw new Error("Bild nicht gefunden.");
+      const img = await this.ctx.storage.get(meta.key);
+      return { quiet: true, noPersist: true, reply: { word: meta.word, drawer: meta.drawer, strokes: img || [] } };
+    },
+
     kick(ws, { playerId }) {
       this.requireHost(ws);
       if (!this.s.players[playerId]) throw new Error("Spieler nicht gefunden.");

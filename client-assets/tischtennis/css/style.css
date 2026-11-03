@@ -351,3 +351,23 @@ table.scorers td.left:nth-child(3) { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) {
   .t-list li, .tab-body.tab-in, .bump, .sheet, .sheet-card, .livetag::before, .h-live::before, .bmatch.is-live { animation: none !important; }
 }
+
+/* Vereinsrangliste */
+.top-links { display: inline-flex; gap: 18px; flex-wrap: wrap; justify-content: flex-end; }
+.ranking tbody tr { animation: tt-rise .45s var(--ease) both; animation-delay: calc(var(--i, 0) * 30ms); }
+.ranking .rk { display: inline-grid; place-items: center; min-width: 2em; height: 2em; font: 700 1rem var(--display); }
+.ranking tr.top1 .rk { background: var(--red); color: #fff; }
+.ranking tr.top2 .rk, .ranking tr.top3 .rk { box-shadow: inset 0 0 0 2px var(--red); }
+.ranking .sub { display: block; color: var(--muted); font-size: .78rem; }
+.ranking .elo { font: 700 1.25rem var(--display); white-space: nowrap; }
+.ranking .trend { display: block; font: 600 .72rem var(--body); color: var(--muted); }
+.ranking .trend.up { color: var(--win); }
+.ranking .trend.down { color: var(--danger); }
+.spark { display: block; margin: 0 auto; overflow: visible; }
+.spark polyline { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.spark.up polyline { stroke: var(--win); }
+.spark.down polyline { stroke: var(--danger); }
+.how { margin-top: 20px; max-width: 70ch; }
+.how summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 560px) { .ranking .hide-s { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ranking tbody tr { animation: none; } }

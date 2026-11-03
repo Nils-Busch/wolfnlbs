@@ -13,6 +13,34 @@ export const mxValue = ([a, b]) => (a === b ? a * 11 : (a === 1 && b === 2) || (
 export const mxLabel = (v) => (v === 21 ? "Mäxchen" : v % 11 === 0 ? `${v / 11}er-Pasch` : String(v));
 const d6 = () => 1 + Math.floor(Math.random() * 6);
 const REVEAL_MS = 3200;
+// Computer: Wahrscheinlichkeit, dass ein frischer Wurf mindestens v ist
+const mxChance = (v) => (v === 21 || v % 11 !== 0 ? 2 : 1) / 36;
+export const mxAtLeast = (v) => MX_ORDER.slice(mxRank(v)).reduce((s, x) => s + mxChance(x), 0);
+
+/** Entscheidung eines Computers: aufdecken (true) oder glauben (false). */
+export function mxBotDoubt(prevValue, level, rnd = Math.random) {
+  const pTrue = mxAtLeast(prevValue);
+  if (prevValue === 21) return rnd() < { easy: 0.55, medium: 0.75, hard: 0.85 }[level];
+  if (level === "easy") return rnd() < 0.65 - pTrue * 0.5;
+  const r = mxRank(prevValue);
+  const pBeat = r + 1 < MX_ORDER.length ? mxAtLeast(MX_ORDER[r + 1]) : 0;
+  const t = level === "hard" ? 0.36 + (pBeat < 0.3 ? 0.12 : 0) : 0.3;
+  return pTrue + (rnd() - 0.5) * 0.12 < t;
+}
+/** Ansage eines Computers für den eigenen Wurf (immer höher als prevValue). */
+export function mxBotSay(dice, prevValue, level, rnd = Math.random) {
+  const actual = mxValue(dice);
+  const min = prevValue ? mxRank(prevValue) + 1 : 0;
+  const legal = MX_ORDER.slice(min);
+  const r = mxRank(actual);
+  if (r >= min) {
+    const lieUp = { easy: 0.05, medium: 0.12, hard: 0.22 }[level];
+    return rnd() < lieUp && r < 12 ? MX_ORDER[Math.min(r + 1 + Math.floor(rnd() * 2), 19)] : actual;
+  }
+  if (level === "easy") return legal[Math.floor(rnd() * Math.min(5, legal.length))];
+  const step = level === "hard" && rnd() < 0.3 ? 1 : 0;
+  return legal[Math.min(step, legal.length - 1)];
+}
 
 /* =================== Montagsmaler =================== */
 export const DR_WORDS = [
@@ -46,7 +74,11 @@ function lev(a, b) {
   const d = Array.from({ length: m + 1 }, (_, i) => [i]);
   for (let j = 1; j <= n; j++) d[0][j] = j;
   for (let i = 1; i <= m; i++)
-    for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    for (let j = 1; j <= n; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      // vertauschte Nachbarbuchstaben („Elefnat“) zählen als ein Fehler
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
   return d[m][n];
 }
 function pick(arr, n, avoid = []) {
@@ -176,6 +208,28 @@ export const extraMethods = {
     }
     this.mxCheckEnd(mx.cur === id ? this.mxNext(id) : mx.cur);
   },
+  // Ist ein Computer dran, plant persist() seinen Zug ein (kleine Denkpause)
+  mxBotPlan() {
+    const s = this.s;
+    const mx = s.mx;
+    if (!mx || s.phase !== "PLAYING" || mx.step === "reveal" || mx.step === "over") { if (mx) mx.botAt = null; return; }
+    const p = s.players[mx.cur];
+    if (!p?.bot) { mx.botAt = null; return; }
+    if (!mx.botAt) mx.botAt = Date.now() + (mx.step === "rolled" ? 1100 : 1300) + Math.floor(Math.random() * 700);
+  },
+  mxBotStep() {
+    const s = this.s;
+    const mx = s.mx;
+    if (!mx || s.phase !== "PLAYING") return;
+    const pid = mx.cur;
+    if (!s.players[pid]?.bot) return;
+    const lvl = s.settings.botLevel || "medium";
+    if (mx.step === "decide") {
+      if (!mx.prev) return this.mxAct(pid, { action: "roll" });
+      return this.mxAct(pid, { action: mxBotDoubt(mx.prev.value, lvl) ? "reveal" : "believe" });
+    }
+    if (mx.step === "rolled") this.mxAct(pid, { action: "say", value: mxBotSay(mx.dice, mx.prev?.value, lvl) });
+  },
   mxView(playerId) {
     const mx = this.s.mx;
     if (!mx) return null;
@@ -240,7 +294,7 @@ export const extraMethods = {
       return;
     }
     dr.drawer = dr.seq[dr.idx];
-    dr.choices = pick(DR_WORDS, 3, dr.used);
+    dr.choices = this.drPickWords(dr.used);
     dr.word = null;
     dr.strokes = [];
     dr.rev++;
@@ -253,6 +307,16 @@ export const extraMethods = {
     s.phase = "CHOOSE";
     dr.total = DR_CHOOSE_MS;
     s.endsAt = Date.now() + DR_CHOOSE_MS;
+  },
+  drPickWords(used) {
+    const st = this.s.settings;
+    const own = (st.words || []).filter((w) => !used.includes(w));
+    if (st.wordMode === "only" && own.length >= 3) return pick(own, 3);
+    if (st.wordMode !== "off" && own.length) {
+      const mine = pick(own, Math.min(own.length, st.wordMode === "only" ? 3 : 1 + Math.floor(Math.random() * 2)));
+      return [...mine, ...pick(DR_WORDS, 3 - mine.length, [...used, ...mine])].sort(() => Math.random() - 0.5);
+    }
+    return pick(DR_WORDS, 3, used);
   },
   drChoose(i) {
     const s = this.s;
@@ -276,6 +340,14 @@ export const extraMethods = {
   drEndTurn(reason) {
     const s = this.s;
     const dr = s.dr;
+    // Bild für die Galerie „Bilder des Abends“ getrennt speichern (persist schreibt es)
+    if (dr.strokes.length && dr.word) {
+      s.gallery ||= [];
+      const key = `img:${s.runId || 0}-${dr.idx}-${Date.now().toString(36)}`;
+      s.gallery.push({ key, word: dr.word, drawer: s.players[dr.drawer]?.name || "?" });
+      (this.pendingImgs ||= []).push([key, dr.strokes]);
+      while (s.gallery.length > 40) (this.dropImgs ||= []).push(s.gallery.shift().key);
+    }
     dr.last = { word: dr.word, reason, guessed: Object.keys(dr.guessed).length };
     s.phase = "REVEAL";
     dr.total = DR_REVEAL_MS;

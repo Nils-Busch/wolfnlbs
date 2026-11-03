@@ -92,6 +92,66 @@ async function tipSummary(env, tid, matches) {
 }
 const DEVICE_RE = /^[A-Za-z0-9_-]{16,48}$/;
 
+/* ---------- Vereinsrangliste über alle Turniere ---------- */
+// Personen werden über den Namen erkannt (Groß-/Kleinschreibung und Leerzeichen egal).
+// Tischtennis-Doppel (Einträge mit mehreren Kaderplätzen) zählen nicht mit.
+const personKey = (name) => String(name || "").toLowerCase().replace(/\s+/g, " ").trim();
+async function clubRanking(env, sport) {
+  const ts = (await env.DB.prepare("SELECT * FROM tournaments WHERE sport = ? AND status != 'draft'").bind(sport).all()).results;
+  if (!ts.length) return { players: [], tournaments: 0, games: 0 };
+  const ids = ts.map((t) => t.id);
+  const ph = ids.map(() => "?").join(",");
+  const players = (await env.DB.prepare(`SELECT * FROM players WHERE tournament_id IN (${ph})`).bind(...ids).all()).results.map(parsePlayer);
+  const matches = (await env.DB.prepare(`SELECT * FROM matches WHERE tournament_id IN (${ph}) AND status = 'done'`).bind(...ids).all()).results.map(parseMatch);
+  const P = Object.fromEntries(players.map((p) => [p.id, p]));
+  const isDouble = (p) => sport === "tabletennis" && Array.isArray(p?.members) && p.members.length > 1;
+  const order = Object.fromEntries(ts.map((t) => [t.id, `${t.event_date || ""}|${String(t.created_at).padStart(15, "0")}`]));
+  const info = new Map(); // key -> { name, club, tournaments:Set, titles }
+  const note = (p, tid) => {
+    const k = personKey(p.name);
+    const i = info.get(k) || { name: p.name, club: "", tournaments: new Set(), titles: 0, last: "" };
+    if (order[tid] >= i.last) { i.name = p.name; i.last = order[tid]; if (p.club) i.club = p.club; }
+    i.tournaments.add(tid);
+    info.set(k, i);
+    return k;
+  };
+  const games = [];
+  matches
+    .filter((m) => P[m.player1_id] && P[m.player2_id] && !isDouble(P[m.player1_id]) && !isDouble(P[m.player2_id]))
+    .sort((a, b) => (order[a.tournament_id] < order[b.tournament_id] ? -1 : order[a.tournament_id] > order[b.tournament_id] ? 1 : a.updated_at - b.updated_at))
+    .forEach((m) => {
+      const a = note(P[m.player1_id], m.tournament_id), b = note(P[m.player2_id], m.tournament_id);
+      const result = m.winner_id == null ? 0.5 : m.winner_id === m.player1_id ? 1 : 0;
+      games.push({ a, b, result });
+    });
+  // Turniersiege
+  for (const t of ts.filter((x) => x.status === "finished")) {
+    const tm = matches.filter((m) => m.tournament_id === t.id);
+    let w = null;
+    if (t.format === "league") {
+      const ids2 = players.filter((p) => p.tournament_id === t.id).map((p) => p.id);
+      const table = (sport === "football" ? L.footballStandings : L.standings)(ids2, tm.filter((m) => m.phase === "group"), {});
+      w = table[0]?.player_id;
+    } else if (t.double_elim) {
+      const gf1 = tm.find((m) => m.bracket === "gf" && m.round === 1);
+      const gf2 = tm.find((m) => m.bracket === "gf" && m.round === 2);
+      w = (gf2 || gf1)?.winner_id;
+    } else {
+      w = tm.find((m) => m.phase === "ko" && !m.next_match_id)?.winner_id;
+    }
+    if (w && P[w] && !isDouble(P[w])) {
+      const k = personKey(P[w].name);
+      const i = info.get(k);
+      if (i) i.titles++;
+    }
+  }
+  const ranking = L.eloRanking(games).map((r) => {
+    const i = info.get(r.key) || {};
+    return { name: i.name, club: i.club || "", rating: r.rating, best: r.best, games: r.games, wins: r.wins, draws: r.draws, losses: r.losses, history: r.history, tournaments: i.tournaments ? i.tournaments.size : 0, titles: i.titles || 0 };
+  });
+  return { players: ranking, tournaments: ts.length, games: games.length };
+}
+
 function tournamentFields(b, t = {}) {
   const out = {
     sport: b.sport !== undefined ? b.sport : (t.sport ?? "tabletennis"),
@@ -346,6 +406,11 @@ export async function handleTischtennisApi(request, env, path) {
            FROM tournaments t ORDER BY t.event_date IS NULL, t.event_date DESC, t.id DESC`
       ).all();
       return securityHeaders(json(rows.results.map((t) => ({ ...t, double_elim: !!t.double_elim }))));
+    }
+    if (path === "/ranking" && method === "GET") {
+      const sport = new URL(request.url).searchParams.get("sport") === "football" ? "football" : "tabletennis";
+      const data = await clubRanking(env, sport);
+      return securityHeaders(json({ sport, ...data }, 200, { "cache-control": "public, max-age=30" }));
     }
     if ((m = path.match(/^\/tournaments\/(\d+)$/)) && method === "GET") {
       const data = await loadTournament(env, intId(m[1]));

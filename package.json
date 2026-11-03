@@ -12,7 +12,9 @@
     "dev": "wrangler dev",
     "dev:woelfe": "npm run dev --workspace clients/woelfe-src",
     "deploy": "wrangler deploy",
-    "db:schema": "echo 'Das Schema legt sich beim ersten Aufruf automatisch an – kein manueller Schritt nötig.'"
+    "db:schema": "echo 'Das Schema legt sich beim ersten Aufruf automatisch an – kein manueller Schritt nötig.'",
+    "test": "node --test \"tests/*.test.js\"",
+    "test:smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3"

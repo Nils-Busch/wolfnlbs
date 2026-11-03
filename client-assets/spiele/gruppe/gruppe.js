@@ -219,6 +219,7 @@
     if (!key) return renderStart('Dieser Raum gehört einem anderen Gerät.');
     app.className = 'gp gp-host';
     app.innerHTML = '<p class="muted">Verbinde …</p>';
+    if (window.VH && VH.sound) VH.sound.toggleButton();
     G.sock = new Sock(code, {
       onOpen: async () => { G.connected = true; const r = await G.sock.emit('host', { hostKey: key }); if (!r.ok) { G.sock.closed = true; renderStart(r.error); } },
       onClose: () => { G.connected = false; },
@@ -252,6 +253,68 @@
   }
   const byId = (s) => Object.fromEntries(s.players.map((p) => [p.id, p]));
   const sortScore = (s) => [...s.players].sort((a, b) => b.score - a.score);
+  const pname = (p) => `${p.bot ? '🤖 ' : ''}${esc(p.name)}`;
+
+  /* ---------- Spieleabend ---------- */
+  const GAME_LIST = ['wwe', 'slf', 'kniffel', 'maexchen', 'draw'];
+  function gamePicker(s, label = 'Spiel wählen') {
+    return `<div class="ev-pick"><p class="muted small">${label}</p><div class="ev-games">${GAME_LIST.map((g) => `<button type="button" class="ev-game ${g === s.game ? 'on' : ''}" data-switch="${g}" ${g === s.game && s.phase === 'LOBBY' ? 'aria-pressed="true"' : ''}>${ICON[g]} ${esc(s.games?.[g] || g)}</button>`).join('')}</div></div>`;
+  }
+  function eveningTable(s) {
+    const ev = s.evening;
+    if (!ev) return '';
+    return `<section class="ev-table"><h3>🏆 Spieleabend <span>${ev.played.length} ${ev.played.length === 1 ? 'Spiel' : 'Spiele'}</span></h3>
+      <ol>${ev.ranking.map((r, i) => `<li data-k="ev${r.id}" class="${G.s?.me?.id === r.id ? 'me' : ''}"><span class="pl">${i + 1}</span><span class="n">${esc(r.name)}</span><span class="w" title="${r.wins} Siege">${'🥇'.repeat(Math.min(r.wins, 3))}</span><b>${r.points}</b></li>`).join('')}</ol>
+      <p class="muted small">Platz 1 bekommt 10 Abendpunkte, Platz 2 sieben, dann 5, 3, 2 und 1.</p></section>`;
+  }
+  function finaleHtml(s) {
+    const ev = s.evening;
+    if (!ev) return '<p class="muted center">Noch kein Spiel beendet.</p>';
+    return `<div class="ev-finale">
+      <p class="kick">Siegerehrung</p><h2>Der Spieleabend</h2>
+      ${podium(ev.ranking.map((r) => ({ name: r.name, score: r.points })))}
+      ${ev.titles.length ? `<ul class="ev-titles">${ev.titles.map((t, i) => `<li style="animation-delay:${1.2 + i * 0.15}s"><span class="ic">${ICON[t.game]}</span><b>${esc(t.title)}</b><span>${esc(t.name)}${t.times > 1 ? ` · ${t.times}×` : ''}</span></li>`).join('')}</ul>` : ''}
+      <p class="ev-played">${ev.played.map((r) => `<span>${ICON[r.game]} ${esc(r.name)}${r.winner ? `: ${esc(r.winner)}` : ''}</span>`).join('')}</p>
+      ${galleryHtml(s)}
+    </div>`;
+  }
+
+  /* ---------- Bilder des Abends (Montagsmaler) ---------- */
+  function galleryHtml(s) {
+    const list = s.galleryMeta || [];
+    if (!list.length) return '';
+    return `<section class="gal"><h3>🖍️ Bilder des Abends</h3><div class="gal-grid">${list.map((m) => `<figure class="gal-it" data-k="g${m.i}-${esc(m.word)}"><canvas class="gal-cv" data-gal="${m.i}" width="400" height="300" aria-label="Zeichnung: ${esc(m.word)}"></canvas>
+      <figcaption><b>${esc(m.word)}</b> <span>von ${esc(m.drawer)}</span></figcaption><button type="button" class="ghost small" data-dl="${m.i}">⬇ Bild speichern</button></figure>`).join('')}</div></section>`;
+  }
+  G.gal = {};
+  async function galleryLoad() {
+    for (const cv of document.querySelectorAll('canvas[data-gal]')) {
+      const i = cv.dataset.gal;
+      if (cv.dataset.loaded === '1') continue;
+      cv.dataset.loaded = '1';
+      if (!G.gal[i]) { const r = await G.sock.emit('galleryItem', { i: +i }); if (!r.ok) continue; G.gal[i] = r; }
+      const ctx = ctxOf(cv);
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 400, 300);
+      ctx.save(); ctx.scale(0.4, 0.4);
+      for (const st of G.gal[i].strokes) paintStroke(ctx, st);
+      ctx.restore();
+    }
+  }
+  function galleryDownload(i) {
+    const g = G.gal[i];
+    if (!g) return;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H + 70;
+    const ctx = ctxOf(cv);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    for (const st of g.strokes) paintStroke(ctx, st);
+    ctx.fillStyle = '#172036'; ctx.font = 'bold 34px system-ui, sans-serif';
+    ctx.fillText(`${g.word} – gezeichnet von ${g.drawer}`, 24, H + 46);
+    const a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    a.download = `montagsmaler-${g.word.toLowerCase().replace(/[^a-z0-9äöüß]+/gi, '-')}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
 
   function renderHost() {
     const s = G.s;
@@ -259,7 +322,7 @@
     const fresh = key !== G.lastPhaseKey;
     G.lastPhaseKey = key;
     const bodyKey = s.game === 'kniffel' || s.game === 'maexchen' ? s.phase : s.game === 'draw' ? `${s.phase}-${s.dr?.turn || 0}` : key;
-    const head = `<header class="gp-bar"><span class="t">${ICON[s.game] || ''} ${esc(s.gameName)}</span>${s.round && s.game !== 'maexchen' ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
+    const head = `<header class="gp-bar"><span class="t">${s.phase === 'FINALE' ? '🏆 Spieleabend' : `${ICON[s.game] || ''} ${esc(s.gameName)}`}</span>${s.round && s.game !== 'maexchen' && s.phase !== 'FINALE' && s.phase !== 'LOBBY' ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
     let body = '';
     let foot = '';
     if (s.phase === 'LOBBY') {
@@ -269,10 +332,15 @@
           <div><p class="muted">Am Handy öffnen:</p><p class="url">${esc(location.host)}/spiele/gruppe</p><p class="muted">Code eingeben:</p>
           <p class="gp-tiles">${[...s.code].map((c) => `<span>${esc(c)}</span>`).join('')}</p></div>
         </div>
-        <div class="gp-people">${s.players.length ? s.players.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${esc(p.name)}</b><button class="x" data-kick="${p.id}" title="Entfernen">✕</button></span>`).join('') : '<p class="muted">Noch niemand da. Scannt den Code!</p>'}</div>
+        <div class="gp-people">${s.players.length ? s.players.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b><button class="x" data-kick="${p.id}" title="Entfernen">✕</button></span>`).join('') : '<p class="muted">Noch niemand da. Scannt den Code!</p>'}</div>
+        ${gamePicker(s)}
         ${settingsHtml(s)}
+        ${eveningTable(s)}
       </div>`;
-      foot = `<button class="big" data-host="start" ${s.players.length < 2 ? 'disabled' : ''}>Los geht’s</button>`;
+      foot = `<button class="big" data-host="start" ${s.players.length < 2 ? 'disabled' : ''}>${ICON[s.game]} ${esc(s.gameName)} starten</button>${s.evening ? '<button class="ghost" data-host="finale">🏆 Siegerehrung</button>' : ''}`;
+    } else if (s.phase === 'FINALE') {
+      body = finaleHtml(s);
+      foot = `<button data-host="restart">Weiter spielen</button>`;
     } else if (s.game === 'wwe') {
       if (s.phase === 'QUESTION') {
         body = `<div class="wwe-q fresh"><p class="kick">Wer würde eher …</p><h2>${esc(s.question.replace(/^… ?/, ''))}</h2></div>${timerBar()}
@@ -334,12 +402,18 @@
         foot = `<button data-host="restart">Nochmal spielen</button>`;
       }
     }
+    if (s.phase === 'END') {
+      body += `<div class="ev-after">${s.game === 'draw' ? galleryHtml(s) : ''}${gamePicker(s, 'Als Nächstes spielen')}${eveningTable(s)}</div>`;
+      foot = `<button data-host="restart">🔁 Nochmal ${esc(s.gameName)}</button><button class="ghost" data-host="finale">🏆 Siegerehrung</button>`;
+    }
     app.className = `gp gp-host g-${s.game}`;
     morph(app, `${head}<main class="gp-stage"><div class="gp-body" data-k="${bodyKey}">${body}</div></main><footer class="gp-foot">${foot}<button class="ghost" data-host="full" title="Vollbild">⛶</button></footer>`);
     bindHost();
     runTimer();
     afterRender(s, fresh);
-    if (s.phase === 'END' && fresh && window.VH) setTimeout(() => VH.confetti(), 600);
+    hostSounds(G.prevHost, s);
+    G.prevHost = s;
+    if ((s.phase === 'END' || s.phase === 'FINALE') && fresh && window.VH) setTimeout(() => VH.confetti({ count: s.phase === 'FINALE' ? 160 : 90 }), 600);
     if (s.phase === 'RESULT' && fresh && s.result.winners.length && window.VH) setTimeout(() => VH.confetti({ count: 50 }), 500);
   }
 
@@ -352,11 +426,17 @@
   function settingsHtml(s) {
     if (s.game === 'kniffel') return `<p class="muted center">13 Runden, alle Felder einmal. Wer dran ist, würfelt am Handy bis zu drei Mal.</p>`;
     if (s.game === 'maexchen') {
-      return `<form class="gp-settings" id="setForm"><label>Deckel pro Person <select name="lives">${[3, 5, 7].map((n) => `<option value="${n}" ${s.settings.lives === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label></form>`;
+      return `<form class="gp-settings" id="setForm"><label>Deckel pro Person <select name="lives">${[3, 5, 7].map((n) => `<option value="${n}" ${s.settings.lives === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label>Computer spielen <select name="botLevel">${[['easy', 'Leicht'], ['medium', 'Mittel'], ['hard', 'Schwer']].map(([k, l]) => `<option value="${k}" ${s.settings.botLevel === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <button type="button" class="ghost small" data-addbot>🤖 Computer dazuholen</button></form>`;
     }
     if (s.game === 'draw') {
       return `<form class="gp-settings" id="setForm"><label>Jede Person zeichnet <select name="rounds">${[1, 2, 3].map((n) => `<option value="${n}" ${s.settings.rounds === n ? 'selected' : ''}>${n}×</option>`).join('')}</select></label>
-        <label>Zeit zum Zeichnen <select name="seconds">${[60, 80, 100, 120].map((n) => `<option value="${n}" ${s.settings.seconds === n ? 'selected' : ''}>${n} Sekunden</option>`).join('')}</select></label></form>`;
+        <label>Zeit zum Zeichnen <select name="seconds">${[60, 80, 100, 120].map((n) => `<option value="${n}" ${s.settings.seconds === n ? 'selected' : ''}>${n} Sekunden</option>`).join('')}</select></label>
+        ${s.wordsText != null ? `<details class="dr-own" ${s.settings.wordCount ? 'open' : ''}><summary>Eigene Wörter${s.settings.wordCount ? ` (${s.settings.wordCount})` : ''}</summary>
+          <textarea name="words" rows="4" maxlength="6000" placeholder="Ein Wort pro Zeile, z. B. Vereinsheim, Trainer Heinz, Grillfest">${esc(s.wordsText)}</textarea>
+          <label>Wörter verwenden <select name="wordMode">${[['mix', 'gemischt mit den eingebauten'], ['only', 'nur eigene Wörter'], ['off', 'nur eingebaute']].map(([k, l]) => `<option value="${k}" ${s.settings.wordMode === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <p class="muted small">Die anderen sehen die Liste nicht.</p></details>` : ''}</form>`;
     }
     if (s.game === 'wwe') {
       return `<form class="gp-settings" id="setForm"><label>Fragen <input type="number" name="rounds" min="3" max="30" value="${s.settings.rounds}"></label>
@@ -372,7 +452,7 @@
     f.onchange = () => {
       const settings = {};
       const cats = [];
-      for (const [k, v] of new FormData(f)) { if (k === 'cat') cats.push(v); else settings[k] = +v; }
+      for (const [k, v] of new FormData(f)) { if (k === 'cat') cats.push(v); else settings[k] = /^\d+$/.test(v) ? +v : v; }
       if (G.s.game === 'slf') settings.categories = cats;
       act('settings', { settings });
     };
@@ -389,6 +469,19 @@
     }));
     app.querySelectorAll('[data-kick]').forEach((b) => (b.onclick = () => act('kick', { playerId: b.dataset.kick })));
     bindSettings();
+    bindCommon();
+  }
+  // Knöpfe, die Bildschirm und Handy der Spielleitung gemeinsam haben
+  function bindCommon() {
+    app.querySelectorAll('[data-switch]').forEach((b) => (b.onclick = async () => {
+      if (b.dataset.switch === G.s.game && G.s.phase === 'LOBBY') return;
+      app.querySelectorAll('[data-switch]').forEach((x) => (x.disabled = true));
+      await act('switchGame', { game: b.dataset.switch });
+      app.querySelectorAll('[data-switch]').forEach((x) => (x.disabled = false));
+    }));
+    const ab = app.querySelector('[data-addbot]');
+    if (ab) ab.onclick = () => act('addBot');
+    app.querySelectorAll('[data-dl]').forEach((b) => (b.onclick = () => galleryDownload(b.dataset.dl)));
   }
 
   /* ---------- Kniffel ---------- */
@@ -496,7 +589,7 @@
     const isMe = me && mx.cur === me.id;
     const coasters = (id) => Array.from({ length: mx.maxLives }, (_, k) => `<i class="${k < (mx.lives[id] || 0) ? '' : 'gone'}"></i>`).join('');
     const players = `<ul class="mx-players">${mx.order.map((id) => `<li data-k="mp${id}" class="${id === mx.cur ? 'turn' : ''} ${(mx.lives[id] || 0) <= 0 ? 'out' : ''} ${me && id === me.id ? 'me' : ''}">
-        <span class="nm">${esc(name(id))}${P[id] && !P[id].connected ? ' 💤' : ''}</span><span class="lives" aria-label="${mx.lives[id] || 0} Deckel">${coasters(id)}</span></li>`).join('')}</ul>`;
+        <span class="nm">${P[id] ? pname(P[id]) : '?'}${P[id] && !P[id].connected ? ' 💤' : ''}</span><span class="lives" aria-label="${mx.lives[id] || 0} Deckel">${coasters(id)}</span></li>`).join('')}</ul>`;
     let said;
     if (mx.step === 'reveal' && mx.reveal) {
       const r = mx.reveal;
@@ -685,8 +778,31 @@
     cv.addEventListener('pointercancel', end);
   }
 
+  /* ---------- Geräusche am Bildschirm (abschaltbar, /shared/sound.js) ---------- */
+  function hostSounds(a, b) {
+    const S = window.VH && VH.sound;
+    if (!S || !a || !b) return;
+    if (b.players.length > a.players.length) S.play('pop');
+    if (a.phase !== b.phase) {
+      if (b.phase === 'END' || b.phase === 'FINALE') S.play('fanfare');
+      else if (b.phase === 'RESULT' || b.phase === 'REVEAL' || b.phase === 'SCORES') S.play('reveal');
+      else if (b.phase !== 'LOBBY') S.play('start');
+    }
+    if (b.game === 'kniffel' && a.kn && b.kn) {
+      if (b.kn.rollId !== a.kn.rollId) S.play('roll');
+      if (b.kn.last && (!a.kn.last || a.kn.last.key !== b.kn.last.key || a.kn.last.player !== b.kn.last.player)) S.play(b.kn.last.key === 'kniffel' && b.kn.last.points ? 'fanfare' : 'ding');
+    }
+    if (b.game === 'maexchen' && a.mx && b.mx) {
+      if (b.mx.rollId !== a.mx.rollId) S.play('shake');
+      if (b.mx.step === 'reveal' && a.mx.step !== 'reveal' && b.mx.reveal) S.play(b.mx.reveal.truth ? 'ding' : 'fail');
+    }
+    if (b.game === 'draw' && a.dr && b.dr && b.dr.guessed.length > (a.dr.guessed?.length || 0)) S.play('ding');
+    if ((b.game === 'wwe' && b.voted && a.voted && b.voted.length > a.voted.length) || (b.done && a.done && b.done.length > a.done.length)) S.play('tick');
+  }
+
   /* ---------- Nach jedem Zeichnen ---------- */
   function afterRender(s, fresh) {
+    if (document.querySelector('canvas[data-gal]')) galleryLoad();
     if (s.game === 'draw') {
       inkSync(s);
       bindCanvas();
@@ -732,12 +848,15 @@
     return `<div class="sh-lobby">
       <p class="kick">${ICON[s.game]} ${esc(s.gameName)}</p>
       <div class="sh-code"><span class="muted">Raumcode</span><p class="gp-tiles small">${[...s.code].map((c) => `<span>${esc(c)}</span>`).join('')}</p></div>
+      ${!host && s.evening ? `<p class="muted small">Als Nächstes: <b>${ICON[s.game]} ${esc(s.gameName)}</b></p>` : ''}
       ${host ? `<div class="sh-invite"><div class="gp-qr small">${qr(joinUrl())}</div>
         <div><p class="muted small">Freunde scannen den QR-Code oder öffnen <b>${esc(location.host)}/spiele/gruppe</b> und geben den Code ein.</p>
         <button class="ghost small" data-share>📨 Einladung teilen</button></div></div>` : '<p class="muted">Gleich geht’s los – die Spielleitung startet.</p>'}
-      <div class="gp-people">${P.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${esc(p.name)}</b>${p.id === s.hostPlayer ? ' 👑' : ''}${host && p.id !== s.me.id ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('')}</div>
-      ${host ? `${settingsHtml(s)}<button class="big" data-host="start" ${P.length < 2 ? 'disabled' : ''}>${P.length < 2 ? 'Warte auf Mitspielende …' : 'Los geht’s'}</button>
+      <div class="gp-people">${P.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b>${p.id === s.hostPlayer ? ' 👑' : ''}${host && p.id !== s.me.id ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('')}</div>
+      ${host ? `${gamePicker(s)}${settingsHtml(s)}<button class="big" data-host="start" ${P.length < 2 ? 'disabled' : ''}>${P.length < 2 ? 'Warte auf Mitspielende …' : `${ICON[s.game]} ${esc(s.gameName)} starten`}</button>
+        ${s.evening ? '<button class="ghost" data-host="finale">🏆 Siegerehrung</button>' : ''}
         ${key ? `<p class="muted small center"><a href="/spiele/gruppe/#host=${esc(s.code)}&k=${encodeURIComponent(key)}" target="_blank" rel="noopener">📺 Zusätzlich auf einem Fernseher zeigen</a></p>` : ''}` : ''}
+      ${eveningTable(s)}
     </div>`;
   }
 
@@ -759,7 +878,11 @@
     const top = `<header class="gp-me">${av(s.me)}<b>${esc(s.me.name)}</b>${s.me.host ? '<span class="crown" title="Spielleitung">👑</span>' : ''}<span class="pts">${s.game === 'maexchen' ? `${s.mx?.lives?.[s.me.id] ?? s.settings.lives} Deckel` : `${s.me.score} Pkt`}</span><span class="code">${esc(s.code)}</span></header>`;
     let body = '';
     if (s.phase === 'LOBBY') {
-      body = s.selfHost ? selfHostLobby(s) : `<div class="gp-wait"><p class="big">Du bist drin!</p><p class="muted">Gleich geht’s los. Schau auf den Bildschirm.</p><div class="gp-people">${s.players.map((p) => `<span class="gp-chip" data-k="c${p.id}">${av(p)}<b>${esc(p.name)}</b></span>`).join('')}</div></div>`;
+      body = s.selfHost || s.me.host ? selfHostLobby(s) : `<div class="gp-wait"><p class="big">Du bist drin!</p><p class="muted">Als Nächstes: <b>${ICON[s.game]} ${esc(s.gameName)}</b></p><p class="muted">Gleich geht’s los. Schau auf den Bildschirm.</p><div class="gp-people">${s.players.map((p) => `<span class="gp-chip" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b></span>`).join('')}</div>${eveningTable(s)}</div>`;
+    } else if (s.phase === 'FINALE') {
+      const mine = s.evening?.ranking.findIndex((r) => r.id === s.me.id);
+      body = `<div class="gp-wait ev-me"><p class="kick">Siegerehrung</p><p class="big">${mine === 0 ? 'Sieg des Abends! 🏆' : mine >= 0 ? `Platz ${mine + 1} am Abend` : 'Spieleabend'}</p>
+        ${(s.evening?.titles || []).filter((t) => t.name === s.me.name).map((t) => `<p class="ev-mytitle">${ICON[t.game]} ${esc(t.title)}</p>`).join('')}</div>${eveningTable(s)}${galleryHtml(s)}`;
     } else if (s.game === 'wwe') {
       if (s.phase === 'QUESTION') {
         body = s.myVote
@@ -813,9 +936,12 @@
         body = endPhone(sortScore(s));
       }
     }
-    if (s.me.host && s.selfHost && s.phase !== 'LOBBY') {
+    if (s.phase === 'END' && !s.me.host) body += `${s.game === 'draw' ? galleryHtml(s) : ''}${eveningTable(s)}<p class="muted small center">Die Spielleitung wählt das nächste Spiel.</p>`;
+    if (s.me.host && s.phase !== 'LOBBY') {
       body += s.phase === 'END'
-        ? `<div class="sh-ctl"><button data-host="restart">🔁 Nochmal spielen</button></div>`
+        ? `<div class="sh-ctl open">${s.game === 'draw' ? galleryHtml(s) : ''}<button data-host="restart">🔁 Nochmal ${esc(s.gameName)}</button>${gamePicker(s, 'Oder ein anderes Spiel')}<button class="ghost" data-host="finale">🏆 Siegerehrung</button>${eveningTable(s)}</div>`
+        : s.phase === 'FINALE'
+        ? `<div class="sh-ctl open"><button data-host="restart">Weiter spielen</button></div>`
         : `<details class="sh-ctl"><summary>Spielleitung</summary><button class="ghost small" data-host="next">${s.game === 'draw' ? (s.phase === 'DRAW' ? 'Runde beenden' : 'Weiter') : 'Zug überspringen'}</button><button class="ghost small" data-host="restart">Zurück in den Warteraum</button></details>`;
     }
     app.className = `gp gp-player g-${s.game}`;
@@ -824,6 +950,7 @@
     runTimer();
     afterRender(s, fresh);
     if (s.phase === 'WRITING' && fresh) setTimeout(() => document.querySelector('#slfForm input')?.focus(), reduced() ? 0 : 2900);
+    if (s.phase === 'FINALE' && fresh && s.evening?.ranking[0]?.id === s.me.id && window.VH) VH.confetti({ count: 140 });
     if (s.phase === 'END' && fresh && s.game !== 'maexchen') {
       const list = s.game === 'wwe' ? s.awards.players : sortScore(s);
       if (list[0] && list[0].name === s.me.name && window.VH) VH.confetti();
@@ -904,6 +1031,7 @@
     }));
     app.querySelectorAll('[data-kick]').forEach((b) => (b.onclick = () => act('kick', { playerId: b.dataset.kick })));
     bindSettings();
+    bindCommon();
     const share = app.querySelector('[data-share]');
     if (share) share.onclick = async () => {
       const url = joinUrl();

@@ -10,6 +10,7 @@ import { handleSpiele, DuelRoom, Leaderboard, Wordle, PartyRoom } from "./spiele
 import { handleTischtennisApi, resolveVisitorLink } from "./tischtennis/router.js";
 import { handleKontoApi } from "./konto/auth.js";
 import { handleQuiz, QuizRoom } from "./quiz/router.js";
+import { checkRateLimit } from "./ratelimit.js";
 
 export { GameRoom, DuelRoom, Leaderboard, Wordle, QuizRoom, PartyRoom };
 
@@ -17,6 +18,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    // Missbrauchsschutz für Raum-Erstellung, Tipps, Anmeldung und Bestenlisten
+    const limited = checkRateLimit(request, path);
+    if (limited) return limited;
 
     if (path.startsWith("/api/woelfe")) {
       return handleWoelfe(request, env, path.slice("/api/woelfe".length) || "/");

@@ -168,3 +168,5 @@ body.idle .fs-btn { opacity: 0; pointer-events: none; }
   .pagebox.turn, .pagebox.turn *, .callup, .champ, .champ *, .bump, .tablecard .lt { animation: none !important; }
   .marq-in { animation: none; }
 }
+.vh-sound-btn { position: fixed; left: 1rem; bottom: 3.2rem; z-index: 9; width: 44px; height: 44px; padding: 0; border: 0; font-size: 1.2rem; background: var(--panel2); color: #fff; cursor: pointer; transition: opacity .3s; }
+body.idle .vh-sound-btn { opacity: 0; pointer-events: none; }

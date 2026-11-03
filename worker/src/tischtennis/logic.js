@@ -236,3 +236,42 @@ export function topScorers(matches) {
   }
   return [...map.values()].sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name, 'de'));
 }
+
+/* ---------- Vereinsrangliste (Elo) ----------
+   games: [{ a, b, result }] in zeitlicher Reihenfolge; a/b = Schlüssel der Personen,
+   result = 1 (a gewinnt), 0 (b gewinnt) oder 0.5 (Unentschieden).
+   Start bei 1000 Punkten. In den ersten 10 Spielen zählt jedes Spiel stärker (K = 40),
+   danach K = 24. Liefert pro Person Wertung, Bilanz und die letzten Wertungen. */
+export const ELO_START = 1000;
+export function eloExpected(ra, rb) {
+  return 1 / (1 + 10 ** ((rb - ra) / 400));
+}
+export function eloRanking(games) {
+  const P = new Map();
+  const get = (k) => {
+    if (!P.has(k)) P.set(k, { key: k, rating: ELO_START, games: 0, wins: 0, draws: 0, losses: 0, history: [ELO_START], best: ELO_START });
+    return P.get(k);
+  };
+  for (const g of games) {
+    if (!g.a || !g.b || g.a === g.b) continue;
+    const A = get(g.a), B = get(g.b);
+    const ea = eloExpected(A.rating, B.rating);
+    const ka = A.games < 10 ? 40 : 24, kb = B.games < 10 ? 40 : 24;
+    const da = ka * (g.result - ea);
+    const db = kb * ((1 - g.result) - (1 - ea));
+    A.rating += da;
+    B.rating += db;
+    for (const [X, r] of [[A, g.result], [B, 1 - g.result]]) {
+      X.games++;
+      if (r === 1) X.wins++;
+      else if (r === 0) X.losses++;
+      else X.draws++;
+      X.history.push(X.rating);
+      if (X.history.length > 21) X.history.shift();
+      X.best = Math.max(X.best, X.rating);
+    }
+  }
+  return [...P.values()]
+    .map((p) => ({ ...p, rating: Math.round(p.rating), best: Math.round(p.best), history: p.history.map(Math.round) }))
+    .sort((a, b) => b.rating - a.rating || b.games - a.games);
+}

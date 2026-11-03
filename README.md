@@ -111,6 +111,18 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
     erscheinen Buchstaben als Tipp. Ein Fernseher ist optional („Zusätzlich auf einem Fernseher zeigen“).
   - Bildschirm und Handys aktualisieren sich per DOM-Abgleich: nur Geändertes wird neu gezeichnet,
     nichts ploppt bei jedem Spielzug neu auf.
+  - **Computer bei Mäxchen online:** Im Warteraum „🤖 Computer dazuholen“ (bis zu 6, Stärke
+    Leicht/Mittel/Schwer). So geht auch eine Runde allein gegen Computer.
+  - **Eigene Montagsmaler-Wörter:** Im Warteraum unter „Eigene Wörter“ (eins pro Zeile), wahlweise
+    gemischt, nur eigene oder nur eingebaute. Die anderen sehen die Liste nicht.
+  - **Bilder des Abends:** Alle Zeichnungen landen in einer Galerie (Spielende und Siegerehrung),
+    jedes Bild lässt sich als PNG speichern.
+  - **Spieleabend:** Nach einem Spiel wählt die Spielleitung im selben Raum das nächste – niemand
+    muss neu beitreten. Jede Partie bringt Abendpunkte (Platz 1: 10, dann 7, 5, 3, 2, 1).
+    „🏆 Siegerehrung“ zeigt Gesamtsieg, Titel (Würfelkönig, Bluff-Profi, Picasso des Abends,
+    Wortakrobat, Gesprächsthema des Abends) und die Bilder des Abends.
+  - **Geräusche am Fernseher:** synthetisch erzeugt (keine Dateien), Knopf 🔊 unten links schaltet sie ab.
+  - **Bildschirm bleibt an:** Während der Spiele geht das Handy nicht in den Standby (wo der Browser es kann).
   - Läuft im Durable Object `PartyRoom` (Migration `v3` in wrangler.jsonc).
 
 ## Tagesrätsel
@@ -182,6 +194,13 @@ Beim Anlegen eines Turniers wählt man die **Sportart**. Die Adresse bleibt
 - Schriften (Roboto Condensed, Open Sans) liegen jetzt selbst unter `/shared/fonts` – keine
   Anfragen mehr an Google.
 
+### Vereinsrangliste
+
+**`/tischtennis/rangliste`** (oben „Vereinsrangliste“): Elo-Wertung über alle Turniere, getrennt
+für Tischtennis und Fußball. Alle starten bei 1000, Siege gegen Stärkere bringen mehr. Personen
+werden am Namen erkannt – in jedem Turnier gleich schreiben. Tischtennis-Doppel zählen nicht mit.
+Dazu Bilanz, Verlauf der letzten Spiele und Turniersiege.
+
 ### Besucher-Link mit QR-Code
 
 In der Turnierleitung beim Turnier auf **„🔗 Besucher-Link & QR-Code“** klicken:
@@ -222,6 +241,29 @@ Ganz neu einrichten:
    `wrangler.jsonc` bei `database_id` eintragen.
 3. Inhalt dieses Ordners in ein GitHub-Repo hochladen (`wrangler.jsonc` auf oberster Ebene).
 4. **Workers & Pages → Erstellen → Repository importieren**, Worker-Name `vereinsheim`.
+
+## Als App, Impressum, Datenschutz
+
+- **App installieren:** Die Seite hat ein Manifest und einen Service Worker. Auf dem Handy über
+  „Zum Startbildschirm hinzufügen“, am Rechner über den Knopf „📲 Als App installieren“ unten auf
+  der Startseite. Besuchte Seiten der Spielegalerie funktionieren dann auch offline.
+- **Impressum und Datenschutz** liegen unter `/impressum` und `/datenschutz` und sind unten auf
+  jeder Seite verlinkt. Es sind **Vorlagen**: alle gelb markierten Stellen in
+  `client-assets/impressum.html` und `client-assets/datenschutz.html` ausfüllen und vom Verein
+  prüfen lassen (keine Rechtsberatung).
+- **Missbrauchsschutz:** Pro IP-Adresse höchstens 30 neue Spielräume in 10 Minuten, 60 Tipps pro
+  Minute, 10 Anmeldeversuche in 5 Minuten (`worker/src/ratelimit.js`).
+
+## Tests
+
+```
+npm test            # Spielregeln: Kniffel, Mäxchen, Montagsmaler, Spieleabend, Turniere, Elo, WoWölfe
+npm run test:smoke  # startet die Seite lokal und prüft Seiten, API und eine Mäxchen-Runde
+```
+
+Automatisch bei jedem Push: Datei `tests.yml` aus Update 10 im GitHub-Webinterface unter
+`.github/workflows/tests.yml` anlegen (Add file → Create new file, Inhalt einfügen). Danach zeigt
+GitHub bei jedem Push einen grünen Haken oder ein rotes Kreuz. Veröffentlicht wird dabei nichts.
 
 ## Lokal ausprobieren (optional)
 

@@ -209,6 +209,7 @@ function render() {
   if (mq) { mq.dataset.sig = tick; if (pos != null && mq.getAnimations()[0]) mq.getAnimations()[0].currentTime = pos; }
   if (champ && L.champShown !== champ && window.VH) {
     L.champShown = champ;
+    VH.sound?.play('fanfare');
     VH.confetti({ colors: ['#ff2b08', '#3ec2dc', '#ffffff', '#f1c40f'], count: 140 });
   }
   detectCalls(d, P, W);
@@ -237,6 +238,7 @@ function showCall(W) {
   el.setAttribute('role', 'alert');
   el.innerHTML = `<div class="cu-no"><small>${esc(W.table)}</small>${c.tn}</div><div class="cu-txt"><span class="cu-k">Bitte an ${esc(W.table)} ${c.tn} · ${esc(c.title)}</span><span class="cu-p">${esc(c.a)} <i>gegen</i> ${esc(c.b)}</span></div>`;
   document.body.appendChild(el);
+  window.VH?.sound?.play('gong');
   setTimeout(() => el.classList.add('out'), 8000);
   setTimeout(() => { el.remove(); L.calling = false; showCall(W); }, 8600);
 }
@@ -273,6 +275,9 @@ async function pickView() {
     }
     <p><a href="/tischtennis/" style="color:var(--cyan)">← Zur Turnierseite</a></p></div>`;
 }
+
+// Geräusche: Aufruf-Gong, Fanfare beim Turniersieg (Knopf unten links schaltet sie ab)
+if (window.VH && VH.sound) VH.sound.toggleButton();
 
 function route() {
   L.timers.forEach(clearInterval);
