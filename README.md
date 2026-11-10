@@ -1,6 +1,6 @@
 # Vereinsheim
 
-Eine gemeinsame Seite für die Party- und Vereins-Apps:
+Eine private Seite für Freunde und Familie mit Party- und Spiele-Apps:
 
 - **🐺 WoWölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy. Mit Rollen-Vorlagen
   (Einsteiger, Klassisch, Liebesdrama, Chaos) und einer **Erzähleransicht**: Wer „Ich leite nur“
@@ -10,6 +10,7 @@ Eine gemeinsame Seite für die Party- und Vereins-Apps:
 - **🧩 Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections**, **Nonogramm** und **Puzzle**, dazu eine **ewige Bestenliste**
 - **🏆 Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, Besucheransicht mit **QR-Code**, **Liveansicht für den Bildschirm**
 - **👤 Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
+- **🚪 Geschlossene Gesellschaft** – nur mit Zugangscode, Einladungslink oder Konto erreichbar (siehe unten)
 
 Technisch ist alles **ein einziges Cloudflare-Projekt** (ein Worker + eine
 Konfigurationsdatei) und läuft im kostenlosen Cloudflare-Plan.
@@ -30,6 +31,7 @@ client-assets/          Alles, was der Browser direkt lädt (HTML/CSS/JS)
 clients/woelfe-src/     Quellcode der Werwolf-Oberfläche (React), wird vorm Deploy gebaut
 worker/src/             Der Cloudflare Worker
   konto/                   Gemeinsame Konten (Registrierung, Login, Rechte)
+  zugang/                  Eingangstor: Zugangscode, Einladungslinks, Zugangs-Cookie
   quiz/                    Quiz-Speicher (D1) + Live-Quiz-Raum (Durable Object)
   spiele/                  Bestenlisten, Duelle, Wordle (+ Wortliste)
   tischtennis/, woelfe/    Turnier- und Werwolf-Logik
@@ -252,17 +254,54 @@ Ganz neu einrichten:
 3. Inhalt dieses Ordners in ein GitHub-Repo hochladen (`wrangler.jsonc` auf oberster Ebene).
 4. **Workers & Pages → Erstellen → Repository importieren**, Worker-Name `vereinsheim`.
 
-## Als App, Impressum, Datenschutz
+## Geschlossene Gesellschaft (privater Zugang)
+
+Das Vereinsheim ist eine **private Seite für Freunde und Familie**. Wer keinen Zugang hat, sieht
+für jede Adresse nur das Eingangstor („Geschlossene Gesellschaft“) – keine Spiele, keine Namen,
+keine Bestenlisten. Suchmaschinen sind ausgesperrt (`robots.txt`, `X-Robots-Tag: noindex`).
+
+Reinkommen geht auf drei Wegen:
+
+1. **Gemeinsamer Zugangscode** – unter **Konto → 🚪 Zugang** festlegen. Groß-/Kleinschreibung und
+   Leerzeichen sind egal. Ändern oder Abschalten sperrt alle Geräte aus, die nur mit dem alten
+   Code drin waren.
+2. **Persönlicher Einladungslink** – ebenfalls unter **Konto → 🚪 Zugang**: Name eintragen,
+   Gültigkeit wählen (ohne Ablauf, 1 Tag für Partygäste, 7/30/365 Tage), Link kopieren oder als
+   QR-Code zeigen. Wer ihn öffnet, ist auf diesem Gerät drin. Löschen sperrt sofort wieder aus.
+3. **Konto** – Anmelden öffnet das Tor automatisch. Registrieren können sich nur Leute, die schon
+   drin sind.
+
+Der Zugang gilt pro Gerät/Browser 180 Tage und verlängert sich bei Benutzung von selbst.
+QR-Codes und Links aus Quiz, Werwolf, Gruppenspielen und Turnieren funktionieren weiter: Neue
+Gäste sehen zuerst das Tor, geben den Code ein und landen dann direkt auf der richtigen Seite.
+
+**Nach dem Update einmal einrichten:** Auf der Seite „Ich habe ein Konto“ aufklappen, als Admin
+anmelden, dann unter **Konto → 🚪 Zugang** einen Code festlegen und/oder Einladungen erstellen.
+Bis dahin kommen nur Konten herein.
+
+### Warum kein Impressum?
+
+Eine Impressumspflicht besteht für Seiten, die geschäftsmäßig betrieben werden (§ 5 DDG) oder
+nicht ausschließlich persönlichen oder familiären Zwecken dienen (§ 18 MStV). Eine
+passwortgeschützte Seite für einen festgelegten Kreis von Freunden und Familie gilt nach Auskunft
+der Landesanstalt für Medien NRW als davon befreit. Damit das so bleibt:
+
+- Code und Einladungslinks **nur im privaten Kreis** weitergeben, nirgends öffentlich posten
+- **keine Werbung, keine Affiliate-Links, keine Spendenaufrufe** und kein Bezug zu Firma oder Verein
+- die Seite **nicht** für einen eingetragenen Verein oder für die Firma nutzen (dann wäre wieder
+  ein Impressum nötig)
+
+Das ist keine Rechtsberatung. Wer unsicher ist, legt trotzdem ein Impressum an.
+
+## Als App, Datenschutz
 
 - **App installieren:** Die Seite hat ein Manifest und einen Service Worker. Auf dem Handy über
   „Zum Startbildschirm hinzufügen“, am Rechner über den Knopf „📲 Als App installieren“ unten auf
   der Startseite. Besuchte Seiten der Spielegalerie funktionieren dann auch offline.
-- **Impressum und Datenschutz** liegen unter `/impressum` und `/datenschutz` und sind unten auf
-  jeder Seite verlinkt. Es sind **Vorlagen**: alle gelb markierten Stellen in
-  `client-assets/impressum.html` und `client-assets/datenschutz.html` ausfüllen und vom Verein
-  prüfen lassen (keine Rechtsberatung).
+- **Datenschutz** liegt unter `/datenschutz` und ist auch ohne Zugang erreichbar. Es ist eine
+  **Vorlage**: die gelb markierten Stellen in `client-assets/datenschutz.html` ausfüllen.
 - **Missbrauchsschutz:** Pro IP-Adresse höchstens 30 neue Spielräume in 10 Minuten, 60 Tipps pro
-  Minute, 10 Anmeldeversuche in 5 Minuten (`worker/src/ratelimit.js`).
+  Minute, 10 Anmeldeversuche und 10 Zugangscode-Versuche in 5 Minuten (`worker/src/ratelimit.js`).
 
 ## Tests
 

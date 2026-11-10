@@ -49,3 +49,16 @@
 .user-row details[open] summary::before { transform: rotate(90deg); }
 .perm-grid .area { text-transform: none; letter-spacing: 0; font-size: .82rem; }
 .success-box .big { font-size: 3rem; animation: vh-pop .5s var(--vh-ease-hop) both; }
+
+/* ---------- Zugang ---------- */
+.access-intro { max-width: 70ch; margin: 0 0 .5rem; }
+.access-code { font: 750 1.25rem var(--vh-display); background: var(--vh-board); padding: .15rem .6rem; border-radius: 8px; letter-spacing: .05em; }
+.vh-field select { font: 450 1rem var(--vh-body); }
+.invite-row { padding: .9rem 0; border-bottom: 1px solid var(--vh-line); display: grid; gap: .45rem; animation: vh-rise .3s var(--vh-ease-out) both; }
+.invite-row:last-child { border-bottom: 0; }
+.invite-row .top { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+.invite-row .top .name { flex: 1 1 200px; display: grid; }
+.invite-row.expired { opacity: .6; }
+.invite-qr { display: grid; justify-items: start; gap: .3rem; }
+.invite-qr svg { width: 180px; height: 180px; background: #fff; border-radius: 8px; }
+.invite-qr .vh-hint { word-break: break-all; font-size: .8rem; }

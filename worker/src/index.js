@@ -1,9 +1,10 @@
 // Einstiegspunkt des gemeinsamen Workers für alle Bereiche.
 //
-// Cloudflare liefert alles, was NICHT unter "run_worker_first" in wrangler.jsonc
-// fällt, direkt als statische Datei aus client-assets/ aus – dieser Worker sieht
-// also nur die dynamischen Pfade: /api/<bereich>/* und den kurzen Besucher-Link
-// für Tischtennis-Turniere.
+// Das Vereinsheim ist eine geschlossene Gesellschaft: Jede Anfrage läuft zuerst
+// durch diesen Worker ("run_worker_first" in wrangler.jsonc) und wird nur mit
+// gültigem Zugang (Code, Einladungslink oder Konto) beantwortet – siehe
+// zugang/gate.js. Danach geht es an die Bereiche (/api/<bereich>/*) bzw. an
+// die statischen Dateien aus client-assets/.
 
 import { handleWoelfe, GameRoom } from "./woelfe/router.js";
 import { handleSpiele, DuelRoom, Leaderboard, Wordle, PartyRoom } from "./spiele/router.js";
@@ -11,41 +12,58 @@ import { handleTischtennisApi, resolveVisitorLink } from "./tischtennis/router.j
 import { handleKontoApi } from "./konto/auth.js";
 import { handleQuiz, QuizRoom } from "./quiz/router.js";
 import { checkRateLimit } from "./ratelimit.js";
+import { guard, handleZugangApi, redeemInvite } from "./zugang/gate.js";
 
 export { GameRoom, DuelRoom, Leaderboard, Wordle, QuizRoom, PartyRoom };
 
+async function route(request, env, path) {
+  if (path.startsWith("/api/zugang")) {
+    return handleZugangApi(request, env, path.slice("/api/zugang".length) || "/");
+  }
+  if (path.startsWith("/api/woelfe")) {
+    return handleWoelfe(request, env, path.slice("/api/woelfe".length) || "/");
+  }
+  if (path.startsWith("/api/spiele")) {
+    return handleSpiele(request, env, path.slice("/api/spiele".length) || "/");
+  }
+  if (path.startsWith("/api/konto")) {
+    return handleKontoApi(request, env, path.slice("/api/konto".length) || "/");
+  }
+  if (path.startsWith("/api/quiz")) {
+    return handleQuiz(request, env, path.slice("/api/quiz".length) || "/");
+  }
+  if (path.startsWith("/api/tischtennis")) {
+    return handleTischtennisApi(request, env, path.slice("/api/tischtennis".length) || "/");
+  }
+  const invite = path.match(/^\/zugang\/([a-f0-9]{16,64})$/);
+  if (invite) return redeemInvite(request, env, invite[1]);
+  const linkMatch = path.match(/^\/tischtennis\/t\/([a-z0-9]+)$/);
+  if (linkMatch) {
+    return resolveVisitorLink(env, linkMatch[1]);
+  }
+  return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Nicht gefunden.", { status: 404 });
+}
+
+/** Suchmaschinen fernhalten und ggf. das verlängerte Zugangs-Cookie mitschicken. */
+function finish(res, setCookie) {
+  if (res.status === 101 || res.webSocket) return res; // WebSocket-Antworten nicht anfassen
+  const out = new Response(res.body, res);
+  out.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  if (setCookie) out.headers.append("set-cookie", setCookie);
+  return out;
+}
+
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const path = url.pathname;
+    const path = new URL(request.url).pathname;
 
-    // Missbrauchsschutz für Raum-Erstellung, Tipps, Anmeldung und Bestenlisten
+    // Missbrauchsschutz für Raum-Erstellung, Tipps, Anmeldung, Zugangscode und Bestenlisten
     const limited = checkRateLimit(request, path);
-    if (limited) return limited;
+    if (limited) return finish(limited);
 
-    if (path.startsWith("/api/woelfe")) {
-      return handleWoelfe(request, env, path.slice("/api/woelfe".length) || "/");
-    }
-    if (path.startsWith("/api/spiele")) {
-      return handleSpiele(request, env, path.slice("/api/spiele".length) || "/");
-    }
-    if (path.startsWith("/api/konto")) {
-      return handleKontoApi(request, env, path.slice("/api/konto".length) || "/");
-    }
-    if (path.startsWith("/api/quiz")) {
-      return handleQuiz(request, env, path.slice("/api/quiz".length) || "/");
-    }
-    if (path.startsWith("/api/tischtennis")) {
-      return handleTischtennisApi(request, env, path.slice("/api/tischtennis".length) || "/");
-    }
-    const linkMatch = path.match(/^\/tischtennis\/t\/([a-z0-9]+)$/);
-    if (linkMatch) {
-      return resolveVisitorLink(env, linkMatch[1]);
-    }
+    const gate = await guard(request, env, path);
+    if (gate.response) return finish(gate.response);
 
-    // Sollte wegen "run_worker_first" in wrangler.jsonc eigentlich nie erreicht
-    // werden (alles andere liefert Cloudflare direkt als Datei aus) – nur als
-    // Sicherheitsnetz, falls doch mal ein unerwarteter Pfad hier landet.
-    return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Nicht gefunden.", { status: 404 });
+    return finish(await route(request, env, path), gate.setCookie);
   },
 };

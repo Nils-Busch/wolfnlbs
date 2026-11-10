@@ -16,6 +16,8 @@ export const RULES = [
   { method: "POST", re: /^\/api\/tischtennis\/matches\/\d+\/tip$/, key: "tip", limit: 60, windowMs: 60_000 },
   // Anmelden und Registrieren (gegen Passwort-Raten)
   { method: "POST", re: /\/auth\/(login|register)$/, key: "auth", limit: 10, windowMs: 5 * 60_000 },
+  // Zugangscode raten
+  { method: "POST", re: /^\/api\/zugang\/code$/, key: "zugang", limit: 10, windowMs: 5 * 60_000 },
   // Bestenlisten-Einträge
   { method: "POST", re: /^\/api\/spiele\/scores\/[a-z0-9]+$/, key: "score", limit: 60, windowMs: 10 * 60_000 },
 ];

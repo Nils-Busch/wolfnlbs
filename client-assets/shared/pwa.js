@@ -1,5 +1,6 @@
 // Gemeinsam für alle Seiten: App-Installation (Service Worker) und die
-// Fußzeile mit Impressum und Datenschutz.
+// Fußzeile mit dem Datenschutz-Hinweis. (Kein Impressum: Das Vereinsheim ist
+// eine private, nur für Freunde und Familie zugängliche Seite – siehe README.)
 (function () {
   'use strict';
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -20,13 +21,13 @@
     promptEvent = null;
     b.hidden = true;
   });
-  // Rechtliche Links unten auf normalen Seiten (nicht auf Spielbildschirmen)
+  // Hinweis und Datenschutz-Link unten auf normalen Seiten (nicht auf Spielbildschirmen)
   function legal() {
     const body = document.body;
     if (!body || !body.classList.contains('vh-body') || body.classList.contains('no-legal') || document.querySelector('.vh-legal')) return;
     const f = document.createElement('p');
     f.className = 'vh-legal';
-    f.innerHTML = '<a href="/impressum">Impressum</a><a href="/datenschutz">Datenschutz</a>';
+    f.innerHTML = '<span>Privat – nur für Freunde und Familie</span><a href="/datenschutz">Datenschutz</a>';
     body.appendChild(f);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', legal); else legal();

@@ -1,14 +1,14 @@
 'use strict';
-/* Konto-Seite: Anmelden, Registrieren, eigenes Konto, Freischaltung & Rechte. */
+/* Konto-Seite: Anmelden, Registrieren, eigenes Konto, Freischaltung & Rechte, Zugang zur Seite. */
 
 const app = document.getElementById('app');
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const S = { me: null, perms: [], info: [], pendingCount: 0, tab: null, users: null, registered: false };
+const S = { me: null, perms: [], info: [], pendingCount: 0, tab: null, users: null, registered: false, access: null, qr: null };
 const can = (p) => S.perms.includes(p);
 
 async function api(path, opts = {}) {
   const hasBody = opts.body !== undefined || (opts.method && opts.method !== 'GET');
-  const res = await fetch('/api/konto' + path, {
+  const res = await fetch((path.startsWith('/zugang/') ? '/api' : '/api/konto') + path, {
     method: opts.method || 'GET',
     headers: hasBody ? { 'Content-Type': 'application/json' } : {},
     body: opts.body !== undefined ? JSON.stringify(opts.body) : hasBody ? '{}' : undefined,
@@ -97,6 +97,7 @@ function loggedOutView() {
 function shell(content) {
   const tabs = [['account', 'Mein Konto']];
   if (can('users.manage')) tabs.push(['users', `Konten & Rechte${S.pendingCount ? ` (${S.pendingCount} neu)` : ''}`]);
+  if (can('users.manage')) tabs.push(['access', '🚪 Zugang']);
   app.innerHTML = `
     <div class="konto-head">
       <div class="konto-hello"><span class="avatar" aria-hidden="true">${esc((S.me.display_name || '?').trim().charAt(0).toUpperCase())}</span><h1 class="vh-h1">Hallo, ${esc(S.me.display_name)}!</h1></div>
@@ -199,6 +200,83 @@ async function usersView() {
     </form>`);
 }
 
+/* ---------- Zugang zur Seite: Code und Einladungslinks ---------- */
+function qrSvg(text) {
+  if (typeof qrcode !== 'function') return '';
+  const q = qrcode(0, 'M');
+  q.addData(text);
+  q.make();
+  return q.createSvgTag({ cellSize: 5, margin: 2, scalable: true, alt: 'QR-Code' });
+}
+
+async function accessView() {
+  S.access = await api('/zugang/admin');
+  const { code, invites } = S.access;
+  const fmtDay = (ms) => new Date(ms).toLocaleDateString('de-DE', { dateStyle: 'medium' });
+  shell(`
+    <p class="vh-hint access-intro">Das Vereinsheim ist nur für Freunde und Familie da. Wer nicht drin ist, sieht nur das Eingangstor.
+      Reinkommen geht mit dem gemeinsamen Code, einem persönlichen Einladungslink oder einem Konto.
+      Gib Code und Links nur an Leute aus diesem Kreis weiter und veröffentliche sie nirgends.</p>
+    <div class="konto-grid">
+      <form class="vh-card pinned" data-form="access-code">
+        <h2>Gemeinsamer Zugangscode</h2>
+        ${
+          code
+            ? `<p>Aktuell: <code class="access-code">${esc(code)}</code></p>`
+            : '<p class="vh-hint">Kein Code eingerichtet – reinkommen geht gerade nur mit Einladungslink oder Konto.</p>'
+        }
+        <label class="vh-field">${code ? 'Neuer Code' : 'Code festlegen'} (mind. 4 Zeichen)
+          <input name="code" minlength="4" maxlength="64" required autocomplete="off" autocapitalize="none" placeholder="z. B. Würfelbecher"></label>
+        <button class="vh-btn vh-btn-accent">${code ? 'Code ändern' : 'Code festlegen'}</button>
+        ${code ? '<button type="button" class="vh-btn vh-btn-small vh-btn-danger" data-action="code-off" style="margin-top:.6rem">Code abschalten</button>' : ''}
+        <p class="vh-hint">Groß-/Kleinschreibung und Leerzeichen sind egal. Ändern oder Abschalten sperrt alle Geräte aus,
+          die nur mit dem alten Code drin waren – Einladungen und Konten bleiben gültig.</p>
+      </form>
+      <form class="vh-card taped" data-form="invite">
+        <h2>Persönlicher Einladungslink</h2>
+        <label class="vh-field">Für wen?<input name="label" maxlength="60" required placeholder="z. B. Oma Gisela"></label>
+        <label class="vh-field">Gültig
+          <select name="days"><option value="0">ohne Ablauf</option><option value="1">1 Tag (Partygäste)</option><option value="7">7 Tage</option><option value="30">30 Tage</option><option value="365">1 Jahr</option></select></label>
+        <button class="vh-btn vh-btn-accent">Link erstellen</button>
+        <p class="vh-hint">Wer den Link öffnet, ist auf diesem Gerät drin. Löschst du die Einladung, ist der Zugang darüber sofort weg.</p>
+      </form>
+    </div>
+    <section class="vh-card" style="margin-top:1.25rem">
+      <h2>Einladungen (${invites.length})</h2>
+      ${
+        invites.length
+          ? invites
+              .map(
+                (i) => `<div class="invite-row${i.expired ? ' expired' : ''}">
+              <div class="top">
+                <div class="name"><strong>${esc(i.label)}</strong>
+                  <span class="vh-hint">erstellt ${fmtDay(i.created_at)}${i.created_by_name ? ` von ${esc(i.created_by_name)}` : ''}</span></div>
+                <span class="vh-pill">${i.expired ? 'abgelaufen' : i.expires_at ? `bis ${fmtDay(i.expires_at)}` : 'ohne Ablauf'}</span>
+              </div>
+              <div class="vh-hint">${i.uses ? `${i.uses}× geöffnet, zuletzt ${fmtDate(i.last_used)}` : 'noch nicht geöffnet'}</div>
+              <div class="vh-row">
+                <button class="vh-btn vh-btn-small" data-action="copy-invite" data-id="${i.id}">🔗 Link kopieren</button>
+                <button class="vh-btn vh-btn-small" data-action="qr-invite" data-id="${i.id}">QR-Code</button>
+                <button class="vh-btn vh-btn-small vh-btn-danger" data-action="del-invite" data-id="${i.id}">Löschen</button>
+              </div>
+              ${S.qr === i.id ? `<div class="invite-qr">${qrSvg(i.link)}<p class="vh-hint">${esc(i.link)}</p></div>` : ''}
+            </div>`
+              )
+              .join('')
+          : '<p class="vh-hint">Noch keine Einladungen.</p>'
+      }
+    </section>`);
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Link kopiert.');
+  } catch {
+    prompt('Link zum Kopieren:', text);
+  }
+}
+
 /* ---------- Rendern & Ereignisse ---------- */
 async function loadMe() {
   const me = await api('/auth/me');
@@ -212,8 +290,9 @@ async function render() {
   try {
     if (S.me === null) await loadMe();
     if (!S.me) return loggedOutView();
-    if (!S.tab || (S.tab === 'users' && !can('users.manage')) || !['account', 'users'].includes(S.tab)) S.tab = 'account';
+    if (!S.tab || (['users', 'access'].includes(S.tab) && !can('users.manage')) || !['account', 'users', 'access'].includes(S.tab)) S.tab = 'account';
     if (S.tab === 'users') await usersView();
+    else if (S.tab === 'access') await accessView();
     else accountView();
   } catch (e) {
     if (e.status === 401) {
@@ -293,6 +372,16 @@ app.addEventListener('submit', async (e) => {
       if (Number(id) === S.me.id) S.me = null; // eigene Rechte neu laden
     }, 'Gespeichert.');
   }
+  if (kind === 'access-code') {
+    return run(() => api('/zugang/admin/code', { method: 'PUT', body: { code: formData(f).code } }), 'Zugangscode gespeichert.');
+  }
+  if (kind === 'invite') {
+    const d = formData(f);
+    return run(async () => {
+      const r = await api('/zugang/admin/invites', { method: 'POST', body: { label: d.label, days: Number(d.days) } });
+      await copyText(r.link);
+    });
+  }
   if (kind === 'create-user') {
     const d = formData(f);
     return run(
@@ -319,6 +408,15 @@ app.addEventListener('click', (e) => {
   if (a === 'to-login') { S.registered = false; S.tab = 'login'; render(); }
   if (a === 'reject' && confirm('Diese Anfrage ablehnen? Das Konto wird gelöscht.')) run(() => api(`/users/${id}`, { method: 'DELETE' }), 'Anfrage abgelehnt.');
   if (a === 'del-user' && confirm('Dieses Konto endgültig löschen?')) run(() => api(`/users/${id}`, { method: 'DELETE' }), 'Konto gelöscht.');
+  const invite = S.access && S.access.invites.find((i) => String(i.id) === id);
+  if (a === 'copy-invite' && invite) copyText(invite.link);
+  if (a === 'qr-invite' && invite) { S.qr = S.qr === invite.id ? null : invite.id; render(); }
+  if (a === 'del-invite' && invite && confirm(`Einladung für „${invite.label}“ löschen? Wer damit drin ist, sieht danach nur noch das Eingangstor.`)) {
+    run(() => api(`/zugang/admin/invites/${id}`, { method: 'DELETE' }), 'Einladung gelöscht.');
+  }
+  if (a === 'code-off' && confirm('Zugangscode abschalten? Geräte, die nur mit dem Code drin waren, sind dann ausgesperrt.')) {
+    run(() => api('/zugang/admin/code', { method: 'PUT', body: { code: '' } }), 'Zugangscode abgeschaltet.');
+  }
 });
 
 S.tab = (location.hash || '').slice(1) || null;

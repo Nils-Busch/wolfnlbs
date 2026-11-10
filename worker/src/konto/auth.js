@@ -1,6 +1,7 @@
 // Gemeinsame Konten für das ganze Vereinsheim (Quiz, Tischtennis, …).
 //
-// - Jeder kann sich selbst registrieren. Neue Konten sind aber "wartend"
+// - Jeder, der schon drin ist (Zugangscode oder Einladung), kann sich selbst
+//   registrieren. Neue Konten sind aber "wartend"
 //   (pending) und können sich erst anmelden, wenn jemand mit dem Recht
 //   "users.manage" sie freigeschaltet hat.
 // - Rechte werden pro Person vergeben (siehe PERMISSIONS).
@@ -31,6 +32,7 @@ import {
   bodyReader,
   handleErrors,
 } from "./http.js";
+import { issueAccessCookie } from "../zugang/gate.js";
 
 export const PERMISSIONS = [
   { key: "users.manage", label: "Konten freischalten & Rechte vergeben", area: "Konten" },
@@ -263,7 +265,10 @@ export async function handleKontoApi(request, env, path) {
       await env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?,?,?)")
         .bind(tok, row.id, Date.now() + SESSION_MS)
         .run();
-      return securityHeaders(json({ ok: true }, 200, { "set-cookie": sessionCookieHeader(tok, SESSION_MS / 1000, secure) }));
+      const res = securityHeaders(json({ ok: true }, 200, { "set-cookie": sessionCookieHeader(tok, SESSION_MS / 1000, secure) }));
+      // Wer sich mit Konto anmeldet, ist damit auch durchs Tor (siehe zugang/gate.js).
+      res.headers.append("set-cookie", await issueAccessCookie(env, request, "u", row.id));
+      return res;
     }
 
     if (path === "/auth/logout" && method === "POST") {
