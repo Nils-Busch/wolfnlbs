@@ -23,6 +23,7 @@
     if (b.wordle != null) out.push(`<span class="chip w" title="Wordle: weniger Versuche ist besser">🟩 ${b.wordle}/6</span>`);
     if (b.staedte != null) out.push(`<span class="chip s" title="Städteraten: beste Punktzahl">📍 ${fmt(b.staedte)}</span>`);
     if (b.nono != null) out.push(`<span class="chip n" title="Nonogramm: schnellste Zeit">▦ ${fmtTime(b.nono)}</span>`);
+    if (b.jig != null) out.push(`<span class="chip j" title="Puzzle: schnellste Zeit">🧩 ${fmtTime(b.jig)}</span>`);
     if (b.conn != null) out.push(`<span class="chip c" title="Connections: wenigste Fehler, dann Zeit">🔗 ${connFmt(b.conn)}</span>`);
     return out.join('');
   }
@@ -52,6 +53,7 @@
       r.staedte ? rec('📍', 'Beste Städte-Runde', fmt(r.staedte.raw), `${esc(r.staedte.name)}, ${fmtDate(r.staedte.date)}`) : '',
       r.nono ? rec('▦', 'Schnellstes Nonogramm', fmtTime(r.nono.raw), `${esc(r.nono.name)}, ${fmtDate(r.nono.date)}`) : '',
       r.conn ? rec('🔗', 'Bestes Connections', connFmt(r.conn.raw), `${esc(r.conn.name)}, ${fmtDate(r.conn.date)}`) : '',
+      r.jig ? rec('🧩', 'Schnellstes Puzzle', fmtTime(r.jig.raw), `${esc(r.jig.name)}, ${fmtDate(r.jig.date)}`) : '',
       r.streak && r.streak.days > 1 ? rec('🔥', 'Längste Serie', `${r.streak.days} Tage`, esc(r.streak.name)) : '',
     ].join('');
 
@@ -87,6 +89,7 @@
     ['staedte', '📍', 'Städteraten', fmt],
     ['nono', '▦', 'Nonogramm', fmtTime],
     ['conn', '🔗', 'Connections', connFmt],
+    ['jig', '🧩', 'Puzzle', fmtTime],
   ];
   async function loadMine() {
     let d = null;

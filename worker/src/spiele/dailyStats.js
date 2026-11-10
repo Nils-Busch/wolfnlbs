@@ -1,4 +1,4 @@
-// Ewige Bestenliste der Tagesrätsel (Wordle, Städteraten, Nonogramm, Connections).
+// Ewige Bestenliste der Tagesrätsel (Wordle, Städteraten, Nonogramm, Connections, Puzzle).
 // Jede eingetragene Tageswertung landet als Zeile in D1; die Rangliste wird
 // beim Abruf aus allen Zeilen berechnet. Pro Name, Rätsel und Tag zählt nur
 // der erste Eintrag.
@@ -8,18 +8,20 @@
 //   Städteraten  Punkte ÷ 10               →   0 … 500
 //   Nonogramm    600 − Sekunden ÷ 2        → 100 … 600
 //   Connections  600 − 100 × Fehler − Sekunden ÷ 6 (max. 100 Abzug) → 200 … 600
+//   Puzzle       600 − Sekunden ÷ 3        → 100 … 600
 //
 // Mit Konto eingetragene Ergebnisse gehören fest zum Konto (name_key "u:<id>");
 // ohne Konto zählt der Name ("n:<name>").
 
 let ready = false;
 
-export const GAMES = ["wordle", "staedte", "nono", "conn"];
+export const GAMES = ["wordle", "staedte", "nono", "conn", "jig"];
 
 export function pointsFor(game, raw) {
   if (game === "wordle") return Math.max(0, (7 - raw) * 100);
   if (game === "staedte") return Math.round(raw / 10);
   if (game === "nono") return Math.max(100, Math.min(600, Math.round(600 - raw / 2)));
+  if (game === "jig") return Math.max(100, Math.min(600, Math.round(600 - raw / 3)));
   if (game === "conn") {
     const mistakes = Math.floor(raw / 10000), secs = raw % 10000;
     return Math.max(200, 600 - 100 * mistakes - Math.min(100, Math.round(secs / 6)));
@@ -88,7 +90,7 @@ export async function backfillIfEmpty(env, { leaderboardAll, wordleBoard }) {
   try {
     const all = await leaderboardAll();
     for (const [key, entries] of Object.entries(all || {})) {
-      const m = key.match(/^(staedte|nono|conn)(\d{4})(\d{2})(\d{2})$/);
+      const m = key.match(/^(staedte|nono|conn|jig)(\d{4})(\d{2})(\d{2})$/);
       if (!m) continue;
       for (const e of entries) await recordResult(env, { game: m[1], name: e.name, date: `${m[2]}-${m[3]}-${m[4]}`, raw: e.score });
     }
@@ -212,6 +214,7 @@ export async function dailyBoard(env, range = "all") {
     staedte: pick("staedte", (a, b) => a > b),
     nono: pick("nono", (a, b) => a < b),
     conn: pick("conn", (a, b) => a < b),
+    jig: pick("jig", (a, b) => a < b),
     streak: list.reduce((m, p) => (!m || p.bestStreak > m.bestStreak ? p : m), null),
   };
 

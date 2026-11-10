@@ -46,7 +46,7 @@ function client(code) {
 try {
   await waitReady();
   ok("wrangler dev läuft");
-  for (const path of ["/", "/spiele/", "/spiele/gruppe/", "/spiele/games/maexchen.html", "/quiz/", "/raetsel/", "/konto/", "/tischtennis/", "/tischtennis/rangliste", "/tischtennis/live", "/impressum", "/datenschutz", "/manifest.webmanifest", "/sw.js", "/woelfe/"]) {
+  for (const path of ["/", "/spiele/", "/spiele/gruppe/", "/spiele/games/maexchen.html", "/spiele/games/kloetzchen.html", "/raetsel/puzzle.html", "/quiz/", "/raetsel/", "/konto/", "/tischtennis/", "/tischtennis/rangliste", "/tischtennis/live", "/impressum", "/datenschutz", "/manifest.webmanifest", "/sw.js", "/woelfe/"]) {
     const r = await fetch(BASE + path);
     r.ok ? ok(`GET ${path}`) : bad(`GET ${path} -> ${r.status}`);
   }

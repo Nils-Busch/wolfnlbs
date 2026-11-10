@@ -15,8 +15,15 @@ body.rt, .vh-area-raetsel {
 .rt-hero p { margin: 0; color: var(--muted); font-size: 1.1rem; max-width: 44ch; }
 .rt-clock { display: grid; gap: .2rem; justify-items: end; color: var(--muted); font-size: .9rem; }
 .rt-clock b { font: 800 clamp(1.8rem, 5vw, 2.6rem)/1 var(--display); color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
-.rt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-@media (max-width: 1100px) { .rt-grid { grid-template-columns: repeat(2, 1fr); } }
+/* fünf Rätsel: oben drei, unten zwei breitere Karten */
+.rt-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+.rt-grid > .rt-card { grid-column: span 2; }
+.rt-grid > .rt-card:nth-child(n+4) { grid-column: span 3; }
+@media (max-width: 1100px) {
+  .rt-grid { grid-template-columns: repeat(2, 1fr); }
+  .rt-grid > .rt-card, .rt-grid > .rt-card:nth-child(n+4) { grid-column: auto; }
+  .rt-grid > .rt-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
 .rt-card {
   --c: var(--teal); --c-deep: var(--teal-deep);
   position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: .5rem;
@@ -56,7 +63,7 @@ body.rt, .vh-area-raetsel {
 .rt-art .nono i.f { background: #172036; }
 .rt-card:hover .rt-art .nono i.f { animation: rt-blink .5s ease; }
 @keyframes rt-blink { 50% { background: var(--teal); } }
-@media (max-width: 860px) { .rt-grid { grid-template-columns: 1fr; } .rt-clock { justify-items: start; } }
+@media (max-width: 860px) { .rt-grid { grid-template-columns: 1fr; } .rt-grid > .rt-card:last-child:nth-child(odd) { grid-column: auto; } .rt-clock { justify-items: start; } }
 
 /* ---------------- Gemeinsam: Modus-Leiste ---------------- */
 .st-modes { display: flex; gap: .7rem; flex-wrap: wrap; align-items: center; margin-bottom: .9rem; }
@@ -321,3 +328,49 @@ body.rt, .vh-area-raetsel {
 .rt-card:hover .rt-art .conn-art i.y { background: var(--yellow); } .rt-card:hover .rt-art .conn-art i.g { background: var(--green); }
 .rt-card:hover .rt-art .conn-art i.b { background: var(--blue); } .rt-card:hover .rt-art .conn-art i.p { background: #8a5cf0; }
 .rt-art .conn-art i { transition: background .3s; }
+
+/* ---------- Tagespuzzle ---------- */
+.jg { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem 2rem; }
+.jg-bar { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; margin-bottom: .7rem; }
+.jg-bar .spacer { flex: 1; }
+.jg-time b { font-variant-numeric: tabular-nums; }
+.jg-prog { width: 120px; height: 8px; border-radius: 999px; background: var(--panel); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.jg-prog i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--accent); transition: width .5s var(--ease-out); }
+.jg-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+.jg-bar button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
+.jg-table { position: relative; width: 100%; min-height: 300px; border-radius: 22px; background: radial-gradient(circle at 30% 20%, #2a3a63, #19223d 70%); box-shadow: inset 0 0 0 1px var(--line); touch-action: none; user-select: none; -webkit-user-select: none; overflow: hidden; transition: height .5s var(--ease-out); }
+.jg-frame { position: absolute; border-radius: 4px; background: rgba(0, 0, 0, .28); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .14), 0 0 0 6px rgba(0, 0, 0, .18); transition: box-shadow .2s; }
+.jg-frame.near { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 6px rgba(79, 208, 143, .2); }
+.jg-frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; border: 0; border-radius: 4px; background: none; }
+.jg-ghost { opacity: 0; transition: opacity .3s; filter: grayscale(.3); }
+.jg-frame.peek .jg-ghost { opacity: .28; }
+.jg-final { z-index: 3; animation: jg-reveal .8s var(--ease-out) both; }
+.jg-frame.done { box-shadow: 0 0 0 6px #f5ead2, 0 0 0 10px #b98b4a, 0 18px 40px rgba(0, 0, 0, .5); }
+.jg-frame.shine::after { content: ""; position: absolute; inset: 0; z-index: 4; border-radius: 4px; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .55) 50%, transparent 65%); background-size: 250% 100%; animation: jg-shine 1.4s .3s ease-in-out both; pointer-events: none; }
+@keyframes jg-reveal { from { opacity: 0; } }
+@keyframes jg-shine { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+.jg-piece { position: absolute; left: 0; top: 0; z-index: 2; width: auto; aspect-ratio: auto; border: 0; border-radius: 0; background: none; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); will-change: transform; cursor: grab; transition: filter .2s; }
+.jg-piece.lift { filter: drop-shadow(0 12px 14px rgba(0, 0, 0, .5)); cursor: grabbing; }
+.jg-piece.placed { filter: none; cursor: default; }
+.jg-piece.snap { animation: jg-snap .45s var(--ease-hop); }
+.jg-piece.fly { transition: transform .55s var(--ease-out); }
+.jg-piece.gone { opacity: 0; transition: opacity .6s .2s; }
+@keyframes jg-snap { 0% { filter: brightness(1.6) drop-shadow(0 0 10px #fff); } 100% { filter: none; } }
+.jg-title { min-height: 1.4em; margin: .8rem 0 0; text-align: center; font: 800 1.3rem var(--display); }
+.jg-title:not(:empty) { animation: vh-pop-in .5s var(--ease-hop); }
+.jg .nn-done { justify-content: center; margin-top: .4rem; }
+.jg-side { margin-top: 1.4rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+@media (prefers-reduced-motion: reduce) { .jg-piece, .jg-final, .jg-frame::after { animation: none !important; transition: none !important; } }
+.rt-art .jig-art { width: 110px; height: auto; overflow: visible; }
+.rt-art .jig-art path { fill: #dfe6f1; stroke: #172036; stroke-width: 1.5; transition: transform .35s var(--ease-hop), fill .3s; transform-box: fill-box; transform-origin: center; }
+.rt-card:hover .rt-art .jig-art .a { fill: #ff8a5c; transform: translate(-3px, -3px) rotate(-4deg); }
+.rt-card:hover .rt-art .jig-art .b { fill: #ffd166; }
+.rt-card:hover .rt-art .jig-art .c { fill: #4dabf7; transform: translate(3px, -2px) rotate(3deg); }
+.rt-card:hover .rt-art .jig-art .d { fill: #4fd08f; }
+.rt-card:hover .rt-art .jig-art .e { fill: #c56cf0; transform: translateY(3px); }
+.rt-card:hover .rt-art .jig-art .f { fill: #ff7ac6; }
+@media (max-width: 520px) {
+  .jg { padding: 0 .75rem 2rem; }
+  .jg-bar .ghost.small { padding: .4rem .6rem; font-size: .82rem; }
+  .jg-prog { width: 80px; }
+}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tagesrätsel – Vereinsheim</title>
-<meta name="description" content="Jeden Tag neu: Wordle, Städteraten, Connections und Nonogramm mit Tagesbestenliste.">
+<meta name="description" content="Jeden Tag neu: Wordle, Städteraten, Connections, Nonogramm und Puzzle mit Tagesbestenliste.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
 <link rel="stylesheet" href="/spiele/css/style.css">
@@ -59,6 +59,12 @@
       <p>Die Zahlen am Rand verraten, welche Felder gefüllt sind. Logik statt Raten.</p>
       <span class="rt-state">Heute lösen</span>
     </a>
+    <a class="rt-card" data-tilt id="rtJig" href="/raetsel/puzzle.html">
+      <span class="rt-art" aria-hidden="true"><svg class="jig-art" viewBox="0 0 120 80"><path class="a" d="M4 4h36v10c-6 0-6 10 0 10v12H28c0 6-10 6-10 0H4z"/><path class="b" d="M40 4h36v14c6 0 6 10 0 10v8H64c0-6-10-6-10 0H40V24c-6 0-6-10 0-10z"/><path class="c" d="M76 4h40v32H82c0 6-10 6-10 0h4V28c6 0 6-10 0-10z"/><path class="d" d="M4 36h14c0 6 10 6 10 0h12v12c6 0 6 10 0 10v18H4z"/><path class="e" d="M40 36h14c0-6 10-6 10 0h12v14c-6 0-6 10 0 10v16H40V58c6 0 6-10 0-10z"/><path class="f" d="M76 36h-4c0 6 10 6 10 0h34v40H76V60c-6 0-6-10 0-10z"/></svg></span>
+      <h2>Puzzle</h2>
+      <p>Jeden Tag ein neues, selbst gemaltes Bild in 24 Teilen. Wer setzt es am schnellsten zusammen?</p>
+      <span class="rt-state">Heute puzzeln</span>
+    </a>
   </div>
   <a class="rt-lb-link" href="/raetsel/bestenliste.html">🏆 Ewige Bestenliste – Punkte, Serien und Rekorde</a>
 </main>
@@ -67,7 +73,7 @@
 <script>
   (() => {
     const today = Daily.today();
-    document.getElementById('rtDate').textContent = `${Daily.longDate(today)}: vier Rätsel, für alle dieselben. Wer ist heute am schnellsten?`;
+    document.getElementById('rtDate').textContent = `${Daily.longDate(today)}: fünf Rätsel, für alle dieselben. Wer ist heute am schnellsten?`;
     const clock = document.getElementById('rtClock');
     const tick = () => { clock.textContent = Daily.fmtCountdown(Daily.untilMidnight()); };
     tick();
@@ -87,6 +93,8 @@
     if (c && c.date === today && c.over) mark('rtConn', true, c.won ? `Gelöst mit ${c.mistakes} Fehler${c.mistakes === 1 ? '' : 'n'}` : 'Heute gespielt');
     const n = Daily.store.get('nono-day');
     if (n && n.date === today && n.done) mark('rtNono', true, `Gelöst in ${Math.floor(n.elapsed / 60)}:${String(n.elapsed % 60).padStart(2, '0')}`);
+    const j = Daily.store.get('jig-day');
+    if (j && j.date === today && j.done) mark('rtJig', true, `Fertig in ${Math.floor(j.elapsed / 60)}:${String(j.elapsed % 60).padStart(2, '0')}`);
   })();
 </script>
 <script src="/shared/tilt.js"></script>

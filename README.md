@@ -6,8 +6,8 @@ Eine gemeinsame Seite für die Party- und Vereins-Apps:
   (Einsteiger, Klassisch, Liebesdrama, Chaos) und einer **Erzähleransicht**: Wer „Ich leite nur“
   ankreuzt, sieht Vorlesetexte für jede Phase, alle Rollen (verdeckbar) und was nachts passiert.
 - **❓ Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
-- **🎮 Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores, **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**)
-- **🧩 Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections** und **Nonogramm**, dazu eine **ewige Bestenliste**
+- **🎮 Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores (neu: **Klötzchen**), **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**)
+- **🧩 Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections**, **Nonogramm** und **Puzzle**, dazu eine **ewige Bestenliste**
 - **🏆 Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, Besucheransicht mit **QR-Code**, **Liveansicht für den Bildschirm**
 - **👤 Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
 
@@ -89,6 +89,10 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
 - **Mäxchen**: 2–6 Plätze an einem Handy, Menschen und Computer gemischt. Würfel heimlich
   unter dem Becher anschauen, ansagen, bluffen; wer auffliegt, verliert einen Deckel.
 - **Gomoku**: fünf in einer Reihe auf 15 × 15, auch online per Raumcode.
+- **Klötzchen**: Blöcke auf ein 8 × 8-Feld ziehen, volle Reihen und Spalten verschwinden.
+  Mehrere Reihen auf einmal bringen mehr (80, 240, 480 …), Abräumen in Folge baut eine Kombo
+  auf (×2, ×3 …), ein leeres Feld gibt 300 extra. Vorbei, wenn keiner der drei Blöcke passt.
+  Ein angefangenes Spiel bleibt nach dem Neuladen erhalten. Bestenliste wie bei den anderen Solo-Spielen.
 - **Gruppenspiele** (`/spiele/gruppe/`): Ein Gerät ist der Bildschirm (Fernseher/Laptop, Raum
   eröffnen), alle anderen treten am Handy per Code oder QR-Code bei – ohne Konto.
   - **Wer würde eher …?** – 60 eingebaute Fragen, Abstimmung am Handy, Auflösung mit Balken,
@@ -127,7 +131,7 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
 
 ## Tagesrätsel
 
-Unter `/raetsel/`: Wordle, Städteraten, Connections und Nonogramm, für alle am selben Tag
+Unter `/raetsel/`: Wordle, Städteraten, Connections, Nonogramm und Puzzle, für alle am selben Tag
 gleich (deutsche Zeit, neue Rätsel um Mitternacht).
 
 - **Städteraten**: fünf Städte auf der Deutschlandkarte antippen, bis zu 1000 Punkte je
@@ -140,10 +144,16 @@ gleich (deutsche Zeit, neue Rätsel um Mitternacht).
 - **Connections**: 16 Begriffe, vier Gruppen (gelb leicht bis lila knifflig), vier Fehler erlaubt.
   Jeden Tag wird pro Stufe eine Gruppe aus `client-assets/raetsel/js/connections-data.js`
   gezogen (96 Gruppen) – neue Gruppen dort einfach anhängen.
+- **Puzzle** (`/raetsel/puzzle.html`): jeden Tag ein neues Bild in 24 Teilen (6 × 4), Bestenliste
+  nach Zeit. Die Bilder malt `client-assets/raetsel/js/puzzle-art.js` selbst aus dem Datum
+  (Bergsee, Ballonfahrt, Stadt am Fluss, Korallenriff, Leuchtturm, Sommerwiese in wechselnden
+  Tageszeiten) – keine Bilddateien, keine fremden Rechte. Teile rasten am richtigen Platz ein;
+  „Vorlage“ zeigt das Bild blass im Rahmen, „Ränder zuerst“ legt die Randteile nach vorne.
+  Im freien Spiel 12, 24 oder 54 Teile mit immer neuem Bild.
 - Die Tagesbestenlisten werden 14 Tage aufgehoben, pro Name zählt der beste Eintrag.
 - **Ewige Bestenliste** (`/raetsel/bestenliste.html`): Punkte, Serien, Tagessiege und Rekorde
   über alle Tage (D1-Tabelle `daily_results`). Wordle bis 600, Städteraten bis 500,
-  Nonogramm bis 600, Connections bis 600 Punkte – Details stehen auf der Seite.
+  Nonogramm bis 600, Connections bis 600, Puzzle bis 600 Punkte – Details stehen auf der Seite.
 - **Mit Konto**: Wer angemeldet ist, trägt sich in allen Bestenlisten automatisch unter dem
   Kontonamen ein. Namen, die zu einem Konto gehören, können ohne Anmeldung nicht mehr benutzt
   werden. Angemeldete sehen auf der ewigen Bestenliste ihre eigene Statistik.
