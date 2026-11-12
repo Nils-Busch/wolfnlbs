@@ -5,12 +5,13 @@
 
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-export function gatePage({ codeEnabled, message = "" }) {
+export function gatePage({ codeEnabled, message = "", back = null }) {
   return `<!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/shared/theme.js"></script>
 <meta name="robots" content="noindex, nofollow">
 <title>Vereinsheim – Zugang</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚪</text></svg>">
@@ -55,6 +56,7 @@ export function gatePage({ codeEnabled, message = "" }) {
       codeEnabled ? "dem Zugangscode oder deinem persönlichen Einladungslink" : "deinem persönlichen Einladungslink"
     } kommst du rein.</p>
     ${message ? `<p class="note" role="status">${esc(message)}</p>` : ""}
+    ${back ? `<p><a class="vh-btn" href="${esc(back.href)}">${esc(back.label)}</a></p>` : ""}
     ${
       codeEnabled
         ? `<form class="vh-card" id="code-form">

@@ -120,13 +120,13 @@ function partyStub(env, code) {
 }
 
 // ---------- Gruppenspiele (Wer würde eher, Stadt-Land-Fluss) ----------
-//   POST /party            { game: "wwe" | "slf" } -> { roomCode, hostKey }
+//   POST /party            { game: "wwe" | "slf" | "kniffel" | "maexchen" | "draw" | "agent" | "explain" } -> { roomCode, hostKey }
 //   GET  /party/:code      Gibt es den Raum?
 //   GET  /party/:code/ws   WebSocket für Bildschirm und Handys
 async function handleParty(request, env, path) {
   if (path === "/party" && request.method === "POST") {
     const body = (await readJson(request)) || {};
-    const game = ["slf", "wwe", "kniffel", "maexchen", "draw"].includes(body.game) ? body.game : null;
+    const game = ["slf", "wwe", "kniffel", "maexchen", "draw", "agent", "explain"].includes(body.game) ? body.game : null;
     if (!game) return json({ error: "Unbekanntes Spiel" }, 400);
     const hostKey = randomCode(12) + randomCode(12);
     for (let attempt = 0; attempt < 30; attempt++) {

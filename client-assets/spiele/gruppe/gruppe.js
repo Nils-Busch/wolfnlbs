@@ -1,5 +1,6 @@
 /**
- * Gruppenspiele: „Wer würde eher …?“, Stadt-Land-Fluss, Kniffel, Mäxchen online und Montagsmaler.
+ * Gruppenspiele: „Wer würde eher …?“, Stadt-Land-Fluss, Kniffel, Mäxchen online, Montagsmaler
+ * und die Teamspiele Agentenrunde und Erklärbär.
  *   /spiele/gruppe/                 Start: Spiel wählen oder mit Code beitreten
  *   /spiele/gruppe/?new=maexchen    Start mit hervorgehobenem Spiel
  *   /spiele/gruppe/#host=CODE       Bildschirm/Spielleitung (Fernseher oder Laptop)
@@ -25,8 +26,10 @@
   const normCode = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
   const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const vibrate = (p) => { if (navigator.vibrate) try { navigator.vibrate(p); } catch {} };
-  const ICON = { wwe: '🫵', slf: '🔤', kniffel: '🎲', maexchen: '🥤', draw: '🖍️' };
-  const SELF_HOST = new Set(['maexchen', 'draw']);
+  const ICON = { wwe: '🫵', slf: '🔤', kniffel: '🎲', maexchen: '🥤', draw: '🖍️', agent: '🕵️', explain: '🐻' };
+  const SELF_HOST = new Set(['maexchen', 'draw', 'agent', 'explain']);
+  const TEAM_GAMES = new Set(['agent', 'explain']);
+  const TEAM = ['Rot', 'Blau'];
 
   /* ---------- DOM-Abgleich ---------- */
   const keyOf = (n) => (n.nodeType === 1 ? n.getAttribute('data-k') || n.id || '' : '');
@@ -140,6 +143,8 @@
     ['kniffel', 'Kniffel', 'Wer dran ist, würfelt am eigenen Handy, hält Würfel fest und trägt ein. Der Bildschirm zeigt die Würfel groß und den Block aller.', 'Fernseher + Handys'],
     ['maexchen', 'Mäxchen online', 'Jede Person würfelt verdeckt am eigenen Handy, sagt an und blufft. Glauben oder aufdecken? Geht auch über die Ferne.', 'Nur Handys'],
     ['draw', 'Montagsmaler', 'Eine Person zeichnet am Handy, alle anderen raten um die Wette. Wer schnell rät, bekommt mehr Punkte.', 'Nur Handys, Fernseher optional'],
+    ['agent', 'Agentenrunde', 'Team Rot gegen Team Blau: 25 Wörter, je Team ein Funker mit Geheimkarte. Ein Wort als Hinweis, das Team tippt die passenden Karten an.', 'Teams ab 4 Personen'],
+    ['explain', 'Erklärbär', 'Begriffe gegen die Uhr erklären, ohne die fünf verbotenen Wörter zu sagen. Das andere Team liest mit und drückt „Verboten!“.', 'Teams ab 4 Personen'],
   ];
   function renderStart(err = '') {
     G.mode = 'start';
@@ -256,7 +261,7 @@
   const pname = (p) => `${p.bot ? '🤖 ' : ''}${esc(p.name)}`;
 
   /* ---------- Spieleabend ---------- */
-  const GAME_LIST = ['wwe', 'slf', 'kniffel', 'maexchen', 'draw'];
+  const GAME_LIST = ['wwe', 'slf', 'kniffel', 'maexchen', 'draw', 'agent', 'explain'];
   function gamePicker(s, label = 'Spiel wählen') {
     return `<div class="ev-pick"><p class="muted small">${label}</p><div class="ev-games">${GAME_LIST.map((g) => `<button type="button" class="ev-game ${g === s.game ? 'on' : ''}" data-switch="${g}" ${g === s.game && s.phase === 'LOBBY' ? 'aria-pressed="true"' : ''}>${ICON[g]} ${esc(s.games?.[g] || g)}</button>`).join('')}</div></div>`;
   }
@@ -316,13 +321,22 @@
     document.body.appendChild(a); a.click(); a.remove();
   }
 
+  // Schlüssel der Hülle: Animationen laufen nur, wenn er sich ändert
+  function phaseKey(s, key) {
+    if (s.game === 'kniffel' || s.game === 'maexchen') return s.phase;
+    if (s.game === 'draw') return `${s.phase}-${s.dr?.turn || 0}`;
+    if (s.game === 'agent') return `${s.phase === 'BOARD' ? 'PLAYING' : s.phase}-${s.ag?.match || 0}`;
+    if (s.game === 'explain') return `${s.phase}-${s.ex?.turnNo || 0}`;
+    return key;
+  }
+
   function renderHost() {
     const s = G.s;
     const key = `${s.phase}-${s.round}`;
     const fresh = key !== G.lastPhaseKey;
     G.lastPhaseKey = key;
-    const bodyKey = s.game === 'kniffel' || s.game === 'maexchen' ? s.phase : s.game === 'draw' ? `${s.phase}-${s.dr?.turn || 0}` : key;
-    const head = `<header class="gp-bar"><span class="t">${s.phase === 'FINALE' ? '🏆 Spieleabend' : `${ICON[s.game] || ''} ${esc(s.gameName)}`}</span>${s.round && s.game !== 'maexchen' && s.phase !== 'FINALE' && s.phase !== 'LOBBY' ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
+    const bodyKey = phaseKey(s, key);
+    const head = `<header class="gp-bar"><span class="t">${s.phase === 'FINALE' ? '🏆 Spieleabend' : `${ICON[s.game] || ''} ${esc(s.gameName)}`}</span>${s.round && s.game !== 'maexchen' && !TEAM_GAMES.has(s.game) && s.phase !== 'FINALE' && s.phase !== 'LOBBY' ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}${s.game === 'agent' && s.ag && s.settings.rounds > 1 && s.phase !== 'LOBBY' && s.phase !== 'FINALE' ? `<span class="r">Partie ${s.ag.match} von ${s.settings.rounds}</span>` : ''}${s.game === 'explain' && s.ex && !['LOBBY', 'FINALE', 'END'].includes(s.phase) ? `<span class="r">Zug ${Math.min(s.ex.turnNo + 1, s.ex.total)} von ${s.ex.total}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
     let body = '';
     let foot = '';
     if (s.phase === 'LOBBY') {
@@ -332,12 +346,12 @@
           <div><p class="muted">Am Handy öffnen:</p><p class="url">${esc(location.host)}/spiele/gruppe</p><p class="muted">Code eingeben:</p>
           <p class="gp-tiles">${[...s.code].map((c) => `<span>${esc(c)}</span>`).join('')}</p></div>
         </div>
-        <div class="gp-people">${s.players.length ? s.players.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b><button class="x" data-kick="${p.id}" title="Entfernen">✕</button></span>`).join('') : '<p class="muted">Noch niemand da. Scannt den Code!</p>'}</div>
+        ${TEAM_GAMES.has(s.game) && s.players.length ? teamsHtml(s, { canMove: true, kick: true }) : `<div class="gp-people">${s.players.length ? s.players.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b><button class="x" data-kick="${p.id}" title="Entfernen">✕</button></span>`).join('') : '<p class="muted">Noch niemand da. Scannt den Code!</p>'}</div>`}
         ${gamePicker(s)}
         ${settingsHtml(s)}
         ${eveningTable(s)}
       </div>`;
-      foot = `<button class="big" data-host="start" ${s.players.length < 2 ? 'disabled' : ''}>${ICON[s.game]} ${esc(s.gameName)} starten</button>${s.evening ? '<button class="ghost" data-host="finale">🏆 Siegerehrung</button>' : ''}`;
+      foot = `<button class="big" data-host="start" ${s.players.length < (TEAM_GAMES.has(s.game) ? 4 : 2) ? 'disabled' : ''}>${ICON[s.game]} ${esc(s.gameName)} starten</button>${s.evening ? '<button class="ghost" data-host="finale">🏆 Siegerehrung</button>' : ''}`;
     } else if (s.phase === 'FINALE') {
       body = finaleHtml(s);
       foot = `<button data-host="restart">Weiter spielen</button>`;
@@ -371,6 +385,12 @@
     } else if (s.game === 'maexchen') {
       body = mxHtml(s, null);
       foot = s.phase === 'PLAYING' ? `<button class="ghost" data-host="next" title="Für eine Person entscheiden, die nicht reagiert">Zug überspringen</button>` : `<button data-host="restart">Nochmal spielen</button>`;
+    } else if (s.game === 'agent') {
+      body = agHost(s);
+      foot = s.phase === 'PLAYING' ? `<button class="ghost" data-host="next" title="Wenn jemand nicht reagiert">Zug beenden</button>` : s.phase === 'BOARD' ? `<button data-host="next">Nächste Partie</button>` : '';
+    } else if (s.game === 'explain') {
+      body = exHost(s);
+      foot = s.phase === 'READY' ? `<button data-host="next">Runde starten</button>` : s.phase === 'PLAY' ? `<button class="ghost" data-host="next">Runde beenden</button>` : '';
     } else if (s.game === 'draw') {
       body = drHost(s);
       foot = s.phase === 'END' ? `<button data-host="restart">Nochmal spielen</button>` : `<button class="ghost" data-host="next">${s.phase === 'CHOOSE' ? 'Wort automatisch wählen' : s.phase === 'DRAW' ? 'Runde beenden' : 'Weiter'}</button>`;
@@ -438,6 +458,22 @@
           <label>Wörter verwenden <select name="wordMode">${[['mix', 'gemischt mit den eingebauten'], ['only', 'nur eigene Wörter'], ['off', 'nur eingebaute']].map(([k, l]) => `<option value="${k}" ${s.settings.wordMode === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
           <p class="muted small">Die anderen sehen die Liste nicht.</p></details>` : ''}</form>`;
     }
+    if (s.game === 'agent') {
+      return `<form class="gp-settings" id="setForm"><label>Partien <select name="rounds">${[1, 2, 3].map((n) => `<option value="${n}" ${s.settings.rounds === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label>Zeit pro Zug <select name="seconds">${[[0, 'ohne Zeitlimit'], [60, '1 Minute'], [90, '1½ Minuten'], [120, '2 Minuten'], [180, '3 Minuten']].map(([n, l]) => `<option value="${n}" ${s.settings.seconds === n ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        ${s.wordsText != null ? `<details class="dr-own" ${s.settings.wordCount ? 'open' : ''}><summary>Eigene Wörter${s.settings.wordCount ? ` (${s.settings.wordCount})` : ''}</summary>
+          <textarea name="words" rows="4" maxlength="6000" placeholder="Ein Wort pro Zeile, z. B. Vereinsheim, Grillfest, Sauna">${esc(s.wordsText)}</textarea>
+          <label>Wörter verwenden <select name="wordMode">${[['mix', 'gemischt (bis zu 10 eigene)'], ['only', 'nur eigene (mind. 25)'], ['off', 'nur eingebaute']].map(([k, l]) => `<option value="${k}" ${s.settings.wordMode === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <p class="muted small">Die anderen sehen die Liste nicht.</p></details>` : ''}</form>`;
+    }
+    if (s.game === 'explain') {
+      return `<form class="gp-settings" id="setForm"><label>Runden pro Team <select name="rounds">${[2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${s.settings.rounds === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label>Zeit pro Runde <select name="seconds">${[45, 60, 90].map((n) => `<option value="${n}" ${s.settings.seconds === n ? 'selected' : ''}>${n} Sekunden</option>`).join('')}</select></label>
+        ${s.cardsText != null ? `<details class="dr-own" ${s.settings.cardCount ? 'open' : ''}><summary>Eigene Karten${s.settings.cardCount ? ` (${s.settings.cardCount})` : ''}</summary>
+          <textarea name="cards" rows="5" maxlength="12000" placeholder="Eine Karte pro Zeile: Begriff: verboten, verboten, …&#10;Vereinsheim: Verein, Haus, Treffen, Feier, Bier">${esc(s.cardsText)}</textarea>
+          <label>Karten verwenden <select name="cardMode">${[['mix', 'gemischt mit den eingebauten'], ['only', 'nur eigene (mind. 5)'], ['off', 'nur eingebaute']].map(([k, l]) => `<option value="${k}" ${s.settings.cardMode === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <p class="muted small">Die anderen sehen die Karten erst im Spiel.</p></details>` : ''}</form>`;
+    }
     if (s.game === 'wwe') {
       return `<form class="gp-settings" id="setForm"><label>Fragen <input type="number" name="rounds" min="3" max="30" value="${s.settings.rounds}"></label>
         <label>Sekunden pro Frage <input type="number" name="seconds" min="10" max="90" value="${s.settings.seconds}"></label></form>`;
@@ -473,6 +509,8 @@
   }
   // Knöpfe, die Bildschirm und Handy der Spielleitung gemeinsam haben
   function bindCommon() {
+    app.querySelectorAll('[data-move]').forEach((b) => (b.onclick = () => act('team', { playerId: b.dataset.move, team: +b.dataset.to })));
+    app.querySelectorAll('[data-team]').forEach((b) => (b.onclick = () => act('team', { team: +b.dataset.team })));
     app.querySelectorAll('[data-switch]').forEach((b) => (b.onclick = async () => {
       if (b.dataset.switch === G.s.game && G.s.phase === 'LOBBY') return;
       app.querySelectorAll('[data-switch]').forEach((x) => (x.disabled = true));
@@ -778,6 +816,149 @@
     cv.addEventListener('pointercancel', end);
   }
 
+
+  /* ---------- Teamspiele: Agentenrunde und Erklärbär ---------- */
+  const teamOf = (s, id) => s.teams?.[id];
+  const teamTag = (t) => (t === 0 || t === 1 ? `<span class="tm-tag t${t}">Team ${TEAM[t]}</span>` : '');
+  function teamsHtml(s, { canMove = false, kick = false } = {}) {
+    const P = s.players.filter((p) => !p.bot);
+    const me = s.me?.id;
+    const col = (t) => {
+      const list = P.filter((p) => teamOf(s, p.id) === t);
+      return `<section class="tm-col t${t}" data-k="tc${t}"><h3>Team ${TEAM[t]} <span>${list.length}</span></h3>
+        <div class="tm-list">${list.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'} ${p.id === me ? 'me' : ''}" data-k="tm${p.id}">${av(p)}<b>${esc(p.name)}</b>${p.id === s.hostPlayer ? ' 👑' : ''}${canMove ? `<button class="x" data-move="${p.id}" data-to="${1 - t}" title="Ins Team ${TEAM[1 - t]}" aria-label="${esc(p.name)} ins Team ${TEAM[1 - t]}">⇄</button>` : ''}${kick && p.id !== me ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('') || '<p class="muted small">Noch niemand</p>'}</div>
+        ${me && teamOf(s, me) !== t && !canMove ? `<button type="button" class="ghost small" data-team="${t}">Ins Team ${TEAM[t]}</button>` : ''}</section>`;
+    };
+    const short = [0, 1].some((t) => P.filter((p) => teamOf(s, p.id) === t).length < 2);
+    return `<div class="tm-teams"><div class="tm-cols">${col(0)}${col(1)}</div>
+      ${canMove ? `<p class="center"><button type="button" class="ghost small" data-host="shuffleTeams">🔀 Teams neu mischen</button></p>` : ''}
+      ${short ? '<p class="muted small center">Jedes Team braucht mindestens 2 Personen.</p>' : ''}</div>`;
+  }
+  // Punktestand beider Teams
+  function teamScore(s, labels) {
+    const sc = s.game === 'agent' ? s.ag?.wins || [0, 0] : s.ex?.scores || [0, 0];
+    const turn = s.game === 'agent' ? s.ag?.turn : s.ex?.team;
+    const live = s.phase === 'PLAYING' || s.phase === 'READY' || s.phase === 'PLAY';
+    return `<div class="tm-score">${[0, 1].map((t) => `<div class="tm-side t${t} ${live && turn === t ? 'on' : ''}" data-k="ts${t}"><span class="n">Team ${TEAM[t]}</span><b class="v" data-v="${sc[t]}">${sc[t]}</b>${labels ? `<small>${labels[t]}</small>` : ''}</div>`).join('<span class="tm-vs">:</span>')}</div>`;
+  }
+  function teamWinner(s) {
+    const sc = s.game === 'agent' ? s.ag?.wins || [0, 0] : s.ex?.scores || [0, 0];
+    return sc[0] === sc[1] ? null : sc[0] > sc[1] ? 0 : 1;
+  }
+  function teamFinal(s) {
+    const w = teamWinner(s);
+    const names = (t) => s.players.filter((p) => teamOf(s, p.id) === t).map((p) => esc(p.name)).join(', ');
+    return `<div class="tm-final ${w == null ? '' : `t${w}`}"><p class="kick">Spielende</p><h2>${w == null ? 'Unentschieden!' : `Team ${TEAM[w]} gewinnt!`}</h2>${teamScore(s)}
+      <p class="muted">${w == null ? `${names(0)} · ${names(1)}` : names(w)}</p></div>`;
+  }
+  function teamEnd(s) {
+    const w = teamWinner(s);
+    const my = teamOf(s, s.me.id);
+    return `<div class="gp-wait tm-final ${w == null ? '' : `t${w}`}"><p class="kick">Spielende</p><p class="big">${w == null ? 'Unentschieden!' : w === my ? 'Gewonnen! 🎉' : 'Knapp verloren'}</p>${teamScore(s)}</div>`;
+  }
+
+  // Agentenrunde
+  const AG_K = { 0: 'r', 1: 'b', n: 'n', x: 'x' };
+  function agBoard(s, phone) {
+    const ag = s.ag;
+    const my = s.me ? teamOf(s, s.me.id) : null;
+    const canTap = phone && s.phase === 'PLAYING' && ag.step === 'guess' && my === ag.turn && !ag.iSpy;
+    return `<div class="ag-board ${canTap ? 'can' : ''} ${ag.iSpy && s.phase === 'PLAYING' ? 'spy' : ''}">${ag.cards.map((c, i) => {
+      const k = c.k == null ? '' : `k-${AG_K[c.k]}`;
+      return `<div class="ag-card ${k} ${c.open ? 'open' : ''} ${c.mine ? 'mine' : ''} ${c.marks.length && !c.open ? 'marked' : ''}" data-k="ag${i}" ${canTap && !c.open ? `data-tap="${i}" role="button" tabindex="0" aria-label="${esc(c.w)}${c.mine ? ', nochmal tippen zum Aufdecken' : ''}"` : ''}>
+        <span class="w">${esc(c.w)}</span>${c.open && c.k === 'x' ? '<span class="ic" aria-hidden="true">💣</span>' : ''}${c.open && c.by && !phone ? `<span class="by">${esc(c.by)}</span>` : ''}${c.marks.length && !c.open ? `<span class="mk">${c.marks.map((n) => `<i title="${esc(n)}">${esc(initials(n))}</i>`).join('')}</span>` : ''}</div>`;
+    }).join('')}</div>`;
+  }
+  function agStatus(s) {
+    const ag = s.ag;
+    const t = ag.turn;
+    if (s.phase !== 'PLAYING') {
+      const why = ag.reason === 'trap' ? `Team ${TEAM[1 - ag.winner]} hat den Doppelagenten erwischt.` : `Team ${TEAM[ag.winner]} hat alle Agenten gefunden.`;
+      return `<div class="ag-status over t${ag.winner}"><b>Team ${TEAM[ag.winner]} gewinnt die Partie!</b><span>${why}</span></div>`;
+    }
+    if (ag.step === 'clue') return `<div class="ag-status t${t}" data-k="st-c${t}"><b>Team ${TEAM[t]} ist dran.</b><span>${ag.spyNames[t] ? `${esc(ag.spyNames[t])} überlegt sich einen Hinweis …` : 'Kein Funker da – die Spielleitung kann den Zug beenden.'}</span></div>`;
+    const left = ag.clue.n + 1 - ag.guesses;
+    return `<div class="ag-status t${t}" data-k="st-g${t}"><span class="ag-clue" data-k="clue-${esc(ag.clue.word)}">${esc(ag.clue.word)} <em>${ag.clue.n}</em></span><span>Team ${TEAM[t]} rät · noch ${left} ${left === 1 ? 'Versuch' : 'Versuche'}</span></div>`;
+  }
+  const agLeftLabels = (s) => [0, 1].map((t) => `noch ${s.ag.left[t]} ${s.ag.left[t] === 1 ? 'Agent' : 'Agenten'}`);
+  function agLog(s) {
+    const log = (s.ag.log || []).slice().reverse();
+    if (!log.length) return '';
+    const sym = { r: '🟥', b: '🟦', n: '⬜', x: '💣' };
+    return `<ul class="ag-log">${log.map((l, i) => `<li class="t${l.team}" data-k="lg${log.length - i}"><b>${l.word ? `${esc(l.word)} ${l.n}` : 'kein Hinweis'}</b>${l.picks.map((p) => `<span>${sym[AG_K[p.k]]} ${esc(p.w)}</span>`).join('')}</li>`).join('')}</ul>`;
+  }
+  function agHost(s) {
+    if (s.phase === 'END') return teamFinal(s) + agBoard(s, false);
+    const ag = s.ag;
+    return `<div class="ag-host">${s.settings.rounds > 1 ? teamScore(s) : ''}
+      <div class="ag-left">${[0, 1].map((t) => `<span class="t${t} ${s.phase === 'PLAYING' && ag.turn === t ? 'on' : ''}" data-k="al${t}">Team ${TEAM[t]}: <b>${ag.left[t]}</b></span>`).join('')}</div>
+      ${agStatus(s)}${s.phase === 'PLAYING' && s.endsAt ? timerBar() : ''}${agBoard(s, false)}${agLog(s)}</div>`;
+  }
+  function agPhone(s) {
+    if (s.phase === 'END') return teamEnd(s) + agBoard(s, true);
+    const ag = s.ag;
+    const my = teamOf(s, s.me.id);
+    let top = '';
+    if (s.phase === 'PLAYING') {
+      if (ag.iSpy && ag.step === 'clue' && ag.turn === my) {
+        top = `<form class="ag-clueform" id="agClue" data-k="cf${ag.match}-${ag.log.length}"><p class="kick">Du bist Funker – gib deinem Team einen Hinweis</p>
+          <input name="word" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ein Wort" aria-label="Hinweiswort">
+          <div class="ag-nums" role="radiogroup" aria-label="Wie viele Karten">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<label><input type="radio" name="n" value="${n}" ${n === (G.agN || 2) ? 'checked' : ''}><span>${n}</span></label>`).join('')}</div>
+          <button>Hinweis geben</button><p class="muted small">Farbig umrandet: deine Agenten. 💣 = Doppelagent, unbedingt vermeiden.</p></form>`;
+      } else if (ag.iSpy) {
+        top = `<p class="ag-me t${my}">Du bist Funker für Team ${TEAM[my]}. ${ag.turn === my ? 'Dein Team rät gerade – du darfst nichts sagen!' : 'Das andere Team ist dran.'}</p>`;
+      } else if (ag.step === 'guess' && ag.turn === my) {
+        top = `<p class="ag-me t${my}">Einmal tippen markiert, nochmal tippen deckt auf.</p>`;
+      }
+    }
+    const canPass = s.phase === 'PLAYING' && ag.step === 'guess' && ag.turn === my && !ag.iSpy && ag.guesses > 0;
+    const ownClue = s.phase === 'PLAYING' && ag.iSpy && ag.step === 'clue' && ag.turn === my;
+    return `<div class="ag-phone">${ownClue ? '' : agStatus(s)}${s.phase === 'PLAYING' && s.endsAt ? timerBar() : ''}${top}${agBoard(s, true)}
+      ${canPass ? '<button type="button" class="ghost" data-pass>Zug beenden</button>' : ''}
+      <div class="ag-left small">${[0, 1].map((t) => `<span class="t${t}" data-k="al${t}">Team ${TEAM[t]}: <b>${ag.left[t]}</b></span>`).join('')}</div>
+      ${s.phase === 'BOARD' && s.me.host ? '<button type="button" data-host="next">Nächste Partie</button>' : s.phase === 'BOARD' ? '<p class="muted small center">Gleich geht es mit der nächsten Partie weiter.</p>' : ''}</div>`;
+  }
+
+  // Erklärbär
+  const EX_SYM = { ok: '✅', skip: '⏭️', buzz: '🚫' };
+  function exLog(log, cls = '') {
+    if (!log || !log.length) return '';
+    return `<ul class="ex-log ${cls}">${log.map((l, i) => `<li class="${l.r}" data-k="xl${i}"><span>${EX_SYM[l.r]}</span>${esc(l.t)}${l.r === 'buzz' && l.by ? ` <small>(${esc(l.by)})</small>` : ''}</li>`).join('')}</ul>`;
+  }
+  const exPts = (log) => (log || []).reduce((a, l) => a + (l.r === 'ok' ? 1 : l.r === 'buzz' ? -1 : 0), 0);
+  function exLast(s) {
+    const L = s.ex.last;
+    if (!L) return '';
+    return `<section class="ex-last"><p class="muted small">Letzte Runde: ${esc(L.name)} für Team ${TEAM[L.team]}, <b>${L.pts >= 0 ? '+' : ''}${L.pts}</b></p>${exLog(L.log, 'small')}</section>`;
+  }
+  function exHost(s) {
+    if (s.phase === 'END') return teamFinal(s) + exLast(s);
+    const ex = s.ex;
+    if (s.phase === 'READY') {
+      return `<div class="ex-host">${teamScore(s)}<div class="ex-next t${ex.team}"><p class="kick">Als Nächstes</p><h2>${esc(ex.explainerName || '?')}</h2><p>erklärt für <b>Team ${TEAM[ex.team]}</b></p><p class="muted">Am Handy auf „Los“ tippen.</p></div>${exLast(s)}</div>`;
+    }
+    const n = ex.log.filter((l) => l.r === 'ok').length;
+    return `<div class="ex-host">${teamScore(s)}${timerBar()}<div class="ex-next t${ex.team} live"><p class="kick">Team ${TEAM[ex.team]} rät</p><h2>${esc(ex.explainerName || '?')} erklärt</h2><p class="ex-count"><b data-v="${n}">${n}</b> erraten</p></div>${exLog(ex.log.slice().reverse())}</div>`;
+  }
+  function exPhone(s) {
+    if (s.phase === 'END') return teamEnd(s);
+    const ex = s.ex;
+    const my = teamOf(s, s.me.id);
+    if (s.phase === 'READY') {
+      if (ex.iExplain) return `<div class="gp-wait ex-wait t${my}">${teamScore(s)}<p class="kick">Du bist dran!</p><p class="big">Du erklärst</p><p class="muted">Dein Team rät, das andere Team passt auf verbotene Wörter auf. Bereit?</p><button type="button" class="big" data-go>Los!</button>${exLast(s)}</div>`;
+      return `<div class="gp-wait ex-wait t${ex.team}">${teamScore(s)}<p class="kick">Als Nächstes</p><p class="big">${esc(ex.explainerName || '?')} erklärt</p><p class="muted">${my === ex.team ? 'Du rätst mit – ruf laut, was dir einfällt!' : 'Du liest mit und passt auf verbotene Wörter auf.'}</p>${exLast(s)}</div>`;
+    }
+    const card = ex.card;
+    const cardHtml = card ? `<div class="ex-card t${ex.team}" data-k="card${ex.pos}"><h2>${esc(card.t)}</h2><p class="muted small">Verboten:</p><ul>${card.f.map((f) => `<li>${esc(f)}</li>`).join('')}</ul></div>` : '';
+    if (ex.iExplain) {
+      return `<div class="ex-phone">${timerBar()}${cardHtml}<div class="ex-btns"><button type="button" class="ghost" data-mark="skip" data-pos="${ex.pos}">Überspringen</button><button type="button" class="ok" data-mark="ok" data-pos="${ex.pos}">✓ Erraten</button></div><p class="muted small center">Diese Runde: ${exPts(ex.log) >= 0 ? '+' : ''}${exPts(ex.log)}</p></div>`;
+    }
+    if (my !== ex.team && card) {
+      return `<div class="ex-phone">${timerBar()}<p class="ex-who">${esc(ex.explainerName || '?')} erklärt für Team ${TEAM[ex.team]}</p>${cardHtml}<button type="button" class="ex-buzz" data-mark="buzz" data-pos="${ex.pos}">🚫 Verboten!</button></div>`;
+    }
+    return `<div class="gp-wait ex-wait t${ex.team}">${timerBar()}<p class="kick">Rate laut!</p><p class="big">${esc(ex.explainerName || '?')} erklärt</p><p class="ex-count"><b data-v="${ex.log.filter((l) => l.r === 'ok').length}">${ex.log.filter((l) => l.r === 'ok').length}</b> erraten</p>${exLog(ex.log.slice().reverse(), 'small')}</div>`;
+  }
+
   /* ---------- Geräusche am Bildschirm (abschaltbar, /shared/sound.js) ---------- */
   function hostSounds(a, b) {
     const S = window.VH && VH.sound;
@@ -797,6 +978,15 @@
       if (b.mx.step === 'reveal' && a.mx.step !== 'reveal' && b.mx.reveal) S.play(b.mx.reveal.truth ? 'ding' : 'fail');
     }
     if (b.game === 'draw' && a.dr && b.dr && b.dr.guessed.length > (a.dr.guessed?.length || 0)) S.play('ding');
+    if (b.game === 'agent' && a.ag && b.ag) {
+      const opened = b.ag.cards.filter((c, i) => c.open && !a.ag.cards[i]?.open);
+      if (opened.length) S.play(opened.some((c) => c.k === 'x') ? 'fail' : opened.some((c) => c.k === a.ag.turn) ? 'ding' : 'tick');
+      if (b.ag.step === 'guess' && a.ag.step !== 'guess') S.play('pop');
+    }
+    if (b.game === 'explain' && a.ex && b.ex && b.ex.log.length > a.ex.log.length) {
+      const l = b.ex.log[b.ex.log.length - 1];
+      S.play(l.r === 'ok' ? 'ding' : l.r === 'buzz' ? 'fail' : 'tick');
+    }
     if ((b.game === 'wwe' && b.voted && a.voted && b.voted.length > a.voted.length) || (b.done && a.done && b.done.length > a.done.length)) S.play('tick');
   }
 
@@ -817,6 +1007,10 @@
       if (s.phase === 'END' && fresh && window.VH) VH.confetti();
     }
     if (s.game === 'kniffel' && s.kn?.last && s.kn.last.key === 'kniffel' && s.kn.last.points === 50 && G.knParty !== s.kn.rollId && window.VH) { G.knParty = s.kn.rollId; VH.confetti({ count: 80 }); }
+    if (s.game === 'agent' && s.phase === 'BOARD' && s.ag && s.ag.winner != null && G.agParty !== s.ag.match && window.VH) {
+      G.agParty = s.ag.match;
+      if (G.mode === 'host' || teamOf(s, s.me?.id) === s.ag.winner) VH.confetti({ count: 70 });
+    }
   }
 
   /* ---------- Handy ---------- */
@@ -852,8 +1046,8 @@
       ${host ? `<div class="sh-invite"><div class="gp-qr small">${qr(joinUrl())}</div>
         <div><p class="muted small">Freunde scannen den QR-Code oder öffnen <b>${esc(location.host)}/spiele/gruppe</b> und geben den Code ein.</p>
         <button class="ghost small" data-share>📨 Einladung teilen</button></div></div>` : '<p class="muted">Gleich geht’s los – die Spielleitung startet.</p>'}
-      <div class="gp-people">${P.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b>${p.id === s.hostPlayer ? ' 👑' : ''}${host && p.id !== s.me.id ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('')}</div>
-      ${host ? `${gamePicker(s)}${settingsHtml(s)}<button class="big" data-host="start" ${P.length < 2 ? 'disabled' : ''}>${P.length < 2 ? 'Warte auf Mitspielende …' : `${ICON[s.game]} ${esc(s.gameName)} starten`}</button>
+      ${TEAM_GAMES.has(s.game) ? teamsHtml(s, { canMove: host, kick: host }) : `<div class="gp-people">${P.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b>${p.id === s.hostPlayer ? ' 👑' : ''}${host && p.id !== s.me.id ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('')}</div>`}
+      ${host ? `${gamePicker(s)}${settingsHtml(s)}<button class="big" data-host="start" ${P.length < (TEAM_GAMES.has(s.game) ? 4 : 2) ? 'disabled' : ''}>${P.length < (TEAM_GAMES.has(s.game) ? 4 : 2) ? 'Warte auf Mitspielende …' : `${ICON[s.game]} ${esc(s.gameName)} starten`}</button>
         ${s.evening ? '<button class="ghost" data-host="finale">🏆 Siegerehrung</button>' : ''}
         ${key ? `<p class="muted small center"><a href="/spiele/gruppe/#host=${esc(s.code)}&k=${encodeURIComponent(key)}" target="_blank" rel="noopener">📺 Zusätzlich auf einem Fernseher zeigen</a></p>` : ''}` : ''}
       ${eveningTable(s)}
@@ -874,8 +1068,8 @@
       return;
     }
     G.lastPhaseKey = key;
-    const bodyKey = s.game === 'kniffel' || s.game === 'maexchen' ? s.phase : s.game === 'draw' ? `${s.phase}-${s.dr?.turn || 0}` : key;
-    const top = `<header class="gp-me">${av(s.me)}<b>${esc(s.me.name)}</b>${s.me.host ? '<span class="crown" title="Spielleitung">👑</span>' : ''}<span class="pts">${s.game === 'maexchen' ? `${s.mx?.lives?.[s.me.id] ?? s.settings.lives} Deckel` : `${s.me.score} Pkt`}</span><span class="code">${esc(s.code)}</span></header>`;
+    const bodyKey = phaseKey(s, key);
+    const top = `<header class="gp-me">${av(s.me)}<b>${esc(s.me.name)}</b>${s.me.host ? '<span class="crown" title="Spielleitung">👑</span>' : ''}${TEAM_GAMES.has(s.game) ? teamTag(s.me.team) : ''}<span class="pts">${s.game === 'maexchen' ? `${s.mx?.lives?.[s.me.id] ?? s.settings.lives} Deckel` : TEAM_GAMES.has(s.game) ? '' : `${s.me.score} Pkt`}</span><span class="code">${esc(s.code)}</span></header>`;
     let body = '';
     if (s.phase === 'LOBBY') {
       body = s.selfHost || s.me.host ? selfHostLobby(s) : `<div class="gp-wait"><p class="big">Du bist drin!</p><p class="muted">Als Nächstes: <b>${ICON[s.game]} ${esc(s.gameName)}</b></p><p class="muted">Gleich geht’s los. Schau auf den Bildschirm.</p><div class="gp-people">${s.players.map((p) => `<span class="gp-chip" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b></span>`).join('')}</div>${eveningTable(s)}</div>`;
@@ -903,6 +1097,12 @@
     } else if (s.game === 'maexchen') {
       body = mxHtml(s, s.me);
       if (s.phase === 'PLAYING' && s.mx.cur === s.me.id && s.mx.step === 'decide' && prev?.mx && (prev.mx.cur !== s.me.id || prev.mx.step !== 'decide')) vibrate([60, 60, 60]);
+    } else if (s.game === 'agent') {
+      body = agPhone(s);
+      if (s.phase === 'PLAYING' && prev?.ag && s.ag.turn === s.me.team && prev.ag.turn !== s.me.team) vibrate([60, 60, 60]);
+    } else if (s.game === 'explain') {
+      body = exPhone(s);
+      if (s.phase === 'READY' && s.ex.iExplain && fresh) vibrate([60, 60, 60]);
     } else if (s.game === 'draw') {
       body = drPhone(s);
       if (s.phase === 'CHOOSE' && s.dr.drawer === s.me.id && fresh) vibrate([60, 60, 60]);
@@ -942,7 +1142,7 @@
         ? `<div class="sh-ctl open">${s.game === 'draw' ? galleryHtml(s) : ''}<button data-host="restart">🔁 Nochmal ${esc(s.gameName)}</button>${gamePicker(s, 'Oder ein anderes Spiel')}<button class="ghost" data-host="finale">🏆 Siegerehrung</button>${eveningTable(s)}</div>`
         : s.phase === 'FINALE'
         ? `<div class="sh-ctl open"><button data-host="restart">Weiter spielen</button></div>`
-        : `<details class="sh-ctl"><summary>Spielleitung</summary><button class="ghost small" data-host="next">${s.game === 'draw' ? (s.phase === 'DRAW' ? 'Runde beenden' : 'Weiter') : 'Zug überspringen'}</button><button class="ghost small" data-host="restart">Zurück in den Warteraum</button></details>`;
+        : `<details class="sh-ctl"><summary>Spielleitung</summary><button class="ghost small" data-host="next">${s.game === 'draw' ? (s.phase === 'DRAW' ? 'Runde beenden' : 'Weiter') : s.game === 'agent' ? (s.phase === 'BOARD' ? 'Nächste Partie' : 'Zug beenden') : s.game === 'explain' ? (s.phase === 'READY' ? 'Runde starten' : 'Runde beenden') : 'Zug überspringen'}</button><button class="ghost small" data-host="restart">Zurück in den Warteraum</button></details>`;
     }
     app.className = `gp gp-player g-${s.game}`;
     morph(app, `${top}<main class="gp-phone"><div class="gp-body" data-k="${bodyKey}">${body}</div></main>${G.connected ? '' : '<p class="warn center">Verbindung unterbrochen …</p>'}`);
@@ -951,7 +1151,9 @@
     afterRender(s, fresh);
     if (s.phase === 'WRITING' && fresh) setTimeout(() => document.querySelector('#slfForm input')?.focus(), reduced() ? 0 : 2900);
     if (s.phase === 'FINALE' && fresh && s.evening?.ranking[0]?.id === s.me.id && window.VH) VH.confetti({ count: 140 });
-    if (s.phase === 'END' && fresh && s.game !== 'maexchen') {
+    if (s.phase === 'END' && fresh && TEAM_GAMES.has(s.game)) {
+      if (teamWinner(s) === s.me.team && window.VH) VH.confetti();
+    } else if (s.phase === 'END' && fresh && s.game !== 'maexchen') {
       const list = s.game === 'wwe' ? s.awards.players : sortScore(s);
       if (list[0] && list[0].name === s.me.name && window.VH) VH.confetti();
     }
@@ -1038,6 +1240,41 @@
       const text = `Spiel mit: ${G.s.gameName} – Code ${G.code}`;
       try { if (navigator.share) await navigator.share({ title: G.s.gameName, text, url }); else { await navigator.clipboard.writeText(url); toast('Link kopiert'); } } catch {}
     };
+    // Agentenrunde
+    app.querySelectorAll('[data-tap]').forEach((b) => (b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } }));
+    app.querySelectorAll('[data-tap]').forEach((b) => (b.onclick = async () => {
+      if (b.classList.contains('pressed')) return;
+      vibrate(12);
+      b.classList.add('pressed');
+      const r = await act('tap', { index: +b.dataset.tap });
+      b.classList.remove('pressed');
+      if (r.ok && r.revealed != null) vibrate(r.revealed === 'x' ? [80, 50, 200] : r.revealed === G.s.me.team ? [30, 30, 60] : 40);
+    }));
+    const cf = document.getElementById('agClue');
+    if (cf) {
+      cf.onchange = (e) => { if (e.target.name === 'n') G.agN = +e.target.value; };
+      cf.onsubmit = async (e) => {
+        e.preventDefault();
+        const word = cf.word.value.trim();
+        if (!word) { toast('Bitte ein Wort eingeben.'); cf.word.focus(); return; }
+        const btn = cf.querySelector('button');
+        btn.disabled = true;
+        const r = await act('clue', { word, n: +(new FormData(cf).get('n') || 1) });
+        btn.disabled = false;
+        if (!r.ok) cf.word.select();
+      };
+    }
+    const ps = app.querySelector('[data-pass]');
+    if (ps) ps.onclick = () => { ps.disabled = true; act('pass'); };
+    // Erklärbär
+    const go = app.querySelector('[data-go]');
+    if (go) go.onclick = () => { go.disabled = true; vibrate(30); act('go'); };
+    app.querySelectorAll('[data-mark]').forEach((b) => (b.onclick = async () => {
+      app.querySelectorAll('[data-mark]').forEach((x) => (x.disabled = true));
+      vibrate(b.dataset.mark === 'buzz' ? [60, 40, 60] : 20);
+      const r = await act('mark', { result: b.dataset.mark, pos: +b.dataset.pos });
+      if (!r.ok || r.stale) app.querySelectorAll('[data-mark]').forEach((x) => (x.disabled = false));
+    }));
     // Montagsmaler
     app.querySelectorAll('[data-choose]').forEach((b) => (b.onclick = () => { app.querySelectorAll('[data-choose]').forEach((x) => (x.disabled = true)); act('choose', { index: +b.dataset.choose }); }));
     app.querySelectorAll('[data-pen-c]').forEach((b) => (b.onclick = () => { G.pen.c = b.dataset.penC; if (G.pen.c === '#ffffff' && G.pen.w < 30) G.pen.w = 30; renderPlayer(G.s); }));

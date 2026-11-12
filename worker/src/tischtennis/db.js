@@ -91,6 +91,8 @@ export async function init(env) {
   await addColumnIfMissing(env, "matches", "extra", "TEXT NOT NULL DEFAULT '{}'");
   // Liveticker: Zwischenstand eines laufenden Spiels als JSON ({ sets: [[a,b], …], since }) oder NULL.
   await addColumnIfMissing(env, "matches", "live", "TEXT");
+  // Gastlink: bis wann Zuschauer ohne Zugangscode Spielplan und Liveansicht sehen (ms, 0 = aus)
+  await addColumnIfMissing(env, "tournaments", "guest_until", "INTEGER NOT NULL DEFAULT 0");
   initialized = true;
 }
 

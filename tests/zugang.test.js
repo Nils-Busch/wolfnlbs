@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { signToken, verifyToken, isValidForState, isPublicPath, normalizeCode, MAX_AGE_SEC } from "../worker/src/zugang/token.js";
+import { signToken, verifyToken, isValidForState, isValidGuest, guestAllows, isPublicPath, normalizeCode, MAX_AGE_SEC } from "../worker/src/zugang/token.js";
 
 const now = Date.now();
 const t = Math.floor(now / 1000);
@@ -34,10 +34,10 @@ test("Zugang: Einladungen und Konten", () => {
 });
 
 test("Zugang: nur das Tor und seine Zutaten sind öffentlich", () => {
-  for (const p of ["/shared/fonts/figtree.woff2", "/shared/vereinsheim.css", "/robots.txt", "/datenschutz", "/api/zugang/code", "/api/konto/auth/login", "/zugang/0123456789abcdef0123456789abcdef"]) {
+  for (const p of ["/shared/fonts/figtree.woff2", "/shared/vereinsheim.css", "/robots.txt", "/datenschutz", "/api/zugang/code", "/api/konto/auth/login", "/zugang/0123456789abcdef0123456789abcdef", "/tischtennis/t/abc", "/shared/theme.js"]) {
     assert.ok(isPublicPath(p), p);
   }
-  for (const p of ["/", "/woelfe/", "/spiele/", "/api/konto/auth/register", "/api/zugang/admin", "/api/spiele/party", "/tischtennis/t/abc", "/impressum", "/shared/me.js", "/zugang/nicht-hex"]) {
+  for (const p of ["/", "/woelfe/", "/spiele/", "/api/konto/auth/register", "/api/zugang/admin", "/api/spiele/party", "/tischtennis/t/ABC", "/impressum", "/shared/me.js", "/zugang/nicht-hex"]) {
     assert.ok(!isPublicPath(p), p);
   }
 });
@@ -45,4 +45,26 @@ test("Zugang: nur das Tor und seine Zutaten sind öffentlich", () => {
 test("Zugang: Code-Vergleich ohne Groß-/Kleinschreibung und Leerzeichen", () => {
   assert.equal(normalizeCode(" Würfel Becher "), normalizeCode("würfelbecher"));
   assert.notEqual(normalizeCode("wuerfelbecher"), normalizeCode("würfelbecher"));
+});
+
+test("Turnier-Gast: Cookie gilt nur für den aktuellen Link und solange der Gastzugang läuft", async () => {
+  const tok = await signToken("geheim", { k: "g", id: 4, s: "abc123", t });
+  const p = await verifyToken("geheim", tok);
+  assert.equal(p.k, "g");
+  const t4 = { visitor_slug: "abc123", guest_until: now + 3_600_000 };
+  assert.ok(isValidGuest(p, t4, now));
+  assert.ok(!isValidGuest(p, { ...t4, guest_until: now - 1 }, now), "abgelaufen");
+  assert.ok(!isValidGuest(p, { ...t4, guest_until: 0 }, now), "ausgeschaltet");
+  assert.ok(!isValidGuest(p, { ...t4, visitor_slug: "neu999" }, now), "neuer Link");
+  assert.ok(!isValidGuest(p, null, now), "Turnier gelöscht");
+  assert.ok(!isValidForState(p, state, now), "Gast-Cookie öffnet nicht die ganze Seite");
+});
+
+test("Turnier-Gast: sieht nur Spielplan, Liveansicht und Tippspiel seines Turniers", () => {
+  for (const [m, path] of [["GET", "/tischtennis/"], ["GET", "/tischtennis/live"], ["GET", "/tischtennis/js/public.js"], ["GET", "/tischtennis/css/style.css"], ["GET", "/shared/motion.js"], ["GET", "/api/tischtennis/tournaments"], ["GET", "/api/tischtennis/tournaments/4"], ["GET", "/api/tischtennis/tournaments/4/tips"], ["POST", "/api/tischtennis/matches/17/tip"]]) {
+    assert.ok(guestAllows(path, m, 4), `${m} ${path}`);
+  }
+  for (const [m, path] of [["GET", "/"], ["GET", "/tischtennis/admin"], ["GET", "/tischtennis/rangliste"], ["GET", "/tischtennis/js/admin.js"], ["GET", "/api/tischtennis/tournaments/5"], ["GET", "/api/tischtennis/ranking"], ["POST", "/api/tischtennis/tournaments/4/start"], ["GET", "/quiz/"], ["POST", "/api/spiele/party"]]) {
+    assert.ok(!guestAllows(path, m, 4), `${m} ${path}`);
+  }
 });

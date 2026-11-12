@@ -31,4 +31,26 @@
     body.appendChild(f);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', legal); else legal();
+
+  // Aussehen: Pinsel-Knopf in der Kopfzeile, die Auswahl (/shared/look.js) kommt erst beim Antippen
+  function lookButton() {
+    const header = document.querySelector('.vh-header');
+    if (!header || !window.VHLook || header.querySelector('.vh-look-btn')) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'vh-look-btn';
+    b.title = 'Aussehen';
+    b.setAttribute('aria-label', 'Aussehen ändern');
+    b.setAttribute('aria-expanded', 'false');
+    b.innerHTML = '<span aria-hidden="true">🎨</span>';
+    header.insertBefore(b, header.querySelector('.vh-account, .vh-guest-pill'));
+    b.addEventListener('click', () => {
+      if (window.VHLookUI) return window.VHLookUI.toggle(b);
+      const s = document.createElement('script');
+      s.src = '/shared/look.js';
+      s.onload = () => window.VHLookUI && window.VHLookUI.toggle(b);
+      document.head.appendChild(s);
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lookButton); else lookButton();
 })();

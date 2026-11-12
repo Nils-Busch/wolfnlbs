@@ -6,10 +6,11 @@ Eine private Seite für Freunde und Familie mit Party- und Spiele-Apps:
   (Einsteiger, Klassisch, Liebesdrama, Chaos) und einer **Erzähleransicht**: Wer „Ich leite nur“
   ankreuzt, sieht Vorlesetexte für jede Phase, alle Rollen (verdeckbar) und was nachts passiert.
 - **❓ Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
-- **🎮 Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores (neu: **Klötzchen**), **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**)
+- **🎮 Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores (neu: **Klötzchen**), **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**), Gruppenspiele mit Handys – neu die Teamspiele **Agentenrunde** und **Erklärbär**
 - **🧩 Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections**, **Nonogramm** und **Puzzle**, dazu eine **ewige Bestenliste**
-- **🏆 Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, Besucheransicht mit **QR-Code**, **Liveansicht für den Bildschirm**
+- **🏆 Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, **Gastlink mit QR-Code** für Zuschauer, **Liveansicht für den Bildschirm**
 - **👤 Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
+- **🎨 Aussehen** – fünf Farbthemen (auch dunkel), Schrift, Schriftgröße und Animationen, gespeichert am Konto
 - **🚪 Geschlossene Gesellschaft** – nur mit Zugangscode, Einladungslink oder Konto erreichbar (siehe unten)
 
 Technisch ist alles **ein einziges Cloudflare-Projekt** (ein Worker + eine
@@ -25,7 +26,7 @@ client-assets/          Alles, was der Browser direkt lädt (HTML/CSS/JS)
   quiz/                    Quiz-Übersicht + Editor, Bildschirm (screen), Handy (play)
   spiele/                  Spielegalerie (inkl. games/wordle.html), js/ai.js = Computergegner
   raetsel/                 Tagesrätsel: Übersicht, Städteraten, Connections, Nonogramm, ewige Bestenliste
-  spiele/gruppe/           Gruppenspiele mit Handys (Wer würde eher, Stadt-Land-Fluss, Kniffel, Mäxchen online, Montagsmaler)
+  spiele/gruppe/           Gruppenspiele mit Handys (Wer würde eher, Stadt-Land-Fluss, Kniffel, Mäxchen online, Montagsmaler, Agentenrunde, Erklärbär)
   tischtennis/             Turniere (Tischtennis + Fußball): Besucheransicht, Turnierleitung, Liveansicht
   woelfe/                  Gebaute Werwolf-Oberfläche (entsteht automatisch beim Deploy)
 clients/woelfe-src/     Quellcode der Werwolf-Oberfläche (React), wird vorm Deploy gebaut
@@ -115,6 +116,19 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
     alle anderen sehen die Zeichnung live und raten. Schnelles Raten bringt mehr Punkte, die
     zeichnende Person bekommt Punkte für jede richtige Antwort, nach der Hälfte der Zeit
     erscheinen Buchstaben als Tipp. Ein Fernseher ist optional („Zusätzlich auf einem Fernseher zeigen“).
+  - **Agentenrunde** (Team Rot gegen Team Blau, ab 4 Personen) – 25 Wörter liegen aus. Je Team
+    sieht eine Person (Funker, wechselt jede Partie) am Handy, welche Karten zum eigenen Team
+    gehören, und gibt einen Hinweis aus **einem Wort plus Zahl**. Das Team tippt Karten an: einmal
+    tippen markiert (alle sehen es), nochmal tippen deckt auf. Wer zuerst alle eigenen Agenten
+    findet, gewinnt; wer den Doppelagenten 💣 aufdeckt, verliert sofort. Hinweise, die in einem
+    Wort auf dem Feld stecken, lehnt das Spiel ab. Einstellbar: 1–3 Partien, Zeit pro Zug, eigene
+    Wörter (bis zu 10 pro Feld gemischt oder nur eigene). Logik in `worker/src/spiele/teamGames.js`.
+  - **Erklärbär** (Teams, ab 4 Personen) – reihum erklärt eine Person ihrem Team Begriffe gegen
+    die Uhr (45/60/90 Sekunden), ohne die fünf verbotenen Wörter zu sagen. Das andere Team sieht
+    die Karte am Handy mit und drückt **„Verboten!“** (−1). Erraten +1, Überspringen 0. Eigene
+    Karten im Warteraum: eine pro Zeile, `Begriff: verboten, verboten, …`.
+  - **Teams:** Im Warteraum zwei Spalten; jede Person kann wechseln, die Spielleitung verschiebt
+    Leute (⇄) oder mischt neu. Im Spieleabend teilt sich das ganze Gewinnerteam Platz 1.
   - Bildschirm und Handys aktualisieren sich per DOM-Abgleich: nur Geändertes wird neu gezeichnet,
     nichts ploppt bei jedem Spielzug neu auf.
   - **Computer bei Mäxchen online:** Im Warteraum „🤖 Computer dazuholen“ (bis zu 6, Stärke
@@ -126,7 +140,7 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
   - **Spieleabend:** Nach einem Spiel wählt die Spielleitung im selben Raum das nächste – niemand
     muss neu beitreten. Jede Partie bringt Abendpunkte (Platz 1: 10, dann 7, 5, 3, 2, 1).
     „🏆 Siegerehrung“ zeigt Gesamtsieg, Titel (Würfelkönig, Bluff-Profi, Picasso des Abends,
-    Wortakrobat, Gesprächsthema des Abends) und die Bilder des Abends.
+    Wortakrobat, Gesprächsthema des Abends, Meisterspion, Plaudertasche) und die Bilder des Abends.
   - **Geräusche am Fernseher:** synthetisch erzeugt (keine Dateien), Knopf 🔊 unten links schaltet sie ab.
   - **Bildschirm bleibt an:** Während der Spiele geht das Handy nicht in den Standby (wo der Browser es kann).
   - Läuft im Durable Object `PartyRoom` (Migration `v3` in wrangler.jsonc).
@@ -213,11 +227,20 @@ für Tischtennis und Fußball. Alle starten bei 1000, Siege gegen Stärkere brin
 werden am Namen erkannt – in jedem Turnier gleich schreiben. Tischtennis-Doppel zählen nicht mit.
 Dazu Bilanz, Verlauf der letzten Spiele und Turniersiege.
 
-### Besucher-Link mit QR-Code
+### Gastlink mit QR-Code
 
-In der Turnierleitung beim Turnier auf **„🔗 Besucher-Link & QR-Code“** klicken:
+In der Turnierleitung beim Turnier auf **„🔗 Gastlink & QR-Code“** klicken:
 Es erscheint ein QR-Code mit dem festen Link zum Turnier, dazu „Link kopieren“ und
 „Drucken“ (druckt nur QR-Code, Turniername und Link – gut als Aushang).
+
+- **Zuschauer ohne Zugangscode:** Solange der Gastzugang offen ist, kommen Gäste über den
+  QR-Code **nur in dieses Turnier**: Spielplan, Tabelle, Liveansicht und Tippspiel. Menü,
+  Vereinsrangliste und alle anderen Bereiche bleiben zu (Cookie `vh_gast`, siehe
+  `worker/src/zugang/gate.js`). Wer schon Zugang hat, landet einfach im Turnier.
+- **Dauer:** Beim ersten Erzeugen 3 Tage, im Dialog umstellbar auf 1, 3 oder 7 Tage oder
+  sofort beenden. Nach dem letzten Spiel bleibt er höchstens noch 12 Stunden offen.
+- **Neuer Link:** „Neuen Link erzeugen“ macht den alten QR-Code und alle bisherigen
+  Gastzugänge ungültig.
 
 ## Turniere: Liveansicht
 
@@ -271,6 +294,9 @@ Reinkommen geht auf drei Wegen:
 3. **Konto** – Anmelden öffnet das Tor automatisch. Registrieren können sich nur Leute, die schon
    drin sind.
 
+Dazu kommt der **Turnier-Gastlink** (siehe Turniere): Er öffnet für kurze Zeit nur Spielplan,
+Liveansicht und Tippspiel eines einzigen Turniers.
+
 Der Zugang gilt pro Gerät/Browser 180 Tage und verlängert sich bei Benutzung von selbst.
 QR-Codes und Links aus Quiz, Werwolf, Gruppenspielen und Turnieren funktionieren weiter: Neue
 Gäste sehen zuerst das Tor, geben den Code ein und landen dann direkt auf der richtigen Seite.
@@ -290,8 +316,26 @@ der Landesanstalt für Medien NRW als davon befreit. Damit das so bleibt:
 - **keine Werbung, keine Affiliate-Links, keine Spendenaufrufe** und kein Bezug zu Firma oder Verein
 - die Seite **nicht** für einen eingetragenen Verein oder für die Firma nutzen (dann wäre wieder
   ein Impressum nötig)
+- den **Turnier-Gastlink** nur bei Turnieren im eigenen Kreis aushängen, nicht bei offenen
+  Veranstaltungen mit fremdem Publikum, und den Gastzugang danach beenden
 
 Das ist keine Rechtsberatung. Wer unsicher ist, legt trotzdem ein Impressum an.
+
+## Aussehen
+
+Oben rechts in der Kopfzeile öffnet der **🎨-Knopf** die Auswahl, mit Konto gibt es dafür auch
+den Reiter **Konto → 🎨 Aussehen**:
+
+- **Farbthema:** Vereinsheim (wie gewohnt), Nachtschicht (dunkel), Filztisch, Bonbon, Kontrast.
+- **Abends:** Thema behalten oder dunkel, sobald das Gerät auf dunkel umstellt.
+- **Schrift** verspielt oder schlicht, **Schriftgröße** normal oder groß, **Animationen** alle
+  oder weniger (Konfetti, Würfelrollen & Co. bleiben dann still).
+
+Die Wahl liegt im Browser und – mit Konto – zusätzlich am Konto (`PUT /api/konto/prefs`), gilt
+also auf allen Geräten, mit denen man angemeldet ist. `client-assets/shared/theme.js` steht in
+jeder Seite ganz oben und setzt nur CSS-Variablen (`--vh-*` für normale Seiten, `--vh-g-*` für die
+dunklen Spielflächen), damit nichts kurz aufblitzt. Spielfarben (Spielsteine, Würfel, Karten)
+bleiben in jedem Thema gleich, WoWölfe behält sein Nachtdorf.
 
 ## Als App, Datenschutz
 
@@ -306,8 +350,8 @@ Das ist keine Rechtsberatung. Wer unsicher ist, legt trotzdem ein Impressum an.
 ## Tests
 
 ```
-npm test            # Spielregeln: Kniffel, Mäxchen, Montagsmaler, Spieleabend, Turniere, Elo, WoWölfe
-npm run test:smoke  # startet die Seite lokal und prüft Seiten, API und eine Mäxchen-Runde
+npm test            # Spielregeln: Kniffel, Mäxchen, Montagsmaler, Teamspiele, Spieleabend, Turniere, Elo, WoWölfe, Zugang, Aussehen
+npm run test:smoke  # startet die Seite lokal und prüft Tor, Gastlink, Seiten, API und Runden Mäxchen, Agentenrunde, Erklärbär
 ```
 
 Automatisch bei jedem Push: Datei `tests.yml` aus Update 10 im GitHub-Webinterface unter

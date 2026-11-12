@@ -8,6 +8,7 @@ import { init, parseMatch, parsePlayer, deleteTournamentCascade, SPORTS } from "
 import { randomSlug, shuffle } from "./crypto.js";
 import { HttpError, fail, intId, str } from "../konto/http.js";
 import { getUser, handleKontoApi, isKontoPath } from "../konto/auth.js";
+import { forgetGuestTournament } from "../zugang/gate.js";
 
 function securityHeaders(res) {
   const h = new Headers(res.headers);
@@ -301,6 +302,12 @@ async function updateStatus(env, tid) {
     finished = ms.some((m) => m.phase === "ko" && !m.next_match_id && m.status !== "pending");
   }
   await env.DB.prepare("UPDATE tournaments SET status = ? WHERE id = ?").bind(finished ? "finished" : "running", tid).run();
+  // Nach dem letzten Spiel gilt ein laufender Gastzugang noch 12 Stunden.
+  if (finished) {
+    const cap = Date.now() + 12 * 3_600_000;
+    const r = await env.DB.prepare("UPDATE tournaments SET guest_until = ? WHERE id = ? AND guest_until > ?").bind(cap, tid, cap).run();
+    if (r.meta?.changes) forgetGuestTournament(tid);
+  }
 }
 
 async function assertDraft(env, tid) {
@@ -368,7 +375,12 @@ async function syncGrandFinalReset(env, m, winnerId) {
    Haupt-Handler
    path: Pfad relativ zu "/api/tischtennis", z.B. "/auth/login", "/tournaments/5"
    ========================================================================= */
-export async function handleTischtennisApi(request, env, path) {
+export async function handleTischtennisApi(request, env, path, ctx = {}) {
+  // Turnier-Gast (Gastlink): nur lesen und tippen, nur „sein“ Turnier
+  const guestTid = ctx.guestTid ?? null;
+  if (guestTid != null && !/^\/(tournaments(\/\d+(\/tips)?)?|matches\/\d+\/tip)$/.test(path)) {
+    return securityHeaders(json({ error: "Mit dem Gastzugang kannst du nur zuschauen und tippen." }, 403));
+  }
   // Anmeldung und Benutzerverwaltung gehören jetzt zu den gemeinsamen Konten.
   // Die alten Pfade unter /api/tischtennis/auth/* und /users* leiten wir
   // weiter, damit nichts kaputtgeht.
@@ -405,7 +417,8 @@ export async function handleTischtennisApi(request, env, path) {
         `SELECT t.*, (SELECT count(*) FROM players p WHERE p.tournament_id = t.id) AS player_count
            FROM tournaments t ORDER BY t.event_date IS NULL, t.event_date DESC, t.id DESC`
       ).all();
-      return securityHeaders(json(rows.results.map((t) => ({ ...t, double_elim: !!t.double_elim }))));
+      const list = guestTid != null ? rows.results.filter((t) => t.id === guestTid) : rows.results;
+      return securityHeaders(json(list.map((t) => ({ ...t, double_elim: !!t.double_elim }))));
     }
     if (path === "/ranking" && method === "GET") {
       const sport = new URL(request.url).searchParams.get("sport") === "football" ? "football" : "tabletennis";
@@ -413,6 +426,7 @@ export async function handleTischtennisApi(request, env, path) {
       return securityHeaders(json({ sport, ...data }, 200, { "cache-control": "public, max-age=30" }));
     }
     if ((m = path.match(/^\/tournaments\/(\d+)$/)) && method === "GET") {
+      if (guestTid != null && intId(m[1]) !== guestTid) fail(403, "Mit dem Gastzugang siehst du nur dein Turnier.");
       const data = await loadTournament(env, intId(m[1]));
       return securityHeaders(json({ ...data, tournament: { ...data.tournament, double_elim: !!data.tournament.double_elim } }));
     }
@@ -454,13 +468,21 @@ export async function handleTischtennisApi(request, env, path) {
       return securityHeaders(json({ ok: true }));
     }
 
-    // Besucher-Link: zufälligen Slug erzeugen (falls noch keiner existiert) und zurückgeben.
+    // Besucher- und Gastlink: Slug erzeugen (falls noch keiner existiert bzw. „renew“),
+    // Gastzugang ein- oder ausschalten ({ days }: 0 = aus). Beim ersten Mal gilt er 3 Tage.
     if ((m = path.match(/^\/tournaments\/(\d+)\/visitor-link$/)) && method === "POST") {
       requirePerm("tournaments.manage");
       const id = intId(m[1]);
-      const t = await env.DB.prepare("SELECT visitor_slug FROM tournaments WHERE id = ?").bind(id).first();
+      const b = await readBody();
+      const t = await env.DB.prepare("SELECT visitor_slug, guest_until FROM tournaments WHERE id = ?").bind(id).first();
       if (!t) fail(404, "Turnier nicht gefunden.");
-      let slug = t.visitor_slug;
+      let slug = b.renew ? null : t.visitor_slug;
+      let until = t.guest_until;
+      if (b.days !== undefined) {
+        const days = Number(b.days);
+        if (![0, 1, 3, 7].includes(days)) fail(400, "Gastzugang: 0, 1, 3 oder 7 Tage.");
+        until = days ? Date.now() + days * 86_400_000 : 0;
+      } else if (!t.visitor_slug) until = Date.now() + 3 * 86_400_000;
       if (!slug) {
         for (let attempt = 0; attempt < 10 && !slug; attempt++) {
           const candidate = randomSlug();
@@ -468,9 +490,10 @@ export async function handleTischtennisApi(request, env, path) {
           if (!clash) slug = candidate;
         }
         if (!slug) fail(503, "Konnte keinen freien Link erzeugen. Bitte nochmal versuchen.");
-        await env.DB.prepare("UPDATE tournaments SET visitor_slug = ? WHERE id = ?").bind(slug, id).run();
       }
-      return securityHeaders(json({ ok: true, path: `/tischtennis/t/${slug}` }));
+      await env.DB.prepare("UPDATE tournaments SET visitor_slug = ?, guest_until = ? WHERE id = ?").bind(slug, until || 0, id).run();
+      forgetGuestTournament(id);
+      return securityHeaders(json({ ok: true, path: `/tischtennis/t/${slug}`, guest_until: until || 0 }));
     }
 
     if ((m = path.match(/^\/tournaments\/(\d+)\/start$/)) && method === "POST") {
@@ -720,7 +743,7 @@ export async function handleTischtennisApi(request, env, path) {
       if (!name) fail(400, "Bitte einen Namen für die Tipp-Tabelle angeben.");
       const pick = Number(b.pick);
       const mm = await env.DB.prepare("SELECT m.*, t.status AS t_status, t.sport FROM matches m JOIN tournaments t ON t.id = m.tournament_id WHERE m.id = ?").bind(id).first();
-      if (!mm) fail(404, "Spiel nicht gefunden.");
+      if (!mm || (guestTid != null && mm.tournament_id !== guestTid)) fail(404, "Spiel nicht gefunden.");
       const drawOk = mm.sport === "football" && mm.phase === "group";
       if (!(pick === 1 || pick === 2 || (pick === 0 && drawOk))) fail(400, "Ungültiger Tipp.");
       if (mm.t_status !== "running" || mm.status !== "pending" || !mm.player1_id || !mm.player2_id) fail(409, "Auf dieses Spiel kann man nicht (mehr) tippen.");
@@ -733,6 +756,7 @@ export async function handleTischtennisApi(request, env, path) {
     }
     if ((m = path.match(/^\/tournaments\/(\d+)\/tips$/)) && method === "GET") {
       const id = intId(m[1]);
+      if (guestTid != null && id !== guestTid) fail(403, "Mit dem Gastzugang siehst du nur dein Turnier.");
       const device = new URL(request.url).searchParams.get("device") || "";
       if (!DEVICE_RE.test(device)) return securityHeaders(json({ picks: {} }));
       const rows = (await env.DB.prepare("SELECT match_id, pick FROM tips WHERE tournament_id = ? AND device = ?").bind(id, device).all()).results;
@@ -756,12 +780,4 @@ export async function handleTischtennisApi(request, env, path) {
     console.error(err);
     return securityHeaders(json({ error: "Interner Fehler." }, 500));
   }
-}
-
-/** Kurzer Besucher-Link (/tischtennis/t/<slug>) -> Redirect zur Besucheransicht. */
-export async function resolveVisitorLink(env, slug) {
-  await init(env);
-  const t = await env.DB.prepare("SELECT id FROM tournaments WHERE visitor_slug = ?").bind(slug).first();
-  if (!t) return new Response("Dieser Link ist nicht (mehr) gültig.", { status: 404 });
-  return new Response(null, { status: 302, headers: { Location: `/tischtennis/#t=${t.id}` } });
 }

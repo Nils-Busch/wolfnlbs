@@ -10,7 +10,12 @@
     nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / 2;
   }
   const header = document.querySelector('.vh-header');
-  if (!header || header.querySelector('.vh-account')) return;
+  if (document.body.classList.contains('vh-guest')) return; // Turnier-Gast: kein Konto-Knopf
+  if (!header || header.querySelector('.vh-account')) {
+    // Seiten mit eigenem Konto-Knopf: Aussehen trotzdem mit dem Konto abgleichen
+    fetch('/api/konto/auth/me', { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).then((me) => { if (me && me.user && window.VHLook) window.VHLook.sync(me.user.prefs && me.user.prefs.look); }).catch(() => {});
+    return;
+  }
   const a = document.createElement('a');
   a.className = 'vh-account';
   a.href = '/konto/';
@@ -20,6 +25,7 @@
     .then((r) => (r.ok ? r.json() : null))
     .then((me) => {
       if (!me || !me.user) return;
+      if (window.VHLook) window.VHLook.sync(me.user.prefs && me.user.prefs.look); // Aussehen vom Konto
       a.textContent = '👤 ' + me.user.display_name;
       a.title = 'Mein Konto';
       if (me.pendingCount > 0) {

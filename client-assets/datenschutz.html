@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/shared/theme.js"></script>
 <title>Datenschutz – Vereinsheim</title>
 <meta name="theme-color" content="#172036">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
@@ -45,12 +46,13 @@
 
 <h2>Zugang</h2>
 <p>Wer den Zugangscode eingibt, einen Einladungslink öffnet oder sich anmeldet, bekommt ein technisch notwendiges Cookie („vh_zugang“). Es enthält nur die Art des Zugangs, bei Einladungslinks die Nummer der Einladung bzw. bei Konten die Konto-Nummer, und gilt höchstens 180 Tage. Ohne dieses Cookie zeigt die Seite nur das Eingangstor. Zu Einladungslinks speichern wir, für wen sie gedacht sind, wie oft und wann sie zuletzt benutzt wurden. Die Seite ist für Suchmaschinen gesperrt.</p>
+<p>Wer als Zuschauer über den QR-Code eines Turniers kommt (Gastlink), bekommt stattdessen ein technisch notwendiges Cookie „vh_gast“. Es enthält nur die Nummer des Turniers und die Kennung des Links, öffnet ausschließlich Spielplan, Liveansicht und Tippspiel dieses Turniers und läuft spätestens ab, wenn die Turnierleitung den Gastzugang beendet.</p>
 
 <h2>Speicher im Browser</h2>
-<p>Damit du nach dem Neuladen im Spiel bleibst, merkt sich dein Browser (localStorage) zum Beispiel deinen zuletzt benutzten Namen, eine Raum-Kennung, eine zufällige Geräte-Kennung für das Tippspiel und Einstellungen wie „Geräusche aus“. Diese Daten bleiben auf deinem Gerät; du kannst sie jederzeit in den Browser-Einstellungen löschen. Für installierte Nutzung („App“) speichert der Browser außerdem besuchte Seiten zwischen, damit sie offline funktionieren.</p>
+<p>Damit du nach dem Neuladen im Spiel bleibst, merkt sich dein Browser (localStorage) zum Beispiel deinen zuletzt benutzten Namen, eine Raum-Kennung, eine zufällige Geräte-Kennung für das Tippspiel und Einstellungen wie „Geräusche aus“ oder dein gewähltes Aussehen (Farbthema, Schrift, Schriftgröße, Animationen). Diese Daten bleiben auf deinem Gerät; du kannst sie jederzeit in den Browser-Einstellungen löschen. Für installierte Nutzung („App“) speichert der Browser außerdem besuchte Seiten zwischen, damit sie offline funktionieren.</p>
 
 <h2>Konten</h2>
-<p>Wer ein Konto anlegt, speichert Benutzername, Anzeigename und ein verschlüsseltes Passwort (bcrypt, das Passwort selbst kennen wir nicht). Nach dem Anmelden setzt die Seite ein technisch notwendiges Cookie („sid“) für die Sitzung. Mit Konto werden Ergebnisse der Tagesrätsel deinem Konto zugeordnet. Rechtsgrundlage ist die Nutzung des Kontos (Art. 6 Abs. 1 lit. b DSGVO). Zum Löschen eines Kontos genügt eine Nachricht an <mark class="todo">[kontakt@example.org]</mark>.</p>
+<p>Wer ein Konto anlegt, speichert Benutzername, Anzeigename und ein verschlüsseltes Passwort (bcrypt, das Passwort selbst kennen wir nicht). Nach dem Anmelden setzt die Seite ein technisch notwendiges Cookie („sid“) für die Sitzung. Mit Konto werden Ergebnisse der Tagesrätsel deinem Konto zugeordnet; wenn du ein Aussehen wählst, wird es ebenfalls am Konto gespeichert, damit es auf allen deinen Geräten gilt. Rechtsgrundlage ist die Nutzung des Kontos (Art. 6 Abs. 1 lit. b DSGVO). Zum Löschen eines Kontos genügt eine Nachricht an <mark class="todo">[kontakt@example.org]</mark>.</p>
 
 <h2>Bestenlisten, Turniere und Tippspiel</h2>
 <ul>

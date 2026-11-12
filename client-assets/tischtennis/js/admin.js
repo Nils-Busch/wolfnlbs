@@ -116,7 +116,7 @@ async function tournamentView() {
       <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span>
       <a class="link" href="/tischtennis/#t=${t.id}" target="_blank" rel="noopener">Besucheransicht öffnen</a>
       <a class="link" href="/tischtennis/live#t=${t.id}" target="_blank" rel="noopener">📺 Liveansicht (Bildschirm)</a>
-      ${can('tournaments.manage') ? `<button class="link" type="button" data-action="visitor-qr">🔗 Besucher-Link &amp; QR-Code</button>` : ''}</p>
+      ${can('tournaments.manage') ? `<button class="link" type="button" data-action="visitor-qr">🔗 Gastlink &amp; QR-Code</button>` : ''}</p>
     <div id="qrbox"></div>
     ${actions.length ? `<div class="actions">${actions.join('')}</div>` : ''}
     ${renderTabs(tabs, S.tab)}
@@ -438,7 +438,22 @@ app.addEventListener('click', e => {
     'visitor-qr': async () => {
       try {
         const r = await api(`/api/tournaments/${S.tid}/visitor-link`, { method: 'POST' });
-        showVisitorQr(`${location.origin}${r.path}`);
+        showVisitorQr(`${location.origin}${r.path}`, r.guest_until);
+      } catch (err) { toast(err.message, true); }
+    },
+    'guest-days': async () => {
+      try {
+        const r = await api(`/api/tournaments/${S.tid}/visitor-link`, { method: 'POST', body: { days: Number(el.dataset.days) } });
+        showVisitorQr(`${location.origin}${r.path}`, r.guest_until);
+        toast(r.guest_until ? 'Gastzugang verlängert.' : 'Gastzugang beendet.');
+      } catch (err) { toast(err.message, true); }
+    },
+    'guest-renew': async () => {
+      if (!confirm('Neuen Link erzeugen? Der alte QR-Code und alle bisherigen Gastzugänge gelten dann nicht mehr.')) return;
+      try {
+        const r = await api(`/api/tournaments/${S.tid}/visitor-link`, { method: 'POST', body: { renew: true } });
+        showVisitorQr(`${location.origin}${r.path}`, r.guest_until);
+        toast('Neuer Link erzeugt.');
       } catch (err) { toast(err.message, true); }
     },
     'copy-visitor-link': async () => {
@@ -472,8 +487,12 @@ app.addEventListener('input', e => {
   if (e.target.matches('.fbform input[name="g1"], .fbform input[name="g2"]')) syncScorerFields(e.target.closest('form'));
 });
 
-/* ---------- Besucher-Link mit QR-Code ---------- */
-function showVisitorQr(url) {
+/* ---------- Gastlink mit QR-Code ---------- */
+function guestUntilText(until) {
+  if (!until || until < Date.now()) return null;
+  return new Date(until).toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+}
+function showVisitorQr(url, until) {
   const box = document.getElementById('qrbox');
   if (!box) return;
   let svg = '';
@@ -496,7 +515,14 @@ function showVisitorQr(url) {
           <button type="button" data-action="print-qr">🖨 Drucken</button>
           <button class="link" type="button" data-action="close-qr">Schließen</button>
         </div>
-        <p class="hint no-print">Der Link bleibt für dieses Turnier immer gleich – gut für Aushänge.</p>
+        <div class="guestbox no-print">
+          <p><b>Gastzugang:</b> ${guestUntilText(until) ? `<span class="guest-on">offen bis ${esc(guestUntilText(until))}</span>` : '<span class="guest-off">aus – der Link klappt nur mit Zugangscode</span>'}</p>
+          <p class="hint">Mit dem QR-Code sehen Gäste ohne Zugangscode nur dieses Turnier: Spielplan, Liveansicht und Tippspiel – nichts vom Rest der Seite. Nach dem letzten Spiel bleibt der Gastzugang noch 12 Stunden offen.</p>
+          <div class="row"><span class="hint">Gäste reinlassen für</span>
+            ${[[1, '1 Tag'], [3, '3 Tage'], [7, '7 Tage']].map(([d, l]) => `<button type="button" class="small" data-action="guest-days" data-days="${d}">${l}</button>`).join('')}
+            ${guestUntilText(until) ? '<button type="button" class="small danger" data-action="guest-days" data-days="0">Beenden</button>' : ''}</div>
+          <p><button class="link" type="button" data-action="guest-renew">Neuen Link erzeugen</button> <span class="hint">– der alte QR-Code gilt dann nicht mehr.</span></p>
+        </div>
       </div>
     </div>`;
   box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

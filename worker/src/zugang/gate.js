@@ -5,6 +5,10 @@
 //   3. Anmelden mit einem freigeschalteten Konto
 // Ohne Zugang liefert der Worker für jede Adresse nur die Tor-Seite aus.
 //
+// Zusätzlich gibt es Turnier-Gastlinks (/tischtennis/t/<kennung>): Sie öffnen
+// für eine begrenzte Zeit nur Spielplan, Liveansicht und Tippspiel genau eines
+// Turniers – praktisch für Zuschauer in der Halle (QR-Code am Eingang).
+//
 // API (unter /api/zugang):
 //   POST   /code                 { code }            – ohne Zugang erreichbar
 //   GET    /admin                                    (users.manage)
@@ -14,8 +18,9 @@
 
 import { ensureAccounts, getUser, hasPerm } from "../konto/auth.js";
 import { fail, intId, str, json, securityHeaders, readCookie, rejectNonJsonWrites, bodyReader, handleErrors } from "../konto/http.js";
-import { COOKIE, RENEW_AFTER_SEC, signToken, verifyToken, cookieHeader, normalizeCode, isValidForState, isPublicPath } from "./token.js";
+import { COOKIE, GUEST_COOKIE, RENEW_AFTER_SEC, signToken, verifyToken, cookieHeader, normalizeCode, isValidForState, isValidGuest, guestAllows, isPublicPath } from "./token.js";
 import { gatePage } from "./page.js";
+import { init as initTurniere } from "../tischtennis/db.js";
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS access_settings (k TEXT PRIMARY KEY, v TEXT NOT NULL)`,
@@ -72,6 +77,23 @@ async function loadState(env, force = false) {
 
 const isSecure = (request) => new URL(request.url).protocol === "https:";
 
+/* ---------- Turnier-Gäste ---------- */
+const GUEST_CACHE_MS = 30_000;
+const guestCache = new Map(); // Turnier-ID -> { at, row }
+async function guestTournament(env, tid, force = false) {
+  const hit = guestCache.get(tid);
+  if (!force && hit && Date.now() - hit.at < GUEST_CACHE_MS) return hit.row;
+  await initTurniere(env);
+  const row = await env.DB.prepare("SELECT id, name, visitor_slug, guest_until FROM tournaments WHERE id = ?").bind(tid).first();
+  guestCache.set(tid, { at: Date.now(), row: row || null });
+  if (guestCache.size > 200) guestCache.delete(guestCache.keys().next().value);
+  return row || null;
+}
+/** Nach Änderungen am Gastlink (Turnierverwaltung) sofort neu laden. */
+export function forgetGuestTournament(tid) {
+  guestCache.delete(Number(tid));
+}
+
 /** Set-Cookie-Kopfzeile für einen neuen Zugang (Code, Einladung oder Konto). */
 export async function issueAccessCookie(env, request, kind, id = 0) {
   const st = await loadState(env, true);
@@ -87,16 +109,16 @@ function wantsHtml(request) {
 }
 
 /** Tor-Antwort für Anfragen ohne Zugang. */
-async function denied(request, env, path, message) {
+async function denied(request, env, path, message, back = null) {
   if (path.startsWith("/api/")) {
-    return securityHeaders(json({ error: "Kein Zugang – bitte zuerst den Zugangscode eingeben.", zugang: true }, 401));
+    return securityHeaders(json({ error: back ? message : "Kein Zugang – bitte zuerst den Zugangscode eingeben.", zugang: true }, back ? 403 : 401));
   }
   if (!wantsHtml(request)) {
     return new Response("Kein Zugang.", { status: 401, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
   }
   const st = await loadState(env);
   return securityHeaders(
-    new Response(gatePage({ codeEnabled: !!st.code, message }), {
+    new Response(gatePage({ codeEnabled: !!st.code, message, back }), {
       status: 401,
       headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
     })
@@ -111,6 +133,7 @@ async function denied(request, env, path, message) {
 export async function guard(request, env, path) {
   if (isPublicPath(path)) return {};
   const raw = readCookie(request, COOKIE);
+  const guestRaw = readCookie(request, GUEST_COOKIE);
   if (raw) {
     const st = await loadState(env);
     const p = await verifyToken(st.secret, raw);
@@ -123,6 +146,16 @@ export async function guard(request, env, path) {
       return {};
     }
   }
+  // Turnier-Gast: nur das eine Turnier
+  if (guestRaw) {
+    const st = await loadState(env);
+    const p = await verifyToken(st.secret, guestRaw);
+    const t = p && p.k === "g" ? await guestTournament(env, p.id) : null;
+    if (isValidGuest(p, t)) {
+      if (guestAllows(path, request.method, t.id)) return { guest: { tid: t.id, name: t.name } };
+      return { response: await denied(request, env, path, `Mit deinem Gastzugang siehst du nur das Turnier „${t.name}“.`, { href: `/tischtennis/#t=${t.id}`, label: "Zurück zum Turnier" }) };
+    }
+  }
   const response = await denied(request, env, path, raw ? "Dein Zugang gilt nicht mehr – vermutlich wurde der Code geändert." : "");
   if (raw) {
     const h = new Headers(response.headers);
@@ -130,6 +163,35 @@ export async function guard(request, env, path) {
     return { response: new Response(response.body, { status: response.status, headers: h }) };
   }
   return { response };
+}
+
+/**
+ * GET /tischtennis/t/<kennung>: Turnier-Link. Wer schon Zugang hat, landet
+ * direkt im Turnier. Alle anderen bekommen – solange der Gastzugang des
+ * Turniers läuft – ein Gast-Cookie nur für dieses Turnier.
+ */
+export async function enterTournamentLink(request, env, slug) {
+  await initTurniere(env);
+  const t = await env.DB.prepare("SELECT id, name, visitor_slug, guest_until FROM tournaments WHERE visitor_slug = ?").bind(slug).first();
+  const full = !(await guard(new Request(new URL("/", request.url), { headers: request.headers }), env, "/")).response;
+  const to = (tid, setCookie) => {
+    const headers = { location: `/tischtennis/#t=${tid}`, "cache-control": "no-store" };
+    if (setCookie) headers["set-cookie"] = setCookie;
+    return new Response(null, { status: 302, headers });
+  };
+  if (t && full) return to(t.id);
+  if (!t) {
+    if (full) return new Response("Dieser Link ist nicht (mehr) gültig.", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
+    return denied(request, env, "/tischtennis/t", "Dieser Turnier-Link ist nicht (mehr) gültig. Frag die Turnierleitung nach dem aktuellen QR-Code.");
+  }
+  if (!(Number(t.guest_until) > Date.now())) {
+    return denied(request, env, "/tischtennis/t", `Der Gastzugang für „${t.name}“ ist abgelaufen. Frag die Turnierleitung oder komm mit dem Zugangscode rein.`);
+  }
+  const st = await loadState(env);
+  const maxAge = Math.max(60, Math.floor((Number(t.guest_until) - Date.now()) / 1000));
+  const value = await signToken(st.secret, { k: "g", id: t.id, s: t.visitor_slug, t: Math.floor(Date.now() / 1000) });
+  guestCache.set(t.id, { at: Date.now(), row: t });
+  return to(t.id, cookieHeader(value, isSecure(request), maxAge, GUEST_COOKIE));
 }
 
 /** GET /zugang/<token>: Einladungslink einlösen. */
@@ -230,4 +292,5 @@ export async function handleZugangApi(request, env, path) {
 export function _resetCache() {
   cache = null;
   tablesReady = false;
+  guestCache.clear();
 }

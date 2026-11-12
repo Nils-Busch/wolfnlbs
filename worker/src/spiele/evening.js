@@ -6,6 +6,8 @@ export function defaultSettings(game) {
   if (game === "kniffel") return { rounds: 13 };
   if (game === "maexchen") return { lives: 3, botLevel: "medium" };
   if (game === "draw") return { rounds: 2, seconds: 80, words: [], wordMode: "mix" };
+  if (game === "agent") return { rounds: 1, seconds: 0, words: [], wordMode: "mix" };
+  if (game === "explain") return { rounds: 3, seconds: 60, cards: [], cardMode: "mix" };
   return { rounds: 5, seconds: 90, categories: ["Stadt", "Land", "Fluss", "Name", "Tier", "Beruf"] };
 }
 
@@ -17,6 +19,8 @@ export const TITLES = {
   kniffel: "Würfelkönig",
   maexchen: "Bluff-Profi",
   draw: "Picasso des Abends",
+  agent: "Meisterspion",
+  explain: "Plaudertasche",
 };
 /** Plätze aus Punkten (Gleichstand = gleicher Platz) und Abendpunkte. */
 export function placements(list) {
@@ -26,6 +30,19 @@ export function placements(list) {
     if (p.score !== last) { place = i + 1; last = p.score; }
     return { ...p, place, pts: EVENING_POINTS[place - 1] ?? 1 };
   });
+}
+/**
+ * Teamspiele: Alle im besseren Team teilen sich Platz 1 (10 Abendpunkte),
+ * das andere Team bekommt Platz 2 (7). Gleichstand = beide Platz 1.
+ */
+export function teamPlacements(list) {
+  const best = Math.max(...list.map((p) => p.score));
+  return list
+    .map((p) => {
+      const place = p.score === best ? 1 : 2;
+      return { ...p, place, pts: EVENING_POINTS[place - 1] };
+    })
+    .sort((a, b) => a.place - b.place);
 }
 /** Abendtabelle und Titel aus der Liste der gespielten Runden. */
 export function eveningSummary(evening) {

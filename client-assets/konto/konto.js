@@ -95,7 +95,7 @@ function loggedOutView() {
 
 /* ---------- Angemeldet ---------- */
 function shell(content) {
-  const tabs = [['account', 'Mein Konto']];
+  const tabs = [['account', 'Mein Konto'], ['look', '🎨 Aussehen']];
   if (can('users.manage')) tabs.push(['users', `Konten & Rechte${S.pendingCount ? ` (${S.pendingCount} neu)` : ''}`]);
   if (can('users.manage')) tabs.push(['access', '🚪 Zugang']);
   app.innerHTML = `
@@ -132,6 +132,17 @@ function accountView() {
         <button class="vh-btn vh-btn-accent">Passwort ändern</button>
       </form>
     </div>`);
+}
+
+function lookView() {
+  shell(`
+    <section class="vh-card pinned konto-look">
+      <h2>Aussehen</h2>
+      <p class="vh-hint">Farben, Schrift und Bewegung so, wie es dir gefällt. Die Wahl hängt an deinem Konto und gilt auf jedem Gerät, mit dem du angemeldet bist.</p>
+      <div id="lookPanel"></div>
+    </section>`);
+  const el = document.getElementById('lookPanel');
+  if (window.VHLookUI && el) window.VHLookUI.panel(el);
 }
 
 async function usersView() {
@@ -284,15 +295,17 @@ async function loadMe() {
   S.perms = me.user?.permissions || [];
   S.info = me.permissionInfo || [];
   S.pendingCount = me.pendingCount || 0;
+  if (me.user && window.VHLook) window.VHLook.sync(me.user.prefs && me.user.prefs.look);
 }
 
 async function render() {
   try {
     if (S.me === null) await loadMe();
     if (!S.me) return loggedOutView();
-    if (!S.tab || (['users', 'access'].includes(S.tab) && !can('users.manage')) || !['account', 'users', 'access'].includes(S.tab)) S.tab = 'account';
+    if (!S.tab || (['users', 'access'].includes(S.tab) && !can('users.manage')) || !['account', 'users', 'access', 'look'].includes(S.tab)) S.tab = 'account';
     if (S.tab === 'users') await usersView();
     else if (S.tab === 'access') await accessView();
+    else if (S.tab === 'look') lookView();
     else accountView();
   } catch (e) {
     if (e.status === 401) {
@@ -404,7 +417,7 @@ app.addEventListener('click', (e) => {
   if (!el) return;
   const id = el.dataset.id;
   const a = el.dataset.action;
-  if (a === 'logout') run(async () => { await api('/auth/logout', { method: 'POST' }); S.me = undefined; S.tab = 'login'; }, 'Abgemeldet.');
+  if (a === 'logout') run(async () => { await api('/auth/logout', { method: 'POST' }); S.me = undefined; S.tab = 'login'; if (window.VHLook) window.VHLook.account = false; }, 'Abgemeldet.');
   if (a === 'to-login') { S.registered = false; S.tab = 'login'; render(); }
   if (a === 'reject' && confirm('Diese Anfrage ablehnen? Das Konto wird gelöscht.')) run(() => api(`/users/${id}`, { method: 'DELETE' }), 'Anfrage abgelehnt.');
   if (a === 'del-user' && confirm('Dieses Konto endgültig löschen?')) run(() => api(`/users/${id}`, { method: 'DELETE' }), 'Konto gelöscht.');

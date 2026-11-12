@@ -14,12 +14,14 @@
 //   POST /auth/logout
 //   GET  /auth/me
 //   POST /auth/password   { current, next }
+//   PUT  /prefs           { look }  – Aussehen am Konto speichern (siehe prefs.js)
 //   GET  /users                         (users.manage)
 //   POST /users                         (users.manage) – direkt aktives Konto anlegen
 //   POST /users/:id/approve {permissions} (users.manage)
 //   PATCH /users/:id                    (users.manage)
 //   DELETE /users/:id                   (users.manage) – auch zum Ablehnen von Anfragen
 
+import { cleanLook, parsePrefs } from "./prefs.js";
 import bcrypt from "bcryptjs";
 import {
   fail,
@@ -93,6 +95,11 @@ export async function ensureAccounts(env) {
     if (stmts.length) await env.DB.batch(stmts);
   }
 
+  // Migration: persönliche Einstellungen (Aussehen) als JSON
+  if (!cols.results.some((c) => c.name === "prefs")) {
+    await env.DB.prepare("ALTER TABLE users ADD COLUMN prefs TEXT").run();
+  }
+
   await env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(Date.now()).run();
 
   const { n } = await env.DB.prepare("SELECT count(*) AS n FROM users").first();
@@ -142,7 +149,7 @@ export async function getUser(request, env) {
   const token = readCookie(request, "sid");
   if (!token) return null;
   const row = await env.DB.prepare(
-    `SELECT u.id, u.username, u.display_name FROM sessions s
+    `SELECT u.id, u.username, u.display_name, u.prefs FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.token = ? AND s.expires_at > ? AND u.active = 1 AND u.pending = 0`
   )
@@ -150,7 +157,7 @@ export async function getUser(request, env) {
     .first();
   if (!row) return null;
   const perms = await env.DB.prepare("SELECT permission FROM user_permissions WHERE user_id = ?").bind(row.id).all();
-  return { ...row, token, permissions: perms.results.map((r) => r.permission) };
+  return { ...row, prefs: parsePrefs(row.prefs), token, permissions: perms.results.map((r) => r.permission) };
 }
 
 export const hasPerm = (user, perm) => !!user && user.permissions.includes(perm);
@@ -284,6 +291,16 @@ export async function handleKontoApi(request, env, path) {
         pendingCount = (await env.DB.prepare("SELECT count(*) AS n FROM users WHERE pending = 1").first()).n;
       }
       return securityHeaders(json({ user: u, allPermissions: ALL_PERMISSIONS, permissionInfo: PERMISSIONS, pendingCount }));
+    }
+
+    /* ---------- Aussehen am Konto speichern ---------- */
+    if (path === "/prefs" && method === "PUT") {
+      requireLogin();
+      const b = await readBody();
+      const look = cleanLook(b.look);
+      if (!look) fail(400, "Ungültige Einstellungen.");
+      await env.DB.prepare("UPDATE users SET prefs = ? WHERE id = ?").bind(JSON.stringify({ look }), user.id).run();
+      return securityHeaders(json({ ok: true, prefs: { look } }));
     }
 
     if (path === "/auth/password" && method === "POST") {

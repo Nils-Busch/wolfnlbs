@@ -1,6 +1,7 @@
 // Rauchtest: startet die Seite lokal (wrangler dev), prüft das Eingangstor (Code,
-// Einladungslink, Konto), ruft die wichtigsten Seiten auf und spielt eine kurze
-// Mäxchen-Runde über WebSockets. Läuft lokal und im GitHub-Workflow:
+// Einladungslink, Konto, Turnier-Gastlink), ruft die wichtigsten Seiten auf,
+// speichert ein Aussehen am Konto und spielt kurze Runden Mäxchen, Agentenrunde
+// und Erklärbär über WebSockets. Läuft lokal und im GitHub-Workflow:
 //   npm run test:smoke
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -92,7 +93,7 @@ try {
   (await send("/spiele/", gast)).status === 401 ? ok("Code geändert: alter Code-Zugang gesperrt") : bad("alter Code gilt noch");
   (await send("/", admin)).ok ? ok("Konto bleibt drin") : bad("Konto ausgesperrt");
 
-  for (const path of ["/", "/spiele/", "/spiele/gruppe/", "/spiele/games/maexchen.html", "/spiele/games/kloetzchen.html", "/raetsel/puzzle.html", "/quiz/", "/raetsel/", "/konto/", "/tischtennis/", "/tischtennis/rangliste", "/tischtennis/live", "/datenschutz", "/robots.txt", "/manifest.webmanifest", "/sw.js", "/woelfe/"]) {
+  for (const path of ["/", "/spiele/", "/spiele/gruppe/", "/spiele/games/maexchen.html", "/spiele/games/kloetzchen.html", "/raetsel/puzzle.html", "/shared/theme.js", "/shared/look.js", "/quiz/", "/raetsel/", "/konto/", "/tischtennis/", "/tischtennis/rangliste", "/tischtennis/live", "/datenschutz", "/robots.txt", "/manifest.webmanifest", "/sw.js", "/woelfe/"]) {
     const r = await send(path, admin, { redirect: "follow" });
     r.ok ? ok(`GET ${path}`) : bad(`GET ${path} -> ${r.status}`);
   }
@@ -130,6 +131,73 @@ try {
   await sleep(300);
   sw.ok && anna.state.game === "kniffel" && !anna.state.players.some((p) => p.bot) ? ok("Spiel gewechselt, Computer entfernt") : bad("Spiel wechseln");
   anna.ws.close(); ben.ws.close();
+
+  // Teamspiele: Agentenrunde mit 4 Personen – Hinweis geben, Karte markieren und aufdecken
+  const ag = await (await send("/api/spiele/party", admin, { method: "POST", body: JSON.stringify({ game: "agent" }) })).json();
+  const four = ["Anna", "Ben", "Clara", "Dieter"].map(() => client(ag.roomCode));
+  await Promise.all(four.map((c) => c.open));
+  for (const [i, c] of four.entries()) await c.emit("join", { name: ["Anna", "Ben", "Clara", "Dieter"][i], hostKey: i === 0 ? ag.hostKey : undefined });
+  await sleep(200);
+  const teams = four[0].state.teams;
+  [0, 1].every((t) => Object.values(teams).filter((x) => x === t).length === 2) ? ok("Agentenrunde: zwei Teams à 2") : bad("Teams nicht ausgeglichen");
+  (await four[0].emit("start")).ok ? ok("Agentenrunde gestartet") : bad("Agentenrunde starten");
+  await sleep(300);
+  const st0 = four[0].state.ag;
+  const spyC = four.find((c) => c.state.me.id === st0.spy[st0.turn]);
+  const guessC = four.find((c) => c.state.me.team === st0.turn && c !== spyC);
+  spyC.state.ag.cards.every((c) => c.k != null) && guessC.state.ag.cards.every((c) => c.k == null) ? ok("nur der Funker sieht die Geheimkarte") : bad("Geheimkarte sichtbar");
+  (await spyC.emit("clue", { word: spyC.state.ag.cards[0].w, n: 1 })).ok ? bad("Wort vom Feld als Hinweis erlaubt") : ok("Wort vom Feld als Hinweis abgelehnt");
+  (await spyC.emit("clue", { word: "Quatsch", n: 1 })).ok ? ok("Hinweis gegeben") : bad("Hinweis geben");
+  await sleep(200);
+  const own = spyC.state.ag.cards.findIndex((c) => c.k === st0.turn);
+  const t1 = await guessC.emit("tap", { index: own });
+  const t2 = await guessC.emit("tap", { index: own });
+  t1.marked === own && t2.revealed === st0.turn ? ok("Karte markiert und aufgedeckt") : bad(`Aufdecken: ${JSON.stringify([t1, t2])}`);
+  four.forEach((c) => c.ws.close());
+
+  // Erklärbär: Runde starten, erraten, verbotenes Wort melden
+  const ex = await (await send("/api/spiele/party", admin, { method: "POST", body: JSON.stringify({ game: "explain" }) })).json();
+  const ex4 = [0, 1, 2, 3].map(() => client(ex.roomCode));
+  await Promise.all(ex4.map((c) => c.open));
+  for (const [i, c] of ex4.entries()) await c.emit("join", { name: "P" + i, hostKey: i === 0 ? ex.hostKey : undefined });
+  await ex4[0].emit("start");
+  await sleep(300);
+  const e0 = ex4[0].state.ex;
+  const expl = ex4.find((c) => c.state.me.id === e0.explainer);
+  const opp = ex4.find((c) => c.state.me.team === 1 - e0.team);
+  (await expl.emit("go")).ok ? ok("Erklärbär-Runde gestartet") : bad("Erklärbär starten");
+  await sleep(200);
+  const card = expl.state.ex.card;
+  card && opp.state.ex.card?.t === card.t && !ex4.find((c) => c.state.me.team === e0.team && c !== expl).state.ex.card ? ok("Karte nur für Erklärer und Gegenteam") : bad("Karte falsch sichtbar");
+  await expl.emit("mark", { result: "ok", pos: expl.state.ex.pos });
+  await sleep(150);
+  await opp.emit("mark", { result: "buzz", pos: opp.state.ex.pos });
+  await sleep(200);
+  expl.state.ex.scores[e0.team] === 0 && expl.state.ex.log.length === 2 ? ok("Erraten und „Verboten!“ gezählt") : bad(`Erklärbär-Punkte ${JSON.stringify(expl.state.ex.scores)}`);
+  ex4.forEach((c) => c.ws.close());
+
+  // Aussehen am Konto
+  const pr = await send("/api/konto/prefs", admin, { method: "PUT", body: JSON.stringify({ look: { theme: "nacht", size: "l", font: "unsinn" } }) });
+  const me = await (await send("/api/konto/auth/me", admin)).json();
+  pr.ok && me.user.prefs?.look?.theme === "nacht" && me.user.prefs.look.font === "play" ? ok("Aussehen am Konto gespeichert") : bad("Aussehen speichern");
+  (await send("/api/konto/prefs", null, { method: "PUT", body: JSON.stringify({ look: {} }) })).status === 401 ? ok("Aussehen ohne Zugang gesperrt") : bad("Aussehen ohne Zugang");
+
+  // Turnier-Gastlink: nur dieses Turnier, nur ansehen und tippen
+  const tid = (await (await send("/api/tischtennis/tournaments", admin, { method: "POST", body: JSON.stringify({ name: "Hallenturnier", format: "league", best_of: 3, sport: "tabletennis" }) })).json()).id;
+  for (const n of ["Anna", "Ben"]) await send(`/api/tischtennis/tournaments/${tid}/players`, admin, { method: "POST", body: JSON.stringify({ name: n }) });
+  await send(`/api/tischtennis/tournaments/${tid}/start`, admin, { method: "POST", body: "{}" });
+  const vl = await (await send(`/api/tischtennis/tournaments/${tid}/visitor-link`, admin, { method: "POST", body: "{}" })).json();
+  const zuschauer = jar();
+  const in1 = await send(vl.path, zuschauer);
+  in1.status === 302 && zuschauer.header.includes("vh_gast=") ? ok("Gastlink öffnet das Turnier") : bad(`Gastlink -> ${in1.status}`);
+  const tp = await send("/tischtennis/", zuschauer, { headers: { accept: "text/html" } });
+  const tpHtml = await tp.text();
+  tp.ok && tpHtml.includes("vh-guest") && !tpHtml.includes('href="/quiz/"') ? ok("Gast sieht die Turnierseite ohne Menü") : bad(`Gast-Turnierseite -> ${tp.status}`);
+  (await send(`/api/tischtennis/tournaments/${tid}`, zuschauer)).ok ? ok("Gast liest Turnierdaten") : bad("Gast Turnierdaten");
+  (await send("/spiele/", zuschauer)).status === 401 ? ok("Gast kommt nicht in andere Bereiche") : bad("Gast in anderen Bereichen");
+  (await send("/api/tischtennis/ranking?sport=tabletennis", zuschauer)).status === 403 ? ok("Gast ohne Vereinsrangliste") : bad("Gast Rangliste");
+  await send(`/api/tischtennis/tournaments/${tid}/visitor-link`, admin, { method: "POST", body: JSON.stringify({ days: 0 }) });
+  (await send("/tischtennis/", zuschauer)).status === 401 ? ok("beendeter Gastzugang sperrt aus") : bad("Gastzugang gilt nach dem Beenden noch");
 } catch (e) {
   bad(e.message);
 } finally {

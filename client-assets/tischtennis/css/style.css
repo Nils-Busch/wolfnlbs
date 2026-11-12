@@ -19,6 +19,15 @@
 @media (prefers-color-scheme: dark) {
   :root { --paper: #0c0c0d; --ink: #ededec; --muted: #9b9b9d; --rule: #2a2a2c; --card: #1a1a1c; --win: #58d99a; --danger: #ff8a6a; --panel: #1a1a1c; }
 }
+/* Aussehen „Nachtschicht“: dieselben dunklen Farben, auch wenn das Gerät hell eingestellt ist */
+:root[data-theme="nacht"] { --paper: #0c0c0d; --ink: #ededec; --muted: #9b9b9d; --rule: #2a2a2c; --card: #1a1a1c; --win: #58d99a; --danger: #ff8a6a; --panel: #1a1a1c; }
+:root[data-theme="nacht"] a { color: var(--cyan); }
+:root[data-theme="nacht"] .bmatch { border-left-color: #3a3a3d; }
+:root[data-theme="nacht"] .card { border-top-color: #3a3a3d; }
+:root[data-theme="nacht"] button.link { color: var(--cyan); }
+:root[data-theme="nacht"] .amatch { border-top-color: #3a3a3d; }
+:root[data-theme="nacht"] .m-p[data-pid]:not([data-pid=""]):hover, :root[data-theme="nacht"] .players li:hover, :root[data-theme="nacht"] .standings tr[data-pid]:hover td.left { color: var(--cyan); }
+:root[data-theme="nacht"] .tip.on { background: var(--cyan); border-color: var(--cyan); color: #0a0a0b; }
 
 * { box-sizing: border-box; border-radius: 0 !important; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1rem/1.5 var(--body); }
@@ -371,3 +380,10 @@ table.scorers td.left:nth-child(3) { color: var(--muted); }
 .how summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 560px) { .ranking .hide-s { display: none; } }
 @media (prefers-reduced-motion: reduce) { .ranking tbody tr { animation: none; } }
+
+/* Gastlink im QR-Dialog */
+.guestbox { margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--rule); background: var(--paper); }
+.guestbox p { margin: 0 0 8px; }
+.guestbox .row { margin-bottom: 8px; }
+.guest-on { color: var(--win); font-weight: 700; }
+.guest-off { color: var(--muted); font-weight: 700; }

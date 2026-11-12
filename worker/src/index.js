@@ -8,15 +8,15 @@
 
 import { handleWoelfe, GameRoom } from "./woelfe/router.js";
 import { handleSpiele, DuelRoom, Leaderboard, Wordle, PartyRoom } from "./spiele/router.js";
-import { handleTischtennisApi, resolveVisitorLink } from "./tischtennis/router.js";
+import { handleTischtennisApi } from "./tischtennis/router.js";
 import { handleKontoApi } from "./konto/auth.js";
 import { handleQuiz, QuizRoom } from "./quiz/router.js";
 import { checkRateLimit } from "./ratelimit.js";
-import { guard, handleZugangApi, redeemInvite } from "./zugang/gate.js";
+import { guard, handleZugangApi, redeemInvite, enterTournamentLink } from "./zugang/gate.js";
 
 export { GameRoom, DuelRoom, Leaderboard, Wordle, QuizRoom, PartyRoom };
 
-async function route(request, env, path) {
+async function route(request, env, path, guest) {
   if (path.startsWith("/api/zugang")) {
     return handleZugangApi(request, env, path.slice("/api/zugang".length) || "/");
   }
@@ -33,15 +33,29 @@ async function route(request, env, path) {
     return handleQuiz(request, env, path.slice("/api/quiz".length) || "/");
   }
   if (path.startsWith("/api/tischtennis")) {
-    return handleTischtennisApi(request, env, path.slice("/api/tischtennis".length) || "/");
+    return handleTischtennisApi(request, env, path.slice("/api/tischtennis".length) || "/", { guestTid: guest?.tid ?? null });
   }
   const invite = path.match(/^\/zugang\/([a-f0-9]{16,64})$/);
   if (invite) return redeemInvite(request, env, invite[1]);
   const linkMatch = path.match(/^\/tischtennis\/t\/([a-z0-9]+)$/);
-  if (linkMatch) {
-    return resolveVisitorLink(env, linkMatch[1]);
-  }
+  if (linkMatch) return enterTournamentLink(request, env, linkMatch[1]);
   return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Nicht gefunden.", { status: 404 });
+}
+
+/**
+ * Turnier-Gäste: Seiten ohne Menü zu den anderen Bereichen, das Logo führt
+ * zurück zum Turnier, oben steht „Gastzugang“.
+ */
+function asGuestPage(res, guest) {
+  if (!guest || !(res.headers.get("content-type") || "").includes("text/html")) return res;
+  const home = `/tischtennis/#t=${guest.tid}`;
+  return new HTMLRewriter()
+    .on("body", { element(e) { e.setAttribute("class", `${e.getAttribute("class") || ""} vh-guest`.trim()); } })
+    .on(".vh-header nav", { element(e) { e.remove(); } })
+    .on(".top-links", { element(e) { e.remove(); } })
+    .on("a.vh-brand", { element(e) { e.setAttribute("href", home); } })
+    .on(".vh-header", { element(e) { e.append(`<span class="vh-guest-pill" title="Du siehst nur dieses Turnier">Gastzugang</span>`, { html: true }); } })
+    .transform(res);
 }
 
 /** Suchmaschinen fernhalten und ggf. das verlängerte Zugangs-Cookie mitschicken. */
@@ -64,6 +78,6 @@ export default {
     const gate = await guard(request, env, path);
     if (gate.response) return finish(gate.response);
 
-    return finish(await route(request, env, path), gate.setCookie);
+    return finish(asGuestPage(await route(request, env, path, gate.guest), gate.guest), gate.setCookie);
   },
 };
