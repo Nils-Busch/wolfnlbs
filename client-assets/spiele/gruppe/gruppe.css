@@ -580,3 +580,54 @@ button.kn-opt:disabled { opacity: .55; }
 .ex-next .kick, .ex-wait .kick, .tm-final .kick { color: var(--c, var(--accent)); }
 .ex-wait { --c: var(--t0); }
 .ex-wait.t1 { --c: var(--t1); }
+
+/* ---------- Ohne Fernseher: alles Nötige am Handy ---------- */
+.gp-game .gp-tvonly { margin-top: 0; background: transparent; color: var(--muted); box-shadow: none; padding: .3rem .2rem; font-size: .85rem; font-weight: 650; }
+.gp-game .gp-tvonly:hover:not(:disabled) { color: var(--text); box-shadow: none; transform: none; filter: none; }
+/* Gruppe verlassen */
+.gp-me .gp-leave { flex: none; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border-radius: 50%; background: var(--panel2); color: var(--text); font-size: 1rem; box-shadow: none; }
+.gp-me .gp-leave:hover:not(:disabled) { background: color-mix(in srgb, var(--p0) 40%, var(--panel2)); box-shadow: none; transform: none; }
+/* Wer würde eher am Handy */
+.gp-voted.small { gap: .35rem; }
+.gp-voted.small .gp-av { width: 34px; height: 34px; font-size: .78rem; }
+.gp-voted.small span.in { transform: translateY(-3px); }
+.wwe-q.phone h2 { font-size: 1.5rem; }
+.gp-phone .wwe-win b { font-size: 2.2rem; text-align: center; }
+.gp-phone .wwe-win .crown { font-size: 2.2rem; }
+.gp-phone .wwe-bars { gap: .4rem; margin: .8rem 0; }
+.gp-phone .wwe-bars .b { grid-template-columns: auto minmax(0, 6rem) 1fr auto; gap: .5rem; }
+.gp-phone .wwe-bars .gp-av { width: 30px; height: 30px; font-size: .72rem; }
+.gp-phone .wwe-bars .bar { height: 12px; }
+.gp-phone .wwe-hist { font-size: .88rem; }
+.gp-phone .wwe-hist li { flex-direction: column; gap: .1rem; }
+.gp-phone > .gp-body > .wwe-q, .gp-phone .wwe-q.phone { margin-bottom: .6rem; }
+/* Stadt-Land-Fluss: Rangliste nach der Runde */
+.slf-board { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 6px; }
+.slf-board li { display: grid; grid-template-columns: 1.6rem auto minmax(0, 1fr) auto 2.6rem; align-items: center; gap: .5rem; padding: .4rem .7rem .4rem .5rem; border-radius: 14px; background: var(--panel); animation: rise-row .35s var(--ease-out) both; }
+.slf-board li.me { box-shadow: inset 0 0 0 2px var(--accent); }
+.slf-board .pl { font: 800 1rem var(--display); color: var(--muted); text-align: center; }
+.slf-board .gp-av { width: 30px; height: 30px; font-size: .72rem; }
+.slf-board .n { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slf-board em { font-style: normal; color: var(--green); font-weight: 750; font-size: .9rem; }
+.slf-board b { font: 800 1.2rem var(--display); text-align: right; font-variant-numeric: tabular-nums; }
+/* Kniffel: Rangliste und Block aller am Handy */
+.kn-wait .kn-rank { margin: .8rem 0; }
+.kn-rank li.me { box-shadow: inset 0 0 0 2px var(--accent); }
+.kn-rank li.me.cur { box-shadow: inset 0 0 0 2px var(--yellow); }
+.kn-last.small { font-size: .9rem; text-align: center; margin-top: .2rem; }
+.kn-all { margin-top: 1rem; }
+.kn-all summary { cursor: pointer; padding: .7rem .9rem; border-radius: 14px; background: var(--panel); font-weight: 700; list-style: none; }
+.kn-all summary::-webkit-details-marker { display: none; }
+.kn-all[open] summary { border-radius: 14px 14px 0 0; }
+.kn-all .kn-sheet-wrap { max-height: none; border-radius: 0 0 14px 14px; overflow-x: auto; }
+.kn-all .kn-sheet { font-size: .82rem; }
+.kn-all .kn-sheet th, .kn-all .kn-sheet td { padding: .25rem .35rem; }
+.kn-all .kn-sheet thead th .gp-av { width: 26px; height: 26px; font-size: .65rem; }
+.kn-all .kn-sheet thead th span { max-width: 4.5em; font-size: .72rem; }
+.kn-all .kn-sheet tr.total td, .kn-all .kn-sheet tr.total th { font-size: 1rem; }
+/* Spielleitung am Handy: Haupt-Knopf, wenn das Spiel auf sie wartet */
+.sh-next { display: block; width: 100%; margin: 1.2rem 0 .4rem; animation: vh-pop-in .4s var(--ease-hop) both; }
+
+/* „.gp .small“ (kleine Schrift) darf die kleinen Buchstaben-Kacheln nicht schrumpfen */
+.gp .slf-letter.small { font-size: 3.6rem; margin: 0 auto; }
+.gp .gp-hostwait { margin-top: 1rem; }

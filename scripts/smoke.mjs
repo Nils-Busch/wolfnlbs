@@ -1,7 +1,8 @@
 // Rauchtest: startet die Seite lokal (wrangler dev), prüft das Eingangstor (Code,
 // Einladungslink, Konto, Turnier-Gastlink), ruft die wichtigsten Seiten auf,
-// speichert ein Aussehen am Konto und spielt kurze Runden Mäxchen, Agentenrunde
-// und Erklärbär über WebSockets. Läuft lokal und im GitHub-Workflow:
+// speichert ein Aussehen am Konto und spielt kurze Runden Mäxchen, Agentenrunde,
+// Erklärbär, Kniffel und „Wer würde eher“ ohne Fernseher über WebSockets
+// (inklusive „Gruppe verlassen“ mit Übergabe der Spielleitung). Läuft lokal und im GitHub-Workflow:
 //   npm run test:smoke
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -52,6 +53,7 @@ function client(code) {
     const m = JSON.parse(e.data);
     if (m.t === "res") { pending.get(m.id)?.(m.res); pending.delete(m.id); }
     else if (m.event === "state") c.state = m.payload;
+    else if (m.t === "evt") (c.events ||= []).push(m.event);
   };
   c.emit = (event, payload = {}) => new Promise((resolve) => { const id = ++seq; pending.set(id, resolve); ws.send(JSON.stringify({ id, event, payload })); });
   return c;
@@ -175,6 +177,43 @@ try {
   await sleep(200);
   expl.state.ex.scores[e0.team] === 0 && expl.state.ex.log.length === 2 ? ok("Erraten und „Verboten!“ gezählt") : bad(`Erklärbär-Punkte ${JSON.stringify(expl.state.ex.scores)}`);
   ex4.forEach((c) => c.ws.close());
+
+  // Ohne Fernseher: Kniffel, Anna eröffnet, spielt mit und leitet – dann verlässt sie die Gruppe
+  const knr = await (await send("/api/spiele/party", admin, { method: "POST", body: JSON.stringify({ game: "kniffel" }) })).json();
+  const k3 = [0, 1, 2].map(() => client(knr.roomCode));
+  await Promise.all(k3.map((c) => c.open));
+  for (const [i, c] of k3.entries()) await c.emit("join", { name: ["Anna", "Ben", "Clara"][i], hostKey: i === 0 ? knr.hostKey : undefined });
+  await sleep(200);
+  k3[1].state.selfHost && k3[1].state.hostPlayer === k3[0].state.me.id ? ok("Kniffel ohne Fernseher: Anna spielt mit und leitet") : bad("Kniffel selbst leiten");
+  (await k3[0].emit("start")).ok ? ok("Kniffel vom Handy gestartet") : bad("Kniffel starten");
+  await sleep(200);
+  const curC = k3.find((c) => c.state.me.id === c.state.kn.current);
+  await curC.emit("roll");
+  await sleep(150);
+  (await curC.emit("score", { key: "chance" })).ok ? ok("Zug am Handy eingetragen") : bad("Kniffel eintragen");
+  await sleep(200);
+  (await k3[1].emit("next")).ok ? bad("Mitspieler darf Spielleitung spielen") : ok("nur die Spielleitung überspringt");
+  (await k3[0].emit("leave")).ok ? ok("Gruppe verlassen") : bad("Verlassen");
+  await sleep(300);
+  const heir = k3.slice(1).find((c) => c.state.me.host);
+  heir && heir.events?.includes("host") && !k3[1].state.players.some((p) => p.name === "Anna") ? ok(`Spielleitung an ${heir.state.me.name} übergeben`) : bad("Übergabe der Spielleitung");
+  k3[1].state.phase === "PLAYING" && k3[1].state.players.length === 2 ? ok("Kniffel läuft zu zweit weiter") : bad(`Kniffel nach dem Verlassen: ${k3[1].state.phase}`);
+  (await heir.emit("next")).ok ? ok("neue Spielleitung kann Zug überspringen") : bad("neue Spielleitung");
+  k3.forEach((c) => c.ws.close());
+
+  // Wer würde eher ohne Fernseher: Frage und Ergebnis kommen aufs Handy
+  const wr = await (await send("/api/spiele/party", admin, { method: "POST", body: JSON.stringify({ game: "wwe" }) })).json();
+  const w2 = [0, 1].map(() => client(wr.roomCode));
+  await Promise.all(w2.map((c) => c.open));
+  for (const [i, c] of w2.entries()) await c.emit("join", { name: ["Anna", "Ben"][i], hostKey: i === 0 ? wr.hostKey : undefined });
+  await w2[0].emit("start");
+  await sleep(200);
+  w2[1].state.question ? ok("Frage auf dem Handy") : bad("Frage fehlt");
+  for (const c of w2) await c.emit("vote", { targetId: w2[1].state.me.id });
+  await sleep(300);
+  w2[1].state.phase === "RESULT" && w2[1].state.result.winners[0] === "Ben" ? ok("Auflösung auf dem Handy") : bad(`Auflösung: ${w2[1].state.phase}`);
+  (await w2[0].emit("next")).ok && (await sleep(200), w2[1].state.round === 2) ? ok("Spielleitung startet die nächste Frage am Handy") : bad("nächste Frage");
+  w2.forEach((c) => c.ws.close());
 
   // Aussehen am Konto
   const pr = await send("/api/konto/prefs", admin, { method: "PUT", body: JSON.stringify({ look: { theme: "nacht", size: "l", font: "unsinn" } }) });

@@ -1,6 +1,8 @@
 /**
  * Gruppenspiele: „Wer würde eher …?“, Stadt-Land-Fluss, Kniffel, Mäxchen online, Montagsmaler
  * und die Teamspiele Agentenrunde und Erklärbär.
+ * Alle Spiele gehen nur mit Handys: Wer den Raum eröffnet, spielt mit und leitet.
+ * Ein Fernseher kann zusätzlich alles groß zeigen (oder als reiner Bildschirm leiten).
  *   /spiele/gruppe/                 Start: Spiel wählen oder mit Code beitreten
  *   /spiele/gruppe/?new=maexchen    Start mit hervorgehobenem Spiel
  *   /spiele/gruppe/#host=CODE       Bildschirm/Spielleitung (Fernseher oder Laptop)
@@ -27,7 +29,6 @@
   const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const vibrate = (p) => { if (navigator.vibrate) try { navigator.vibrate(p); } catch {} };
   const ICON = { wwe: '🫵', slf: '🔤', kniffel: '🎲', maexchen: '🥤', draw: '🖍️', agent: '🕵️', explain: '🐻' };
-  const SELF_HOST = new Set(['maexchen', 'draw', 'agent', 'explain']);
   const TEAM_GAMES = new Set(['agent', 'explain']);
   const TEAM = ['Rot', 'Blau'];
 
@@ -36,7 +37,7 @@
   const same = (a, b) => a.nodeType === b.nodeType && a.nodeName === b.nodeName && keyOf(a) === keyOf(b);
   function patch(a, b) {
     if (a.nodeType !== 1) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
-    for (const { name } of [...a.attributes]) if (!b.hasAttribute(name)) a.removeAttribute(name);
+    for (const { name } of [...a.attributes]) if (!b.hasAttribute(name) && !(a.tagName === 'DETAILS' && name === 'open')) a.removeAttribute(name);
     for (const { name, value } of [...b.attributes]) if (a.getAttribute(name) !== value) a.setAttribute(name, value);
     if (a.tagName === 'INPUT' && (a.type === 'checkbox' || a.type === 'radio')) a.checked = b.hasAttribute('checked');
     if (a.tagName === 'CANVAS' || a.tagName === 'TEXTAREA') return;
@@ -138,10 +139,10 @@
 
   /* ---------- Start ---------- */
   const GAME_CARDS = [
-    ['wwe', 'Wer würde eher …?', 'Eine Frage, alle stimmen auf dem Handy ab, wer am ehesten passt. Der Bildschirm löst auf – mit Applaus oder Gelächter.', 'Fernseher + Handys'],
-    ['slf', 'Stadt-Land-Fluss', 'Der Bildschirm würfelt einen Buchstaben, alle schreiben am Handy. Gleiche Antworten geben weniger Punkte, Unsinn wird gemeinsam rausgewählt.', 'Fernseher + Handys'],
-    ['kniffel', 'Kniffel', 'Wer dran ist, würfelt am eigenen Handy, hält Würfel fest und trägt ein. Der Bildschirm zeigt die Würfel groß und den Block aller.', 'Fernseher + Handys'],
-    ['maexchen', 'Mäxchen online', 'Jede Person würfelt verdeckt am eigenen Handy, sagt an und blufft. Glauben oder aufdecken? Geht auch über die Ferne.', 'Nur Handys'],
+    ['wwe', 'Wer würde eher …?', 'Eine Frage, alle stimmen am Handy ab, wer am ehesten passt. Dann kommt die Auflösung – mit Applaus oder Gelächter.', 'Nur Handys, Fernseher optional'],
+    ['slf', 'Stadt-Land-Fluss', 'Ein Buchstabe, alle schreiben am Handy. Gleiche Antworten geben weniger Punkte, Unsinn wird gemeinsam rausgewählt.', 'Nur Handys, Fernseher optional'],
+    ['kniffel', 'Kniffel', 'Wer dran ist, würfelt am eigenen Handy, hält Würfel fest und trägt ein. Alle anderen sehen die Würfel live mit.', 'Nur Handys, Fernseher optional'],
+    ['maexchen', 'Mäxchen online', 'Jede Person würfelt verdeckt am eigenen Handy, sagt an und blufft. Glauben oder aufdecken? Geht auch über die Ferne.', 'Nur Handys, Fernseher optional'],
     ['draw', 'Montagsmaler', 'Eine Person zeichnet am Handy, alle anderen raten um die Wette. Wer schnell rät, bekommt mehr Punkte.', 'Nur Handys, Fernseher optional'],
     ['agent', 'Agentenrunde', 'Team Rot gegen Team Blau: 25 Wörter, je Team ein Funker mit Geheimkarte. Ein Wort als Hinweis, das Team tippt die passenden Karten an.', 'Teams ab 4 Personen'],
     ['explain', 'Erklärbär', 'Begriffe gegen die Uhr erklären, ohne die fünf verbotenen Wörter zu sagen. Das andere Team liest mit und drückt „Verboten!“.', 'Teams ab 4 Personen'],
@@ -154,7 +155,7 @@
     const want = params.get('new');
     app.className = 'gp gp-start';
     app.innerHTML = `
-      <section class="hero"><h1>Gruppenspiele</h1><p>Alle spielen am eigenen Handy. Bei den meisten Spielen zeigt ein Fernseher oder Laptop das Geschehen groß, Mäxchen und Montagsmaler laufen auch ganz ohne.</p></section>
+      <section class="hero"><h1>Gruppenspiele</h1><p>Alle spielen am eigenen Handy – ein Fernseher ist nicht nötig. Wer den Raum eröffnet, spielt mit und leitet. Wer mag, zeigt das Geschehen zusätzlich groß auf einem Fernseher oder Laptop.</p></section>
       <form class="panel gp-join" id="joinForm">
         <h2>Mitspielen</h2>
         <div class="row">
@@ -171,9 +172,11 @@
           <h2>${t}</h2>
           <p>${d}</p>
           <span class="gp-tag">${tag}</span>
-          <button data-create="${g}">${SELF_HOST.has(g) ? 'Raum eröffnen & mitspielen' : 'Raum eröffnen'}</button>
+          <button data-create="${g}">Raum eröffnen &amp; mitspielen</button>
+          <button class="ghost small gp-tvonly" data-create-tv="${g}" title="Der Fernseher leitet, du spielst nicht mit">📺 Nur als Bildschirm</button>
         </article>`).join('')}</div>`;
     app.querySelectorAll('[data-create]').forEach((b) => (b.onclick = () => create(b.dataset.create)));
+    app.querySelectorAll('[data-create-tv]').forEach((b) => (b.onclick = () => create(b.dataset.createTv, true)));
     app.querySelector('#joinForm').onsubmit = (e) => {
       e.preventDefault();
       const f = e.target;
@@ -188,10 +191,10 @@
     if (want) app.querySelector(`.gp-game.${CSS.escape(want)}`)?.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
   }
 
-  async function create(game) {
+  async function create(game, tvOnly = false) {
     const nameIn = app.querySelector('#joinForm [name=name]');
     const nm = nameIn ? nameIn.value.trim() : '';
-    if (SELF_HOST.has(game) && !nm) {
+    if (!tvOnly && !nm) {
       const e = app.querySelector('#startErr');
       if (e) e.textContent = 'Du spielst mit – trag oben zuerst deinen Namen ein.';
       nameIn?.focus();
@@ -203,7 +206,7 @@
       const d = await r.json();
       if (!r.ok || !d.ok) throw new Error(d.error || 'Raum konnte nicht erstellt werden.');
       store.set('gp-host-' + d.roomCode, d.hostKey);
-      if (SELF_HOST.has(game)) {
+      if (!tvOnly) {
         try { localStorage.setItem('gg-name', nm); } catch {}
         store.set('gp-join-' + d.roomCode, { name: nm, hostKey: d.hostKey });
         return startPlayer(d.roomCode);
@@ -523,15 +526,11 @@
   }
 
   /* ---------- Kniffel ---------- */
-  function knHost(s) {
+  // Block aller Spielenden (Fernseher und – aufklappbar – Handy)
+  function knSheetTable(s) {
     const kn = s.kn;
     const P = byId(s);
-    const cur = P[kn.current] || { name: '?' };
     const order = kn.order.filter((id) => P[id]);
-    const lastP = kn.last && P[kn.last.player];
-    const lastCat = kn.last && s.cats.find((c) => c.key === kn.last.key);
-    const ranking = [...order].sort((a, b) => kn.totals[b].total - kn.totals[a].total);
-    const top = Math.max(1, ...order.map((id) => kn.totals[id].total));
     const cell = (id, c) => {
       const v = kn.sheets[id]?.[c.key];
       const isCur = id === kn.current;
@@ -541,16 +540,7 @@
       return `<td class="${isCur ? 'cur' : ''} open">${opt !== undefined ? `<span class="opt ${opt ? '' : 'z'}">${opt}</span>` : ''}</td>`;
     };
     const row = (c) => `<tr><th>${esc(c.name)}${KN_HINT[c.key] ? `<small>${KN_HINT[c.key]}</small>` : ''}</th>${order.map((id) => cell(id, c)).join('')}</tr>`;
-    return `<div class="kn-host">
-      <div class="kn-side">
-        <section class="kn-board">
-          <p class="kn-who">${av(cur)}<span><b>${esc(cur.name)}</b> ist dran</span>${rollDots(kn)}</p>
-          ${knDice(kn, false, false)}
-          <p class="kn-last" aria-live="polite">${lastP ? `${esc(lastP.name)} trägt <b>${kn.last.points}</b> bei ${esc(lastCat?.name || '')} ein` : kn.rollsLeft === 3 ? 'Am Handy auf „Würfeln“ tippen' : `Noch ${kn.rollsLeft} ${kn.rollsLeft === 1 ? 'Wurf' : 'Würfe'}`}</p>
-        </section>
-        <ol class="kn-rank">${ranking.map((id) => `<li data-k="rk${id}" class="${id === kn.current ? 'cur' : ''}">${av(P[id])}<span class="n">${esc(P[id].name)}</span><span class="bar"><i style="width:${(kn.totals[id].total / top) * 100}%"></i></span><b>${kn.totals[id].total}</b></li>`).join('')}</ol>
-      </div>
-      <div class="kn-sheet-wrap"><table class="kn-sheet">
+    return `<table class="kn-sheet">
         <thead><tr><th>Runde ${s.round} / 13</th>${order.map((id) => `<th class="${id === kn.current ? 'cur' : ''}">${av(P[id])}<span>${esc(P[id].name)}</span></th>`).join('')}</tr></thead>
         <tbody>
           <tr class="sec"><th colspan="${order.length + 1}">Oben</th></tr>
@@ -559,7 +549,38 @@
           <tr class="sec"><th colspan="${order.length + 1}">Unten</th></tr>
           ${s.cats.slice(6).map(row).join('')}
           <tr class="total"><th>Gesamt</th>${order.map((id) => `<td class="${id === kn.current ? 'cur' : ''}">${kn.totals[id].total}</td>`).join('')}</tr>
-        </tbody></table></div></div>`;
+        </tbody></table>`;
+  }
+  function knRank(s) {
+    const kn = s.kn;
+    const P = byId(s);
+    const order = kn.order.filter((id) => P[id]);
+    const ranking = [...order].sort((a, b) => kn.totals[b].total - kn.totals[a].total);
+    const top = Math.max(1, ...order.map((id) => kn.totals[id].total));
+    return `<ol class="kn-rank">${ranking.map((id) => `<li data-k="rk${id}" class="${id === kn.current ? 'cur' : ''} ${id === s.me?.id ? 'me' : ''}">${av(P[id])}<span class="n">${esc(P[id].name)}</span><span class="bar"><i style="width:${(kn.totals[id].total / top) * 100}%"></i></span><b>${kn.totals[id].total}</b></li>`).join('')}</ol>`;
+  }
+  function knLastLine(s) {
+    const kn = s.kn;
+    const P = byId(s);
+    const lastP = kn.last && P[kn.last.player];
+    const lastCat = kn.last && s.cats.find((c) => c.key === kn.last.key);
+    return lastP ? `${esc(lastP.name)} trägt <b>${kn.last.points}</b> bei ${esc(lastCat?.name || '')} ein` : '';
+  }
+  function knHost(s) {
+    const kn = s.kn;
+    const P = byId(s);
+    const cur = P[kn.current] || { name: '?' };
+    const last = knLastLine(s);
+    return `<div class="kn-host">
+      <div class="kn-side">
+        <section class="kn-board">
+          <p class="kn-who">${av(cur)}<span><b>${esc(cur.name)}</b> ist dran</span>${rollDots(kn)}</p>
+          ${knDice(kn, false, false)}
+          <p class="kn-last" aria-live="polite">${last || (kn.rollsLeft === 3 ? 'Am Handy auf „Würfeln“ tippen' : `Noch ${kn.rollsLeft} ${kn.rollsLeft === 1 ? 'Wurf' : 'Würfe'}`)}</p>
+        </section>
+        ${knRank(s)}
+      </div>
+      <div class="kn-sheet-wrap">${knSheetTable(s)}</div></div>`;
   }
 
   function knPhone(s) {
@@ -594,12 +615,16 @@
       </div>`;
     }
     const cur = s.players.find((p) => p.id === kn.current) || { name: '?' };
-    const rank = [...kn.order].filter((id) => kn.totals[id]).sort((a, b) => kn.totals[b].total - kn.totals[a].total).indexOf(s.me.id) + 1;
+    const rank = [...kn.order].filter((id) => kn.totals[id] && s.players.some((p) => p.id === id)).sort((a, b) => kn.totals[b].total - kn.totals[a].total).indexOf(s.me.id) + 1;
+    const last = knLastLine(s);
     return `<div class="kn-wait">
-      <div class="kn-tray small"><p class="kn-tray-h">${av(cur)}<b>${esc(cur.name)}</b> ist dran ${rollDots(kn)}</p>${knDice(kn, false, false)}</div>
+      <div class="kn-tray small"><p class="kn-tray-h">${av(cur)}<b>${esc(cur.name)}</b> ist dran ${rollDots(kn)}</p>${knDice(kn, false, false)}
+        <p class="kn-last small" aria-live="polite">${last || (kn.rollsLeft === 3 ? `${esc(cur.name)} würfelt gleich …` : `Noch ${kn.rollsLeft} ${kn.rollsLeft === 1 ? 'Wurf' : 'Würfe'}`)}</p></div>
       <div class="kn-mycard"><div><span>Deine Punkte</span><b>${tot.total}</b></div><div><span>Platz</span><b>${rank || '–'}</b></div><div><span>Runde</span><b>${s.round}/13</b></div></div>
+      ${knRank(s)}
       ${bonusBar}
       <div class="kn-opts mini">${s.cats.map((c) => `<div class="kn-opt ${sheet[c.key] != null ? 'done' : ''}"><span>${esc(c.name)}</span><b>${sheet[c.key] == null ? '' : sheet[c.key] === 0 ? '–' : sheet[c.key]}</b></div>`).join('')}</div>
+      <details class="kn-all" data-k="knall"><summary>📋 Block aller ansehen</summary><div class="kn-sheet-wrap">${knSheetTable(s)}</div></details>
     </div>`;
   }
 
@@ -1030,7 +1055,17 @@
       },
       onClose: () => { G.connected = false; },
       onState: (s) => { clock.sync(s.serverNow); const prev = G.s; G.s = s; renderPlayer(prev); },
-      onEvent: (e) => { if (e === 'kicked') { G.sock.closed = true; store.del('gp-join-' + code); renderStart('Du wurdest aus dem Raum entfernt.'); } },
+      onEvent: (e, p) => {
+        if (e === 'kicked' || e === 'left') { G.sock.closed = true; clearInterval(G.tick); store.del('gp-join-' + code); history.replaceState(null, '', '/spiele/gruppe/'); renderStart(e === 'kicked' ? 'Du wurdest aus dem Raum entfernt.' : ''); if (e === 'left') toast('Du hast die Gruppe verlassen.'); }
+        if (e === 'host' && p?.hostKey) {
+          // Die Spielleitung ist gegangen – jetzt leitest du (auch nach dem Neuladen)
+          const j = store.get('gp-join-' + code) || {};
+          store.set('gp-join-' + code, { ...j, hostKey: p.hostKey });
+          store.set('gp-host-' + code, p.hostKey);
+          vibrate([40, 40, 40]);
+          toast('Du leitest jetzt das Spiel 👑');
+        }
+      },
       onGone: () => renderStart('Der Raum ist abgelaufen.'),
     });
   }
@@ -1069,27 +1104,16 @@
     }
     G.lastPhaseKey = key;
     const bodyKey = phaseKey(s, key);
-    const top = `<header class="gp-me">${av(s.me)}<b>${esc(s.me.name)}</b>${s.me.host ? '<span class="crown" title="Spielleitung">👑</span>' : ''}${TEAM_GAMES.has(s.game) ? teamTag(s.me.team) : ''}<span class="pts">${s.game === 'maexchen' ? `${s.mx?.lives?.[s.me.id] ?? s.settings.lives} Deckel` : TEAM_GAMES.has(s.game) ? '' : `${s.me.score} Pkt`}</span><span class="code">${esc(s.code)}</span></header>`;
+    const top = `<header class="gp-me">${av(s.me)}<b>${esc(s.me.name)}</b>${s.me.host ? '<span class="crown" title="Spielleitung">👑</span>' : ''}${TEAM_GAMES.has(s.game) ? teamTag(s.me.team) : ''}<span class="pts">${s.game === 'maexchen' ? `${s.mx?.lives?.[s.me.id] ?? s.settings.lives} Deckel` : TEAM_GAMES.has(s.game) ? '' : `${s.me.score} Pkt`}</span><span class="code">${esc(s.code)}</span><button type="button" class="gp-leave" data-leave title="Gruppe verlassen" aria-label="Gruppe verlassen">🚪</button></header>`;
     let body = '';
     if (s.phase === 'LOBBY') {
-      body = s.selfHost || s.me.host ? selfHostLobby(s) : `<div class="gp-wait"><p class="big">Du bist drin!</p><p class="muted">Als Nächstes: <b>${ICON[s.game]} ${esc(s.gameName)}</b></p><p class="muted">Gleich geht’s los. Schau auf den Bildschirm.</p><div class="gp-people">${s.players.map((p) => `<span class="gp-chip" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b></span>`).join('')}</div>${eveningTable(s)}</div>`;
+      body = s.selfHost || s.me.host ? selfHostLobby(s) : `<div class="gp-wait"><p class="big">Du bist drin!</p><p class="muted">Als Nächstes: <b>${ICON[s.game]} ${esc(s.gameName)}</b></p><p class="muted">Gleich geht’s los – die Spielleitung startet am Bildschirm.</p><div class="gp-people">${s.players.map((p) => `<span class="gp-chip" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b></span>`).join('')}</div>${eveningTable(s)}</div>`;
     } else if (s.phase === 'FINALE') {
       const mine = s.evening?.ranking.findIndex((r) => r.id === s.me.id);
       body = `<div class="gp-wait ev-me"><p class="kick">Siegerehrung</p><p class="big">${mine === 0 ? 'Sieg des Abends! 🏆' : mine >= 0 ? `Platz ${mine + 1} am Abend` : 'Spieleabend'}</p>
         ${(s.evening?.titles || []).filter((t) => t.name === s.me.name).map((t) => `<p class="ev-mytitle">${ICON[t.game]} ${esc(t.title)}</p>`).join('')}</div>${eveningTable(s)}${galleryHtml(s)}`;
     } else if (s.game === 'wwe') {
-      if (s.phase === 'QUESTION') {
-        body = s.myVote
-          ? `<div class="gp-wait"><p class="big">Abgestimmt ✓</p><p class="muted">Du hast ${esc(s.players.find((p) => p.id === s.myVote)?.name || '')} gewählt. Warte auf die anderen …</p></div>`
-          : `<p class="kick">Wer würde eher …</p><h2 class="wwe-phone-q">${esc(s.question.replace(/^… ?/, ''))}</h2>${timerBar()}
-            <div class="gp-pick">${s.players.map((p, i) => `<button data-vote="${p.id}" data-k="p${p.id}" style="animation-delay:${i * 0.04}s">${av(p)}<b>${esc(p.name)}</b></button>`).join('')}</div>`;
-      } else if (s.phase === 'RESULT') {
-        const mine = s.result.ranking.find((r) => r.id === s.me.id);
-        body = `<div class="gp-wait"><p class="kick">Ergebnis</p><p class="big">${s.result.winners.length ? s.result.winners.map(esc).join(' & ') : 'Niemand'}</p>
-          <p class="muted">${mine ? `Für dich gab es ${mine.votes} ${mine.votes === 1 ? 'Stimme' : 'Stimmen'}.` : 'Für dich hat niemand gestimmt.'}</p></div>`;
-      } else {
-        body = endPhone(s.awards.players);
-      }
+      body = wwePhone(s);
     } else if (s.game === 'kniffel') {
       body = s.phase === 'PLAYING' ? knPhone(s) : endPhone(sortScore(s));
       // Hinweis, wenn man an die Reihe kommt
@@ -1111,7 +1135,9 @@
         const vals = s.myAnswers || {};
         const final = s.done && s.done.includes(s.me.id);
         body = final
-          ? `<div class="gp-wait"><div class="slf-letter small"><span>${esc(s.letter)}</span></div><p class="big">Abgegeben ✓</p><p class="muted">Warte, bis die Zeit um ist …</p></div>`
+          ? `<div class="gp-wait"><div class="slf-letter small"><span>${esc(s.letter)}</span></div><p class="big">Abgegeben ✓</p><p class="muted">Warte, bis die Zeit um ist …</p>${timerBar()}
+            <div class="gp-voted small">${s.players.map((p) => `<span class="${s.done.includes(p.id) ? 'in' : ''}" data-k="v${p.id}" title="${esc(p.name)}">${av(p)}</span>`).join('')}</div>
+            <p class="muted small">${s.done.length} von ${s.players.filter((p) => p.connected).length} haben abgegeben</p></div>`
           : `<div class="slf-top"><div class="slf-letter small spin"><span>${esc(s.letter)}</span></div>${timerBar()}</div>
             <p class="slf-stop" id="slfStopped">${s.stoppedBy ? `✋ ${esc(s.stoppedBy)} ist fertig – noch 10 Sekunden!` : ''}</p>
             <form class="slf-form" id="slfForm">${s.settings.categories.map((c) => `<label>${esc(c)}<input name="${esc(c)}" value="${esc(vals[c] || '')}" maxlength="40" autocomplete="off" autocapitalize="words" placeholder="${esc(s.letter)} …"></label>`).join('')}
@@ -1126,12 +1152,14 @@
             const mine = p.id === s.me.id;
             const flagged = fl.includes(s.me.id);
             return `<button class="a ${mine ? 'mine' : ''} ${flagged ? 'flagged' : ''} ${auto.has(k) ? 'auto' : ''} ${!v ? 'empty' : ''}" ${mine || !v || auto.has(k) ? 'disabled' : ''} data-flag="${p.id}" data-cat="${esc(c)}"><small>${esc(p.name)}</small>${v ? esc(v) : '–'}${fl.length ? ` <em>👎 ${fl.length}</em>` : ''}</button>`;
-          }).join('')}</div></div>`).join('')}`;
+          }).join('')}</div></div>`).join('')}${hostWait(s, 'vergibt gleich die Punkte.')}`;
       } else if (s.phase === 'SCORES') {
         const pts = s.roundScores.scores[s.me.id] || 0;
         const rank = sortScore(s).findIndex((p) => p.id === s.me.id) + 1;
-        body = `<div class="gp-wait"><p class="kick">Runde ${s.round}</p><p class="big pop">+${pts}</p><p class="muted">Gesamt ${s.me.score} Punkte, Platz ${rank} von ${s.players.length}</p>
-          <ul class="slf-mine">${s.settings.categories.map((c) => `<li><span>${esc(c)}</span><b>${esc(s.answers[s.me.id]?.[c] || '–')}</b><em class="p${s.roundScores.detail[s.me.id]?.[c] ?? 0}">${s.roundScores.detail[s.me.id]?.[c] ?? 0}</em></li>`).join('')}</ul></div>`;
+        body = `<div class="gp-wait"><p class="kick">Runde ${s.round} von ${s.settings.rounds}</p><p class="big pop">+${pts}</p><p class="muted">Gesamt ${s.me.score} Punkte, Platz ${rank} von ${s.players.length}</p>
+          <ul class="slf-mine">${s.settings.categories.map((c) => `<li><span>${esc(c)}</span><b>${esc(s.answers[s.me.id]?.[c] || '–')}</b><em class="p${s.roundScores.detail[s.me.id]?.[c] ?? 0}">${s.roundScores.detail[s.me.id]?.[c] ?? 0}</em></li>`).join('')}</ul></div>
+          <ol class="slf-board">${sortScore(s).map((p, i) => `<li data-k="sb${p.id}" class="${p.id === s.me.id ? 'me' : ''}"><span class="pl">${i + 1}</span>${av(p)}<span class="n">${esc(p.name)}</span><em>+${s.roundScores.scores[p.id] || 0}</em><b>${p.score}</b></li>`).join('')}</ol>
+          ${hostWait(s, s.round >= s.settings.rounds ? 'zeigt gleich den Endstand.' : 'startet gleich den nächsten Buchstaben.')}`;
       } else {
         body = endPhone(sortScore(s));
       }
@@ -1142,7 +1170,10 @@
         ? `<div class="sh-ctl open">${s.game === 'draw' ? galleryHtml(s) : ''}<button data-host="restart">🔁 Nochmal ${esc(s.gameName)}</button>${gamePicker(s, 'Oder ein anderes Spiel')}<button class="ghost" data-host="finale">🏆 Siegerehrung</button>${eveningTable(s)}</div>`
         : s.phase === 'FINALE'
         ? `<div class="sh-ctl open"><button data-host="restart">Weiter spielen</button></div>`
-        : `<details class="sh-ctl"><summary>Spielleitung</summary><button class="ghost small" data-host="next">${s.game === 'draw' ? (s.phase === 'DRAW' ? 'Runde beenden' : 'Weiter') : s.game === 'agent' ? (s.phase === 'BOARD' ? 'Nächste Partie' : 'Zug beenden') : s.game === 'explain' ? (s.phase === 'READY' ? 'Runde starten' : 'Runde beenden') : 'Zug überspringen'}</button><button class="ghost small" data-host="restart">Zurück in den Warteraum</button></details>`;
+        : (() => {
+          const c = hostCtl(s);
+          return `${c.main ? `<button class="big sh-next" data-host="next" data-k="shn-${s.phase}">${c.main}</button>` : ''}<details class="sh-ctl" data-k="shctl"><summary>Spielleitung</summary>${c.side ? `<button class="ghost small" data-host="next">${c.side}</button>` : ''}<button class="ghost small" data-host="restart">Zurück in den Warteraum</button></details>`;
+        })();
     }
     app.className = `gp gp-player g-${s.game}`;
     morph(app, `${top}<main class="gp-phone"><div class="gp-body" data-k="${bodyKey}">${body}</div></main>${G.connected ? '' : '<p class="warn center">Verbindung unterbrochen …</p>'}`);
@@ -1159,13 +1190,82 @@
     }
   }
 
+  // Wartet das Spiel auf die Spielleitung? Dann sagen wir, auf wen.
+  function hostWait(s, what) {
+    if (!s.selfHost || s.me.host) return '';
+    const h = s.players.find((p) => p.id === s.hostPlayer);
+    return `<p class="muted small center gp-hostwait">${h ? `${esc(h.name)} ${what}` : `Gleich geht es weiter.`}</p>`;
+  }
+  function wwePhone(s) {
+    const q = esc((s.question || '').replace(/^… ?/, ''));
+    if (s.phase === 'QUESTION') {
+      const on = s.players.filter((p) => p.connected).length;
+      const prog = `<div class="gp-voted small">${s.players.map((p) => `<span class="${s.voted.includes(p.id) ? 'in' : ''}" data-k="v${p.id}" title="${esc(p.name)}">${av(p)}</span>`).join('')}</div>
+        <p class="muted small center">${s.voted.length} von ${on} haben abgestimmt</p>`;
+      if (s.myVote) {
+        return `<div class="wwe-q phone"><p class="kick">Wer würde eher …</p><h2 class="wwe-phone-q">${q}</h2></div>${timerBar()}
+          <div class="gp-wait"><p class="big">Abgestimmt ✓</p><p class="muted">Du hast ${esc(s.players.find((p) => p.id === s.myVote)?.name || '')} gewählt.</p></div>${prog}`;
+      }
+      return `<p class="kick">Wer würde eher …</p><h2 class="wwe-phone-q">${q}</h2>${timerBar()}
+        <div class="gp-pick">${s.players.map((p, i) => `<button data-vote="${p.id}" data-k="p${p.id}" style="animation-delay:${i * 0.04}s">${av(p)}<b>${esc(p.name)}</b></button>`).join('')}</div>${prog}`;
+    }
+    if (s.phase === 'RESULT') {
+      const r = s.result;
+      const max = Math.max(1, ...r.ranking.map((x) => x.votes));
+      const mine = r.ranking.find((x) => x.id === s.me.id);
+      return `<div class="wwe-q small phone"><p class="kick">Wer würde eher …</p><h2>${q}</h2></div>
+        ${r.winners.length ? `<div class="wwe-win"><span class="crown">👑</span><b>${r.winners.map(esc).join(' & ')}</b></div>` : '<p class="center muted">Niemand hat abgestimmt.</p>'}
+        <div class="wwe-bars">${r.ranking.map((x, i) => `<div class="b" data-k="wb${x.id}" style="--w:${(x.votes / max) * 100}%; animation-delay:${0.3 + i * 0.12}s">${av({ name: x.name })}<span class="n">${esc(x.name)}</span><span class="bar"><i></i></span><b>${x.votes}</b></div>`).join('')}</div>
+        <p class="muted center small">${mine ? `Für dich gab es ${mine.votes} ${mine.votes === 1 ? 'Stimme' : 'Stimmen'}.` : 'Für dich hat diesmal niemand gestimmt.'}</p>
+        ${hostWait(s, s.round >= s.settings.rounds ? 'zeigt gleich das Ergebnis.' : 'startet gleich die nächste Frage.')}`;
+    }
+    const a = s.awards;
+    return `${endPhone(a.players)}<ol class="wwe-hist">${a.history.map((h) => `<li><span>Wer würde eher ${esc(h.q.replace(/^… ?/, ''))}</span><b>${h.winners.length ? h.winners.map(esc).join(' & ') : '–'}</b></li>`).join('')}</ol>`;
+  }
+  // Was die Spielleitung am Handy gerade braucht: Haupt-Knopf (wenn das Spiel
+  // auf sie wartet) und Notfall-Knöpfe im aufklappbaren Bereich.
+  function hostCtl(s) {
+    const g = s.game, ph = s.phase, last = s.round >= s.settings.rounds;
+    if (g === 'wwe') return { main: ph === 'RESULT' ? (last ? 'Zum Ergebnis' : 'Nächste Frage') : null, side: ph === 'QUESTION' ? 'Jetzt auflösen' : null };
+    if (g === 'slf') return { main: ph === 'REVIEW' ? 'Punkte vergeben' : ph === 'SCORES' ? (last ? 'Zum Endstand' : 'Nächster Buchstabe') : null, side: ph === 'WRITING' ? 'Stopp – jetzt auswerten' : null };
+    if (g === 'kniffel' || g === 'maexchen') return { main: null, side: 'Zug überspringen' };
+    if (g === 'draw') return { main: null, side: ph === 'DRAW' ? 'Runde beenden' : ph === 'CHOOSE' ? 'Wort automatisch wählen' : 'Weiter' };
+    if (g === 'agent') return { main: null, side: ph === 'BOARD' ? null : 'Zug beenden' };
+    if (g === 'explain') return { main: null, side: ph === 'READY' ? 'Runde starten' : 'Runde beenden' };
+    return { main: null, side: null };
+  }
+
   function endPhone(list) {
     const i = list.findIndex((p) => p.name === G.s.me.name);
     return `<div class="gp-wait"><p class="kick">Spielende</p><p class="big">${i === 0 ? 'Platz 1! 🎉' : `Platz ${i + 1}`}</p><p class="muted">${list[i] ? `${list[i].score} ${list[i].score === 1 ? 'Punkt' : 'Punkte'}` : ''}</p>
       <ol class="gp-rest">${list.map((p) => `<li>${esc(p.name)} <b>${p.score}</b></li>`).join('')}</ol></div>`;
   }
 
+  async function leaveRoom() {
+    const s = G.s;
+    const others = s.players.filter((p) => !p.bot && p.id !== s.me.id);
+    const next = others.find((p) => p.connected) || others[0];
+    const running = !['LOBBY', 'END', 'FINALE'].includes(s.phase);
+    const msg = s.me.host && next
+      ? `Gruppe verlassen? ${next.name} übernimmt dann die Spielleitung.`
+      : running ? 'Gruppe verlassen? Das Spiel läuft ohne dich weiter.' : 'Gruppe verlassen?';
+    if (!confirm(msg)) return;
+    await G.sock.emit('leave');
+    G.sock.closed = true;
+    try { G.sock.ws.close(); } catch {}
+    clearInterval(G.tick);
+    store.del('gp-join-' + G.code);
+    if (s.me.host) store.del('gp-host-' + G.code);
+    G.s = null;
+    G.lastPhaseKey = '';
+    history.replaceState(null, '', '/spiele/gruppe/');
+    renderStart();
+    toast('Du hast die Gruppe verlassen.');
+  }
+
   function bindPlayer() {
+    const lv = app.querySelector('[data-leave]');
+    if (lv) lv.onclick = leaveRoom;
     app.querySelectorAll('[data-vote]').forEach((b) => (b.onclick = async () => {
       app.querySelectorAll('[data-vote]').forEach((x) => (x.disabled = true));
       b.classList.add('chosen');

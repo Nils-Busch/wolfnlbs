@@ -1,10 +1,8 @@
-// Zusätzliche Gruppenspiele im PartyRoom, bei denen die Person, die den Raum
-// eröffnet, selbst mitspielt (kein Fernseher nötig, aber möglich):
+// Zusätzliche Gruppenspiele im PartyRoom (wie alle Gruppenspiele auch ganz
+// ohne Fernseher spielbar – wer den Raum eröffnet, spielt mit und leitet):
 //  - Mäxchen online: 2–10 Handys, Würfel verdeckt, ansagen, bluffen, aufdecken.
 //  - Montagsmaler: eine Person zeichnet am Handy, alle anderen raten.
 // Die Funktionen werden als Methoden an PartyRoom gehängt (this = Raum).
-
-export const SELF_HOST = new Set(["maexchen", "draw", "agent", "explain"]);
 
 /* =================== Mäxchen =================== */
 export const MX_ORDER = [31, 32, 41, 42, 43, 51, 52, 53, 54, 61, 62, 63, 64, 65, 11, 22, 33, 44, 55, 66, 21];

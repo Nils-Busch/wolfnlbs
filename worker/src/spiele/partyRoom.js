@@ -7,7 +7,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 import { makeId } from "../woelfe/ids.js";
-import { SELF_HOST, extraMethods } from "./partyExtra.js";
+import { extraMethods } from "./partyExtra.js";
 import { KN_CATS, knScore, knTotals } from "./kniffel.js";
 import { defaultSettings, placements, teamPlacements, eveningSummary, TITLES, EVENING_POINTS } from "./evening.js";
 import { TEAM_GAMES, teamMethods, parseCards, cardsText } from "./teamGames.js";
@@ -217,7 +217,8 @@ export class PartyRoom extends DurableObject {
       endsAt: s.endsAt,
       players: this.playersArr().map((p) => this.pub(p)),
       categoriesAll: SLF_CATEGORIES,
-      selfHost: SELF_HOST.has(s.game),
+      // Spielt die Person mit, die den Raum eröffnet hat? Dann braucht es keinen Fernseher.
+      selfHost: !!s.hostPlayer,
       hostPlayer: s.hostPlayer,
       games: GAMES,
       evening: s.evening && s.evening.played.length ? eveningSummary(s.evening) : null,
@@ -641,6 +642,55 @@ export class PartyRoom extends DurableObject {
     await this.persist();
   }
 
+  /**
+   * Person aus dem Raum nehmen (entfernt oder selbst gegangen) – das laufende
+   * Spiel geht ohne sie weiter. Leitete sie das Spiel, übernimmt die nächste
+   * Person (bekommt den Raumschlüssel, damit es auch nach dem Neuladen klappt).
+   */
+  removePlayer(playerId, why, except = null) {
+    const s = this.s;
+    delete s.players[playerId];
+    delete s.votes[playerId];
+    delete s.answers[playerId];
+    for (const k of Object.keys(s.flags || {})) {
+      if (k.startsWith(playerId + "|")) delete s.flags[k];
+      else if (s.flags[k]) delete s.flags[k][playerId];
+    }
+    if (s.game === "maexchen") this.mxRemove(playerId);
+    if (TEAM_GAMES.has(s.game)) this.tmRemove(playerId);
+    if (s.game === "draw" && s.dr && s.dr.drawer === playerId && (s.phase === "CHOOSE" || s.phase === "DRAW")) this.drEndTurn("left");
+    if (s.game === "kniffel" && s.phase === "PLAYING" && s.kn) {
+      if (s.kn.order.every((id) => !s.players[id])) s.phase = "END";
+      else if (this.knCurrent() === playerId) this.knAdvance();
+    }
+    if (s.game === "wwe") this.wweMaybeAll();
+    if (s.game === "slf" && s.phase === "WRITING") {
+      const on = this.online();
+      if (on.length && on.every((p) => s.answers[p.id]?.final)) this.slfToReview();
+    }
+    for (const o of this.sockets()) {
+      if (o !== except && this.att(o).playerId === playerId) {
+        this.send(o, { t: "evt", event: why, payload: {} });
+        o.serializeAttachment({ role: null });
+      }
+    }
+    if (s.hostPlayer === playerId) this.handOverHost();
+  }
+  handOverHost() {
+    const s = this.s;
+    const humans = this.playersArr().filter((p) => !p.bot);
+    const next = humans.find((p) => p.connected) || humans[0] || null;
+    s.hostPlayer = next ? next.id : null;
+    if (!next) return;
+    for (const o of this.sockets()) {
+      const a = this.att(o);
+      if (a.role === "player" && a.playerId === next.id) {
+        o.serializeAttachment({ ...a, host: true });
+        this.send(o, { t: "evt", event: "host", payload: { hostKey: s.hostKey } });
+      }
+    }
+  }
+
   requireHost(ws) {
     const a = this.att(ws);
     if (a.role !== "host" && !(a.role === "player" && a.host)) throw new Error("Nur die Spielleitung darf das.");
@@ -802,22 +852,7 @@ export class PartyRoom extends DurableObject {
     kick(ws, { playerId }) {
       this.requireHost(ws);
       if (!this.s.players[playerId]) throw new Error("Spieler nicht gefunden.");
-      delete this.s.players[playerId];
-      delete this.s.votes[playerId];
-      delete this.s.answers[playerId];
-      if (this.s.game === "maexchen") this.mxRemove(playerId);
-      if (TEAM_GAMES.has(this.s.game)) this.tmRemove(playerId);
-      if (this.s.game === "draw" && this.s.dr && this.s.dr.drawer === playerId && (this.s.phase === "CHOOSE" || this.s.phase === "DRAW")) this.drEndTurn("left");
-      if (this.s.game === "kniffel" && this.s.phase === "PLAYING" && this.s.kn) {
-        if (this.knCurrent() === playerId) this.knAdvance();
-        else if (this.s.kn.order.every((id) => !this.s.players[id])) this.s.phase = "END";
-      }
-      for (const o of this.sockets()) {
-        if (this.att(o).playerId === playerId) {
-          this.send(o, { t: "evt", event: "kicked", payload: {} });
-          o.serializeAttachment({ role: null });
-        }
-      }
+      this.removePlayer(playerId, "kicked");
     },
 
     /* Handys */
@@ -991,16 +1026,12 @@ export class PartyRoom extends DurableObject {
       return r?.stale ? { quiet: true, reply: { stale: true } } : { reply: r || {} };
     },
 
+    // „Gruppe verlassen“: ganz raus aus dem Raum, auch mitten im Spiel
     leave(ws) {
       const { playerId } = this.att(ws);
-      const s = this.s;
-      if (playerId && s.players[playerId] && s.phase === "LOBBY") {
-        delete s.players[playerId];
-        if (TEAM_GAMES.has(s.game)) this.tmRemove(playerId);
-      }
-      else if (playerId && s.players[playerId]) s.players[playerId].connected = false;
+      if (playerId && this.s.players[playerId]) this.removePlayer(playerId, "left", ws);
       ws.serializeAttachment({ role: null });
-      if (s.game === "wwe") this.wweMaybeAll();
+      return { reply: {} };
     },
   };
 }

@@ -101,8 +101,18 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
   Mehrere Reihen auf einmal bringen mehr (80, 240, 480 …), Abräumen in Folge baut eine Kombo
   auf (×2, ×3 …), ein leeres Feld gibt 300 extra. Vorbei, wenn keiner der drei Blöcke passt.
   Ein angefangenes Spiel bleibt nach dem Neuladen erhalten. Bestenliste wie bei den anderen Solo-Spielen.
-- **Gruppenspiele** (`/spiele/gruppe/`): Ein Gerät ist der Bildschirm (Fernseher/Laptop, Raum
-  eröffnen), alle anderen treten am Handy per Code oder QR-Code bei – ohne Konto.
+- **Gruppenspiele** (`/spiele/gruppe/`): **Alle Spiele gehen nur mit Handys.** Wer den Raum
+  eröffnet („Raum eröffnen & mitspielen“), spielt selbst mit und leitet das Spiel am Handy; die
+  anderen treten per Code oder QR-Code bei – ohne Konto. Die Handys zeigen alles, was sonst der
+  Fernseher zeigt (Kniffel: Würfel der anderen live, Rangliste und „Block aller“; Wer würde eher:
+  Frage, Abstimmungsstand, Auflösung mit Balken; Stadt-Land-Fluss: Abgabestand, Prüfung,
+  Rangliste nach jeder Runde). Wenn das Spiel auf die Spielleitung wartet, hat sie einen großen
+  Knopf („Nächste Frage“, „Punkte vergeben“ …), alle anderen sehen, auf wen gewartet wird.
+  - **Fernseher optional:** „📺 Zusätzlich auf einem Fernseher zeigen“ im Warteraum, oder beim
+    Eröffnen „📺 Nur als Bildschirm“ – dann leitet der Fernseher und spielt nicht mit (wie früher).
+  - **Gruppe verlassen:** 🚪 oben rechts am Handy – jederzeit, auch mitten im Spiel. Das Spiel
+    läuft ohne die Person weiter. Geht die Spielleitung, übernimmt automatisch die nächste Person
+    (👑, klappt auch nach dem Neuladen).
   - **Wer würde eher …?** – 60 eingebaute Fragen, Abstimmung am Handy, Auflösung mit Balken,
     am Ende die „Titel des Abends“.
   - **Stadt-Land-Fluss** – Buchstabe wird gewürfelt, Kategorien frei wählbar (18 zur Auswahl).
