@@ -182,6 +182,18 @@ try {
   pr.ok && me.user.prefs?.look?.theme === "nacht" && me.user.prefs.look.font === "play" ? ok("Aussehen am Konto gespeichert") : bad("Aussehen speichern");
   (await send("/api/konto/prefs", null, { method: "PUT", body: JSON.stringify({ look: {} }) })).status === 401 ? ok("Aussehen ohne Zugang gesperrt") : bad("Aussehen ohne Zugang");
 
+  // Angemeldet bleiben: 90 Tage statt 12 Stunden, „überall abmelden“ beendet alle Sitzungen
+  const maxAge = (r) => Number((r.headers.getSetCookie().find((c) => c.startsWith("sid=")) || "").match(/Max-Age=(\d+)/)?.[1]);
+  const kurz = jar(), lang = jar();
+  const rk = await send("/api/konto/auth/login", kurz, { method: "POST", body: JSON.stringify({ username: "admin", password: ADMIN_PW }) });
+  const rl = await send("/api/konto/auth/login", lang, { method: "POST", body: JSON.stringify({ username: "admin", password: ADMIN_PW, remember: true }) });
+  maxAge(rk) === 12 * 3600 && maxAge(rl) === 90 * 86400 ? ok("Anmeldung: 12 Stunden bzw. 90 Tage mit „Angemeldet bleiben“") : bad(`Anmeldedauer ${maxAge(rk)} / ${maxAge(rl)}`);
+  const ml = await (await send("/api/konto/auth/me", lang)).json();
+  ml.user?.keep === true ? ok("„Angemeldet bleiben“ wird angezeigt") : bad("keep fehlt in /auth/me");
+  await send("/api/konto/auth/logout-all", lang, { method: "POST", body: "{}" });
+  (await (await send("/api/konto/auth/me", kurz)).json()).user === null ? ok("überall abgemeldet") : bad("andere Sitzung lebt noch");
+  r0 = await send("/api/konto/auth/login", admin, { method: "POST", body: JSON.stringify({ username: "admin", password: ADMIN_PW }) });
+
   // Turnier-Gastlink: nur dieses Turnier, nur ansehen und tippen
   const tid = (await (await send("/api/tischtennis/tournaments", admin, { method: "POST", body: JSON.stringify({ name: "Hallenturnier", format: "league", best_of: 3, sport: "tabletennis" }) })).json()).id;
   for (const n of ["Anna", "Ben"]) await send(`/api/tischtennis/tournaments/${tid}/players`, admin, { method: "POST", body: JSON.stringify({ name: n }) });

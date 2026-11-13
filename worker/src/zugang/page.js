@@ -73,6 +73,7 @@ export function gatePage({ codeEnabled, message = "", back = null }) {
       <form class="vh-card" id="login-form">
         <label class="vh-field">Benutzername<input name="username" autocomplete="username" autocapitalize="none" required></label>
         <label class="vh-field">Passwort<input name="password" type="password" autocomplete="current-password" required></label>
+        <label class="vh-check"><input type="checkbox" name="remember" checked> <span>Angemeldet bleiben</span></label>
         <button class="vh-btn">Anmelden</button>
         <p class="vh-error" data-error></p>
       </form>
@@ -102,7 +103,7 @@ export function gatePage({ codeEnabled, message = "", back = null }) {
     });
   }
   bind('code-form', '/api/zugang/code', function (f) { return { code: f.code.value }; });
-  bind('login-form', '/api/konto/auth/login', function (f) { return { username: f.username.value.toLowerCase(), password: f.password.value }; });
+  bind('login-form', '/api/konto/auth/login', function (f) { return { username: f.username.value.toLowerCase(), password: f.password.value, remember: f.remember.checked }; });
 })();
 </script>
 </body>

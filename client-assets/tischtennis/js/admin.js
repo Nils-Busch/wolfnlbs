@@ -23,6 +23,7 @@ function loginView() {
       <h1 class="page-title">Anmelden</h1>
       <label>Benutzername<input name="username" autocomplete="username" required autofocus></label>
       <label>Passwort<input name="password" type="password" autocomplete="current-password" required></label>
+      <label class="check"><input type="checkbox" name="remember" checked> Angemeldet bleiben</label>
       <button class="primary">Anmelden</button>
     </form>
     <p class="hint" style="text-align:center">Noch kein Konto? <a href="/konto/#register">Hier registrieren</a> – danach muss der Admin dich freischalten.</p>`;

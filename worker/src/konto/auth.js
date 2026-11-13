@@ -14,6 +14,7 @@
 //   POST /auth/logout
 //   GET  /auth/me
 //   POST /auth/password   { current, next }
+//   POST /auth/logout-all – auf allen Geräten abmelden
 //   PUT  /prefs           { look }  – Aussehen am Konto speichern (siehe prefs.js)
 //   GET  /users                         (users.manage)
 //   POST /users                         (users.manage) – direkt aktives Konto anlegen
@@ -95,6 +96,12 @@ export async function ensureAccounts(env) {
     if (stmts.length) await env.DB.batch(stmts);
   }
 
+  // Migration: „Angemeldet bleiben“ – lange Sitzungen verlängern sich bei Benutzung
+  const scols = await env.DB.prepare("PRAGMA table_info(sessions)").all();
+  if (!scols.results.some((c) => c.name === "keep")) {
+    await env.DB.prepare("ALTER TABLE sessions ADD COLUMN keep INTEGER NOT NULL DEFAULT 0").run();
+  }
+
   // Migration: persönliche Einstellungen (Aussehen) als JSON
   if (!cols.results.some((c) => c.name === "prefs")) {
     await env.DB.prepare("ALTER TABLE users ADD COLUMN prefs TEXT").run();
@@ -140,8 +147,26 @@ function randomPassword() {
 }
 
 function sessionCookieHeader(token, maxAgeSec, secure) {
-  return `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${secure ? "; Secure" : ""}`;
+  return `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.round(maxAgeSec)}${secure ? "; Secure" : ""}`;
 }
+
+/**
+ * Wie lange eine Anmeldung hält:
+ *  - normal: SESSION_HOURS (Standard 12 Stunden), läuft dann ab
+ *  - „Angemeldet bleiben“: KEEP_DAYS (Standard 90 Tage) und verlängert sich
+ *    bei Benutzung – wer die Seite regelmäßig öffnet, bleibt angemeldet.
+ */
+export function sessionLengths(env) {
+  return {
+    shortMs: (Number(env.SESSION_HOURS) || 12) * 3600 * 1000,
+    keepMs: (Number(env.KEEP_DAYS) || 90) * 86_400_000,
+  };
+}
+/** Muss eine lange Sitzung verlängert werden? (höchstens einmal am Tag) */
+export function needsRenewal(expiresAt, keepMs, now = Date.now()) {
+  return expiresAt - now < keepMs - 86_400_000;
+}
+const wantsKeep = (v) => v === true || v === "on" || v === "1" || v === 1;
 
 /** Angemeldeten Benutzer aus dem Cookie laden (oder null). */
 export async function getUser(request, env) {
@@ -149,7 +174,7 @@ export async function getUser(request, env) {
   const token = readCookie(request, "sid");
   if (!token) return null;
   const row = await env.DB.prepare(
-    `SELECT u.id, u.username, u.display_name, u.prefs FROM sessions s
+    `SELECT u.id, u.username, u.display_name, u.prefs, s.expires_at AS session_expires, s.keep AS session_keep FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.token = ? AND s.expires_at > ? AND u.active = 1 AND u.pending = 0`
   )
@@ -157,7 +182,8 @@ export async function getUser(request, env) {
     .first();
   if (!row) return null;
   const perms = await env.DB.prepare("SELECT permission FROM user_permissions WHERE user_id = ?").bind(row.id).all();
-  return { ...row, prefs: parsePrefs(row.prefs), token, permissions: perms.results.map((r) => r.permission) };
+  const { session_expires, session_keep, ...u } = row;
+  return { ...u, prefs: parsePrefs(row.prefs), token, session: { expires: session_expires, keep: !!session_keep }, permissions: perms.results.map((r) => r.permission) };
 }
 
 export const hasPerm = (user, perm) => !!user && user.permissions.includes(perm);
@@ -214,7 +240,7 @@ export async function handleKontoApi(request, env, path) {
     const method = request.method;
     const readBody = bodyReader(request);
     const secure = new URL(request.url).protocol === "https:";
-    const SESSION_MS = (Number(env.SESSION_HOURS) || 12) * 3600 * 1000;
+    const { shortMs: SESSION_MS, keepMs: KEEP_MS } = sessionLengths(env);
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const user = await getUser(request, env);
     const requireLogin = () => {
@@ -269,10 +295,12 @@ export async function handleKontoApi(request, env, path) {
       loginFails.delete(ip);
       if (row.pending) fail(403, "Dein Konto wartet noch auf Freischaltung durch den Admin.");
       const tok = randomToken();
-      await env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?,?,?)")
-        .bind(tok, row.id, Date.now() + SESSION_MS)
+      const keep = wantsKeep(b.remember);
+      const life = keep ? KEEP_MS : SESSION_MS;
+      await env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at, keep) VALUES (?,?,?,?)")
+        .bind(tok, row.id, Date.now() + life, keep ? 1 : 0)
         .run();
-      const res = securityHeaders(json({ ok: true }, 200, { "set-cookie": sessionCookieHeader(tok, SESSION_MS / 1000, secure) }));
+      const res = securityHeaders(json({ ok: true, keep }, 200, { "set-cookie": sessionCookieHeader(tok, life / 1000, secure) }));
       // Wer sich mit Konto anmeldet, ist damit auch durchs Tor (siehe zugang/gate.js).
       res.headers.append("set-cookie", await issueAccessCookie(env, request, "u", row.id));
       return res;
@@ -283,14 +311,26 @@ export async function handleKontoApi(request, env, path) {
       return securityHeaders(json({ ok: true }, 200, { "set-cookie": sessionCookieHeader("", 0, secure) }));
     }
 
+    if (path === "/auth/logout-all" && method === "POST") {
+      requireLogin();
+      await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id).run();
+      return securityHeaders(json({ ok: true }, 200, { "set-cookie": sessionCookieHeader("", 0, secure) }));
+    }
+
     if (path === "/auth/me" && method === "GET") {
       if (!user) return securityHeaders(json({ user: null, permissionInfo: PERMISSIONS }));
-      const { token: _t, ...u } = user;
+      const { token: _t, session, ...u } = user;
       let pendingCount = 0;
       if (hasPerm(user, "users.manage")) {
         pendingCount = (await env.DB.prepare("SELECT count(*) AS n FROM users WHERE pending = 1").first()).n;
       }
-      return securityHeaders(json({ user: u, allPermissions: ALL_PERMISSIONS, permissionInfo: PERMISSIONS, pendingCount }));
+      const res = securityHeaders(json({ user: { ...u, keep: session.keep }, allPermissions: ALL_PERMISSIONS, permissionInfo: PERMISSIONS, pendingCount }));
+      // „Angemeldet bleiben“: bei Benutzung wieder auf volle Länge verlängern
+      if (session.keep && needsRenewal(session.expires, KEEP_MS)) {
+        await env.DB.prepare("UPDATE sessions SET expires_at = ? WHERE token = ?").bind(Date.now() + KEEP_MS, user.token).run();
+        res.headers.append("set-cookie", sessionCookieHeader(user.token, KEEP_MS / 1000, secure));
+      }
+      return res;
     }
 
     /* ---------- Aussehen am Konto speichern ---------- */

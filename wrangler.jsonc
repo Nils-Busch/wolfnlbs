@@ -60,7 +60,8 @@
 
   // Wie lange ein Login gültig bleibt (Stunden). Passwörter gehören NICHT hierher
   // (die Datei ist öffentlich auf GitHub) – siehe README, "Erster Admin-Zugang".
-  "vars": { "SESSION_HOURS": "12" },
+  // SESSION_HOURS: normale Anmeldung, KEEP_DAYS: „Angemeldet bleiben“ (verlängert sich bei Benutzung)
+  "vars": { "SESSION_HOURS": "12", "KEEP_DAYS": "90" },
 
   "observability": { "enabled": true }
 }

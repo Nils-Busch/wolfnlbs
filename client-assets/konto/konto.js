@@ -73,6 +73,7 @@ function loggedOutView() {
           ? `<form class="vh-card taped" data-form="login">
               <label class="vh-field">Benutzername<input name="username" autocomplete="username" required autofocus autocapitalize="none"></label>
               <label class="vh-field">Passwort<input name="password" type="password" autocomplete="current-password" required></label>
+              <label class="vh-check"><input type="checkbox" name="remember" checked> <span>Angemeldet bleiben<br><small class="vh-hint">Auf fremden Geräten ausschalten – dann endet die Anmeldung nach 12 Stunden.</small></span></label>
               <button class="vh-btn vh-btn-accent">Anmelden</button>
               <p class="vh-error" data-error></p>
             </form>
@@ -124,6 +125,8 @@ function accountView() {
             : '<p class="vh-hint">Du hast noch keine besonderen Rechte. Du kannst freigegebene Quizze starten; alles andere schaltet der Admin frei.</p>'
         }
         <div class="links">${links.map(([h, l]) => `<a class="vh-btn" href="${h}">${l}</a>`).join('')}</div>
+        <p class="vh-hint konto-keep">${S.me.keep ? '✅ Auf diesem Gerät bleibst du angemeldet, solange du die Seite ab und zu öffnest.' : '⏱️ Auf diesem Gerät endet die Anmeldung nach 12 Stunden. Für länger beim Anmelden „Angemeldet bleiben“ ankreuzen.'}</p>
+        <p><button class="vh-link" data-action="logout-all">Auf allen Geräten abmelden</button></p>
       </section>
       <form class="vh-card taped" data-form="password">
         <h2>Passwort ändern</h2>
@@ -417,6 +420,11 @@ app.addEventListener('click', (e) => {
   if (!el) return;
   const id = el.dataset.id;
   const a = el.dataset.action;
+  if (a === 'logout-all') {
+    if (!confirm('Auf allen Geräten abmelden – auch auf diesem? Danach musst du dich überall neu anmelden.')) return;
+    run(async () => { await api('/auth/logout-all', { method: 'POST' }); S.me = undefined; S.tab = 'login'; if (window.VHLook) window.VHLook.account = false; }, 'Überall abgemeldet.');
+    return;
+  }
   if (a === 'logout') run(async () => { await api('/auth/logout', { method: 'POST' }); S.me = undefined; S.tab = 'login'; if (window.VHLook) window.VHLook.account = false; }, 'Abgemeldet.');
   if (a === 'to-login') { S.registered = false; S.tab = 'login'; render(); }
   if (a === 'reject' && confirm('Diese Anfrage ablehnen? Das Konto wird gelöscht.')) run(() => api(`/users/${id}`, { method: 'DELETE' }), 'Anfrage abgelehnt.');

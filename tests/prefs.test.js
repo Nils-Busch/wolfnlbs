@@ -23,3 +23,14 @@ test("Aussehen: Server und Browser kennen dieselben Themen", () => {
   for (const id of LOOK_OPTIONS.theme) assert.ok(js.includes(`${id}: {`), `Thema ${id} fehlt in theme.js`);
   for (const [k, vals] of Object.entries(LOOK_OPTIONS)) assert.ok(js.includes(`${k}: ${k === "theme" ? "Object.keys(THEMES)" : JSON.stringify(vals).replace(/"/g, "'").replace(/,/g, ", ")}`), `Optionen ${k} weichen ab`);
 });
+
+test("Angemeldet bleiben: Längen und Verlängerung höchstens einmal am Tag", async () => {
+  const { sessionLengths, needsRenewal } = await import("../worker/src/konto/auth.js");
+  const L = sessionLengths({ SESSION_HOURS: "12", KEEP_DAYS: "90" });
+  assert.equal(L.shortMs, 12 * 3600e3);
+  assert.equal(L.keepMs, 90 * 86400e3);
+  assert.deepEqual(sessionLengths({}), L); // Standardwerte
+  const now = 1_000_000_000_000;
+  assert.equal(needsRenewal(now + L.keepMs - 3600e3, L.keepMs, now), false); // vor einer Stunde angemeldet
+  assert.equal(needsRenewal(now + L.keepMs - 2 * 86400e3, L.keepMs, now), true); // vor zwei Tagen
+});

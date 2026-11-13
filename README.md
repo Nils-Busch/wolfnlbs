@@ -56,6 +56,11 @@ wrangler.jsonc          Die komplette Cloudflare-Konfiguration
   | Quiz | Alle Quizze bearbeiten & löschen | Moderation |
   | Turniere | Turniere anlegen / Teilnehmer verwalten / Ergebnisse eintragen | wie bisher |
 
+- **Angemeldet bleiben:** Beim Anmelden ist das Häkchen gesetzt. Dann hält die Anmeldung 90 Tage
+  und verlängert sich jedes Mal, wenn man die Seite öffnet – wer regelmäßig vorbeischaut, muss sich
+  nicht mehr neu anmelden. Ohne Häkchen (z. B. an fremden Geräten) endet sie nach 12 Stunden.
+  Beide Werte stehen in `wrangler.jsonc` (`KEEP_DAYS`, `SESSION_HOURS`).
+- **Auf allen Geräten abmelden:** unter **Konto → Mein Konto**, z. B. wenn ein Handy verloren ging.
 - Ohne besondere Rechte kann man sich anmelden und **freigegebene Quizze starten**.
 - **Mitspielen** bei Quiz, Werwolf und Spielen geht immer **ohne Konto**.
 - Bestehende Konten aus dem Tischtennis-Turnier funktionieren unverändert weiter;
