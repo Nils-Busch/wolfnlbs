@@ -366,14 +366,14 @@
   function renderSide() {
     const side = $('side');
     if (mode !== 'daily') {
-      side.innerHTML = `<div class="panel"><h2>🎲 Freies Puzzle</h2><p class="muted">Jedes Mal ein neues Bild, ohne Bestenliste. 12 Teile für zwischendurch, 54 für lange Abende.</p></div>`;
+      side.innerHTML = `<div class="panel"><h2>Freies Puzzle</h2><p class="muted">Jedes Mal ein neues Bild, ohne Bestenliste. 12 Teile für zwischendurch, 54 für lange Abende.</p></div>`;
       return;
     }
     const st = store.get('jig-stats') || { played: 0, best: null, streak: 0 };
     side.innerHTML = `
-      <div class="panel"><h2>🏆 Tagesbestenliste</h2><p class="muted st-date">${esc(Daily.longDate(today))}</p>
-        <div id="jgForm"></div><div id="jgLb"><p class="muted">Lade …</p></div><a class="side-lb-link" href="/raetsel/bestenliste.html">🏆 Ewige Bestenliste</a></div>
-      <div class="panel st-stats"><h2>📊 Deine Statistik</h2>
+      <div class="panel"><h2>Tagesbestenliste</h2><p class="muted st-date">${esc(Daily.longDate(today))}</p>
+        <div id="jgForm"></div><div id="jgLb"><p class="muted">Lade …</p></div><a class="side-lb-link" href="/raetsel/bestenliste.html">Ewige Bestenliste</a></div>
+      <div class="panel st-stats"><h2>Deine Statistik</h2>
         <div class="nums"><div><b>${st.played}</b><span>gelöst</span></div><div><b>${st.best === null ? '–' : fmtTime(st.best)}</b><span>Bestzeit</span></div><div><b>${st.streak}</b><span>Serie</span></div></div>
         <p class="hint">Nur Tagespuzzle, gespeichert auf diesem Gerät.</p></div>`;
     Daily.board($('jgLb'), lbKey, fmtTime, P.submitted || null);

@@ -40,10 +40,10 @@
   }
 
   function draw() {
-    ctx.fillStyle = '#0f1626';
+    ctx.fillStyle = '#17221c';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     // Schachbrett-Hintergrund
-    ctx.fillStyle = '#121a2d';
+    ctx.fillStyle = '#17221c';
     for (let y = 0; y < N; y++) for (let x = (y % 2); x < N; x += 2) ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
 
     // Futter
@@ -60,7 +60,7 @@
     });
     // Augen
     const h = snake[0];
-    ctx.fillStyle = '#0b1020';
+    ctx.fillStyle = '#101914';
     const cx = h.x * CELL + CELL / 2, cy = h.y * CELL + CELL / 2;
     const ox = dir.y !== 0 ? CELL * 0.2 : 0, oy = dir.x !== 0 ? CELL * 0.2 : 0;
     const fx = dir.x * CELL * 0.15, fy = dir.y * CELL * 0.15;
@@ -123,7 +123,7 @@
       localStorage.setItem('gg-best-snake', best);
       $('best').textContent = best;
     }
-    showOverlay(won ? `Perfekt! ${score} Punkte 🏆` : `Game Over – ${score} Punkte`, 'Nochmal', start);
+    showOverlay(won ? `Perfekt! ${score} Punkte` : `Vorbei: ${score} Punkte`, 'Nochmal', start);
     if (score > 0) hs.offer(score);
   }
 

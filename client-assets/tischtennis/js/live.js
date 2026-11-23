@@ -198,7 +198,7 @@ function render() {
     <footer class="ticker ${stale ? 'stale' : ''}"><span class="st"><span class="dot"></span>${stale ? 'Verbindung unterbrochen …' : 'Live'}</span>
       <span class="marq">${tick ? `<span class="marq-in" style="--n:${recent.length}">${tick}${tick}</span>` : '<span class="ti">Die ersten Ergebnisse erscheinen hier.</span>'}</span>
       <span class="host">${esc(location.host)}/tischtennis</span></footer>
-    ${champ ? `<div class="champ"><div class="cup">🏆</div><div class="label">Turniersieg</div><div class="name">${esc(P[champ]?.name || '')}</div><div class="t">${esc(t.name)}</div></div>` : ''}`;
+    ${champ ? `<div class="champ"><div class="cup"><svg class="cup-ico" viewBox="0 0 100 106" aria-hidden="true"><defs><linearGradient id="cupG" x1="0" x2="1"><stop offset="0" stop-color="#9b6a14"/><stop offset=".32" stop-color="#f4d98a"/><stop offset=".5" stop-color="#e2b94c"/><stop offset="1" stop-color="#94640f"/></linearGradient></defs><path d="M27 28C9 28 9 58 35 62M73 28c18 0 18 30-8 34" fill="none" stroke="url(#cupG)" stroke-width="5" stroke-linecap="round"/><path d="M24 22h52v8c0 26-12 40-26 42-14-2-26-16-26-42z" fill="url(#cupG)"/><rect x="21" y="17" width="58" height="7" rx="3" fill="url(#cupG)"/><path d="M45 72h10l-2 16h-6z" fill="url(#cupG)"/><path d="M33 92h34l4 9H29z" fill="url(#cupG)"/></svg></div><div class="label">Turniersieg</div><div class="name">${esc(P[champ]?.name || '')}</div><div class="t">${esc(t.name)}</div></div>` : ''}`;
   // Laufschrift nicht bei jeder Aktualisierung neu starten
   const oldMarq = app.querySelector('.marq-in');
   const sameTick = oldMarq && oldMarq.dataset.sig === tick;
@@ -264,12 +264,12 @@ async function pickView() {
   } catch {}
   const shown = list.filter((t) => t.status !== 'finished');
   app.innerHTML = `<div class="pick">
-    <h1>📺 Liveansicht</h1>
+    <h1>Liveansicht</h1>
     <p>Welches Turnier soll auf dem Bildschirm laufen?</p>
     ${
       (shown.length ? shown : list).length
         ? `<ul>${(shown.length ? shown : list)
-            .map((t) => `<li><a href="#t=${t.id}">${t.sport === 'football' ? '⚽' : '🏓'} ${esc(t.name)} <span>${esc(STATUS_LABEL[t.status])} · ${t.player_count} ${t.sport === 'football' ? 'Teams' : 'Teilnehmer'}</span></a></li>`)
+            .map((t) => `<li><a href="#t=${t.id}">${esc(t.name)} <span>${esc(STATUS_LABEL[t.status])} · ${t.player_count} ${t.sport === 'football' ? 'Teams' : 'Teilnehmer'}</span></a></li>`)
             .join('')}</ul>`
         : '<p>Noch keine Turniere angelegt.</p>'
     }

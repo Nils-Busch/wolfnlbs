@@ -287,7 +287,7 @@
     if (isBest) store.set('kz-best', G.score);
     store.set('kz-state', null);
     renderHud();
-    $('kzOvText').innerHTML = `${isBest && G.score ? 'Neuer Rekord! 🎉' : 'Kein Block passt mehr'}<small>${G.score.toLocaleString('de-DE')} Punkte · ${G.moves} Züge</small>`;
+    $('kzOvText').innerHTML = `${isBest && G.score ? 'Neuer Rekord!' : 'Kein Block passt mehr'}<small>${G.score.toLocaleString('de-DE')} Punkte · ${G.moves} Züge</small>`;
     $('kzOverlay').hidden = false;
     if (G.score > 0) hs.offer(G.score);
     if (isBest && window.VH && G.score) VH.confetti();

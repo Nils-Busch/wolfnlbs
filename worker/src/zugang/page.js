@@ -14,44 +14,34 @@ export function gatePage({ codeEnabled, message = "", back = null }) {
 <script src="/shared/theme.js"></script>
 <meta name="robots" content="noindex, nofollow">
 <title>Vereinsheim – Zugang</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚪</text></svg>">
+<link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#172036">
+<meta name="theme-color" content="#e6ebe3">
 <script src="/shared/pwa.js" defer></script>
 <style>
-  body.vh-body.gate { background: radial-gradient(120% 80% at 50% 0%, var(--vh-table-2), var(--vh-table) 70%); color: #fff; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+  body.vh-body.gate { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
   .gate main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
-  .door { width: min(100%, 420px); text-align: center; animation: vh-rise .45s var(--vh-ease-out) both; }
-  .pawns { display: flex; justify-content: center; gap: .55rem; margin-bottom: 1.4rem; }
-  .pawns i { width: 1.1rem; height: 1.1rem; border-radius: 50%; animation: vh-drop-in .5s var(--vh-ease-out) both; }
-  .pawns i:nth-child(1) { background: var(--vh-red); }
-  .pawns i:nth-child(2) { background: var(--vh-blue); animation-delay: .08s; }
-  .pawns i:nth-child(3) { background: var(--vh-green); animation-delay: .16s; }
-  .pawns i:nth-child(4) { background: var(--vh-yellow); animation-delay: .24s; }
-  .sign { display: inline-block; font: 800 .78rem var(--vh-body); letter-spacing: .14em; text-transform: uppercase; color: var(--vh-table); background: var(--vh-yellow); padding: .3rem .8rem; border-radius: 6px; transform: rotate(-3deg); box-shadow: 0 3px 0 var(--vh-yellow-deep); }
-  .door h1 { font: 800 clamp(1.9rem, 7vw, 2.5rem)/1.05 var(--vh-display); margin: 1rem 0 .7rem; letter-spacing: -.02em; }
-  .door .lead { color: rgba(255,255,255,.78); margin: 0 auto 1.6rem; max-width: 34ch; line-height: 1.5; }
-  .door .vh-card { text-align: left; color: var(--vh-ink); }
-  .door .vh-card h2 { font-size: 1.1rem; }
-  .code-input { font: 750 1.5rem var(--vh-display) !important; letter-spacing: .12em; text-align: center; }
+  .door { width: min(100%, 440px); text-align: center; animation: vh-rise .45s var(--vh-ease-out) both; }
+  /* Die Stecktafel an der Tür */
+  .door h1.vh-filz { margin: 0 0 1.4rem; font-size: clamp(1.5rem, 6vw, 2.1rem); line-height: 1.15; transform: rotate(-1deg); text-wrap: balance; }
+  .door .lead { color: var(--vh-ink-soft); margin: 0 auto 1.6rem; max-width: 36ch; line-height: 1.5; }
+  .door .vh-card { text-align: left; }
+  .door .vh-card h2 { font-size: 1.4rem; }
+  .code-input { font: 700 1.6rem var(--vh-display) !important; letter-spacing: .12em; text-align: center; }
   .door .vh-btn { width: 100%; justify-content: center; }
-  .note { background: rgba(255,255,255,.1); border-radius: var(--vh-r-field); padding: .7rem .9rem; margin: 0 0 1rem; font-size: .92rem; }
+  .note { background: var(--vh-surface-2); border-radius: 8px; padding: .7rem .9rem; margin: 0 0 1rem; font-size: .95rem; }
   details.konto { margin-top: 1.1rem; }
-  details.konto summary { cursor: pointer; color: rgba(255,255,255,.82); font-weight: 650; list-style: none; }
+  details.konto summary { cursor: pointer; color: var(--vh-ink-soft); font-weight: 600; list-style: none; text-decoration: underline; text-underline-offset: 3px; }
   details.konto summary::-webkit-details-marker { display: none; }
-  details.konto summary::after { content: " ▾"; }
   details.konto[open] summary { margin-bottom: .8rem; }
   .shake { animation: vh-shake .4s; }
-  .gate .vh-legal a { color: #fff; }
 </style>
 </head>
 <body class="vh-body vh-area-konto gate">
 <main>
   <div class="door">
-    <div class="pawns" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <span class="sign">Privat</span>
-    <h1>Geschlossene Gesellschaft</h1>
+    <h1 class="vh-filz">Geschlossene Gesellschaft</h1>
     <p class="lead">Das Vereinsheim ist ein privater Treffpunkt für Freunde und Familie. Mit ${
       codeEnabled ? "dem Zugangscode oder deinem persönlichen Einladungslink" : "deinem persönlichen Einladungslink"
     } kommst du rein.</p>

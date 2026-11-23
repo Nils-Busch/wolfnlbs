@@ -2,16 +2,16 @@
 
 Eine private Seite für Freunde und Familie mit Party- und Spiele-Apps:
 
-- **🐺 WoWölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy. Mit Rollen-Vorlagen
+- **WoWölfe** – Werwolf-Rollenspiel, jeder mit eigenem Handy. Mit Rollen-Vorlagen
   (Einsteiger, Klassisch, Liebesdrama, Chaos) und einer **Erzähleransicht**: Wer „Ich leite nur“
   ankreuzt, sieht Vorlesetexte für jede Phase, alle Rollen (verdeckbar) und was nachts passiert.
-- **❓ Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
-- **🎮 Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores (neu: **Klötzchen**), **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**), Gruppenspiele mit Handys – neu die Teamspiele **Agentenrunde** und **Erklärbär**
-- **🧩 Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections**, **Nonogramm** und **Puzzle**, dazu eine **ewige Bestenliste**
-- **🏆 Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, **Gastlink mit QR-Code** für Zuschauer, **Liveansicht für den Bildschirm**
-- **👤 Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
-- **🎨 Aussehen** – fünf Farbthemen (auch dunkel), Schrift, Schriftgröße und Animationen, gespeichert am Konto
-- **🚪 Geschlossene Gesellschaft** – nur mit Zugangscode, Einladungslink oder Konto erreichbar (siehe unten)
+- **Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
+- **Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores (neu: **Klötzchen**), **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**), Gruppenspiele mit Handys – neu die Teamspiele **Agentenrunde** und **Erklärbär**
+- **Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections**, **Nonogramm** und **Puzzle**, dazu eine **ewige Bestenliste**
+- **Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, **Gastlink mit QR-Code** für Zuschauer, **Liveansicht für den Bildschirm**
+- **Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
+- **Aussehen** – fünf Farbthemen (auch dunkel), Schrift, Schriftgröße und Animationen, gespeichert am Konto
+- **Geschlossene Gesellschaft** – nur mit Zugangscode, Einladungslink oder Konto erreichbar (siehe unten)
 
 Technisch ist alles **ein einziges Cloudflare-Projekt** (ein Worker + eine
 Konfigurationsdatei) und läuft im kostenlosen Cloudflare-Plan.
@@ -42,7 +42,7 @@ wrangler.jsonc          Die komplette Cloudflare-Konfiguration
 
 ## Konten & Rechte
 
-- **Registrieren:** Oben rechts auf „👤 Anmelden“ → „Registrieren“. Das neue Konto
+- **Registrieren:** Oben rechts auf „Anmelden“ → „Registrieren“. Das neue Konto
   wartet danach auf Freischaltung und kann sich erst dann anmelden.
 - **Freischalten:** Wer das Recht „Konten freischalten & Rechte vergeben“ hat, sieht
   oben rechts eine Zahl mit wartenden Anfragen. Unter **Konto → Konten & Rechte**
@@ -108,9 +108,9 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
   Frage, Abstimmungsstand, Auflösung mit Balken; Stadt-Land-Fluss: Abgabestand, Prüfung,
   Rangliste nach jeder Runde). Wenn das Spiel auf die Spielleitung wartet, hat sie einen großen
   Knopf („Nächste Frage“, „Punkte vergeben“ …), alle anderen sehen, auf wen gewartet wird.
-  - **Fernseher optional:** „📺 Zusätzlich auf einem Fernseher zeigen“ im Warteraum, oder beim
-    Eröffnen „📺 Nur als Bildschirm“ – dann leitet der Fernseher und spielt nicht mit (wie früher).
-  - **Gruppe verlassen:** 🚪 oben rechts am Handy – jederzeit, auch mitten im Spiel. Das Spiel
+  - **Fernseher optional:** „Zusätzlich auf einem Fernseher zeigen“ im Warteraum, oder beim
+    Eröffnen „Nur als Bildschirm“ – dann leitet der Fernseher und spielt nicht mit (wie früher).
+  - **Gruppe verlassen:** „Verlassen“ oben rechts am Handy – jederzeit, auch mitten im Spiel. Das Spiel
     läuft ohne die Person weiter. Geht die Spielleitung, übernimmt automatisch die nächste Person
     (👑, klappt auch nach dem Neuladen).
   - **Wer würde eher …?** – 60 eingebaute Fragen, Abstimmung am Handy, Auflösung mit Balken,
@@ -154,7 +154,7 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
     jedes Bild lässt sich als PNG speichern.
   - **Spieleabend:** Nach einem Spiel wählt die Spielleitung im selben Raum das nächste – niemand
     muss neu beitreten. Jede Partie bringt Abendpunkte (Platz 1: 10, dann 7, 5, 3, 2, 1).
-    „🏆 Siegerehrung“ zeigt Gesamtsieg, Titel (Würfelkönig, Bluff-Profi, Picasso des Abends,
+    „Siegerehrung“ zeigt Gesamtsieg, Titel (Würfelkönig, Bluff-Profi, Picasso des Abends,
     Wortakrobat, Gesprächsthema des Abends, Meisterspion, Plaudertasche) und die Bilder des Abends.
   - **Geräusche am Fernseher:** synthetisch erzeugt (keine Dateien), Knopf 🔊 unten links schaltet sie ab.
   - **Bildschirm bleibt an:** Während der Spiele geht das Handy nicht in den Standby (wo der Browser es kann).
@@ -300,10 +300,10 @@ keine Bestenlisten. Suchmaschinen sind ausgesperrt (`robots.txt`, `X-Robots-Tag:
 
 Reinkommen geht auf drei Wegen:
 
-1. **Gemeinsamer Zugangscode** – unter **Konto → 🚪 Zugang** festlegen. Groß-/Kleinschreibung und
+1. **Gemeinsamer Zugangscode** – unter **Konto → Zugang** festlegen. Groß-/Kleinschreibung und
    Leerzeichen sind egal. Ändern oder Abschalten sperrt alle Geräte aus, die nur mit dem alten
    Code drin waren.
-2. **Persönlicher Einladungslink** – ebenfalls unter **Konto → 🚪 Zugang**: Name eintragen,
+2. **Persönlicher Einladungslink** – ebenfalls unter **Konto → Zugang**: Name eintragen,
    Gültigkeit wählen (ohne Ablauf, 1 Tag für Partygäste, 7/30/365 Tage), Link kopieren oder als
    QR-Code zeigen. Wer ihn öffnet, ist auf diesem Gerät drin. Löschen sperrt sofort wieder aus.
 3. **Konto** – Anmelden öffnet das Tor automatisch. Registrieren können sich nur Leute, die schon
@@ -317,7 +317,7 @@ QR-Codes und Links aus Quiz, Werwolf, Gruppenspielen und Turnieren funktionieren
 Gäste sehen zuerst das Tor, geben den Code ein und landen dann direkt auf der richtigen Seite.
 
 **Nach dem Update einmal einrichten:** Auf der Seite „Ich habe ein Konto“ aufklappen, als Admin
-anmelden, dann unter **Konto → 🚪 Zugang** einen Code festlegen und/oder Einladungen erstellen.
+anmelden, dann unter **Konto → Zugang** einen Code festlegen und/oder Einladungen erstellen.
 Bis dahin kommen nur Konten herein.
 
 ### Warum kein Impressum?
@@ -336,26 +336,42 @@ der Landesanstalt für Medien NRW als davon befreit. Damit das so bleibt:
 
 Das ist keine Rechtsberatung. Wer unsicher ist, legt trotzdem ein Impressum an.
 
+## Design
+
+Die Seite sieht aus wie ein Vereinsheim: helle, salbeigrüne Wand, die Bereiche sind Abteilungen
+mit eigenem **Filz-Wimpel** (Farbe und Symbol), Spielseiten liegen auf einem **Spieltisch aus
+Filz**. Schrift ist Barlow (Fließtext) und Barlow Condensed (Überschriften, Wimpel, Steckbuchstaben),
+selbst gehostet unter `shared/fonts`. Keine Emojis als Symbole: Spiele und Rätsel haben eigene,
+gezeichnete Symbole (SVG), die beim Drüberfahren eine kleine Szene aus dem Spiel zeigen.
+
+- **Startseite:** Stecktafel mit Datum, Stand der Tagesrätsel und nächstem Turnier; der Würfel
+  steckt einen Spielvorschlag dazu. Daneben das Regal mit den Vereinsrekorden (Klick auf einen
+  Pokal öffnet die Ehrentafel), darunter die Abteilungen als wehende Wimpel (`shared/wimpel.js`).
+- **Spielegalerie:** Spiele nach Spielart, mit Personenzahl und Rekord; „Wie viele seid ihr?“
+  blendet alle Spiele aus, die nicht zur Gruppengröße passen.
+- Die Liveansicht der Turniere (Fernseher in der Halle) und WoWölfe behalten ihr eigenes Design.
+
 ## Aussehen
 
-Oben rechts in der Kopfzeile öffnet der **🎨-Knopf** die Auswahl, mit Konto gibt es dafür auch
-den Reiter **Konto → 🎨 Aussehen**:
+Oben rechts in der Kopfzeile öffnet der Knopf **Aussehen** die Auswahl, mit Konto gibt es dafür
+auch den Reiter **Konto → Aussehen**:
 
-- **Farbthema:** Vereinsheim (wie gewohnt), Nachtschicht (dunkel), Filztisch, Bonbon, Kontrast.
+- **Farbthema:** Vereinsheim (Salbei und Filz), Nachtschicht (dunkel), Turnhalle (blau, intern
+  weiter `filz`), Bonbon, Kontrast.
 - **Abends:** Thema behalten oder dunkel, sobald das Gerät auf dunkel umstellt.
-- **Schrift** verspielt oder schlicht, **Schriftgröße** normal oder groß, **Animationen** alle
+- **Überschriften** schmal oder breit, **Schriftgröße** normal oder groß, **Animationen** alle
   oder weniger (Konfetti, Würfelrollen & Co. bleiben dann still).
 
 Die Wahl liegt im Browser und – mit Konto – zusätzlich am Konto (`PUT /api/konto/prefs`), gilt
 also auf allen Geräten, mit denen man angemeldet ist. `client-assets/shared/theme.js` steht in
 jeder Seite ganz oben und setzt nur CSS-Variablen (`--vh-*` für normale Seiten, `--vh-g-*` für die
-dunklen Spielflächen), damit nichts kurz aufblitzt. Spielfarben (Spielsteine, Würfel, Karten)
+Spieltische), damit nichts kurz aufblitzt. Spielfarben (Spielsteine, Würfel, Karten)
 bleiben in jedem Thema gleich, WoWölfe behält sein Nachtdorf.
 
 ## Als App, Datenschutz
 
 - **App installieren:** Die Seite hat ein Manifest und einen Service Worker. Auf dem Handy über
-  „Zum Startbildschirm hinzufügen“, am Rechner über den Knopf „📲 Als App installieren“ unten auf
+  „Zum Startbildschirm hinzufügen“, am Rechner über den Knopf „Als App installieren“ unten auf
   der Startseite. Besuchte Seiten der Spielegalerie funktionieren dann auch offline.
 - **Datenschutz** liegt unter `/datenschutz` und ist auch ohne Zugang erreichbar. Es ist eine
   **Vorlage**: die gelb markierten Stellen in `client-assets/datenschutz.html` ausfüllen.

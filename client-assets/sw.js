@@ -2,8 +2,8 @@
 // für den Notfall offline bereit. Immer zuerst das Netz fragen – so kommen Updates
 // sofort an; der Zwischenspeicher springt nur ein, wenn keine Verbindung da ist.
 // Online-Spiele, Konten und Bestenlisten (/api/…) laufen nie über den Speicher.
-const CACHE = 'vereinsheim-v1';
-const PRECACHE = ['/', '/offline.html', '/shared/vereinsheim.css', '/hub.css', '/spiele/', '/spiele/css/style.css', '/shared/fonts/figtree.woff2', '/shared/fonts/bricolage-grotesque.woff2', '/shared/icons/icon-192.png'];
+const CACHE = 'vereinsheim-v2';
+const PRECACHE = ['/', '/offline.html', '/shared/vereinsheim.css', '/hub.css', '/hub.js', '/shared/wimpel.js', '/spiele/', '/spiele/css/galerie.css', '/spiele/css/style.css', '/shared/fonts/barlow-400.woff2', '/shared/fonts/barlow-600.woff2', '/shared/fonts/barlow-condensed-700.woff2', '/shared/fonts/barlow-condensed-800.woff2', '/shared/icons/favicon.svg', '/shared/icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).catch(() => {}).then(() => self.skipWaiting()));

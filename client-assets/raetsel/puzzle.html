@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/shared/theme.js"></script>
 <title>Puzzle · Tagesrätsel</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+<link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/spiele/css/style.css">
 <link rel="stylesheet" href="/raetsel/raetsel.css">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/shared/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#172036">
+<meta name="theme-color" content="#e6ebe3">
 <script src="/shared/pwa.js" defer></script>
 </head>
 <body class="rt">
-<header class="top"><a href="/raetsel/" class="back">← Tagesrätsel</a><h1>🧩 Puzzle <span class="rt-num" id="jgNum"></span></h1></header>
+<header class="top"><a href="/raetsel/" class="back">Tagesrätsel</a><h1><svg class="top-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-hoch"><path d="M6 8h14c0-6 10-6 10 0h12v12c-6 0-6 10 0 10v12H30c0-6-10-6-10 0H6V30c6 0 6-10 0-10z" fill="#5b8de0"/></g><path d="M6 8h14c0-6 10-6 10 0h12" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/></svg>Puzzle <span class="rt-num" id="jgNum"></span></h1></header>
 <main class="jg">
   <div class="st-modes">
     <div class="levels" id="jgModes" role="tablist">
@@ -28,13 +28,13 @@
     </div>
   </div>
   <div class="jg-bar">
-    <span class="jg-time">⏱ <b id="jgTime">0:00</b></span>
+    <span class="jg-time">Zeit <b id="jgTime">0:00</b></span>
     <span class="jg-prog" aria-label="Fortschritt"><i id="jgBar"></i></span>
     <span class="jg-count" id="jgCount">0 / 24</span>
     <span class="spacer"></span>
-    <button class="ghost small" id="jgPeek" aria-pressed="false" title="Das ganze Bild blass im Rahmen zeigen">👁 Vorlage</button>
+    <button class="ghost small" id="jgPeek" aria-pressed="false" title="Das ganze Bild blass im Rahmen zeigen">Vorlage</button>
     <button class="ghost small" id="jgEdges" title="Randteile nach vorne legen">▢ Ränder zuerst</button>
-    <button class="ghost small" id="jgShuffle" title="Lose Teile neu verteilen">🔀 Mischen</button>
+    <button class="ghost small" id="jgShuffle" title="Lose Teile neu verteilen">Mischen</button>
   </div>
   <div class="jg-table" id="jgTable">
     <div class="jg-frame" id="jgFrame"><canvas class="jg-ghost" id="jgGhost"></canvas><canvas class="jg-final" id="jgFinal" hidden></canvas></div>

@@ -119,9 +119,9 @@
   }
 
   function draw() {
-    ctx.fillStyle = '#0f1626';
+    ctx.fillStyle = '#17221c';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#162036';
+    ctx.strokeStyle = '#17221c';
     ctx.lineWidth = 1;
     for (let x = 1; x < W; x++) { ctx.beginPath(); ctx.moveTo(x * S + .5, 0); ctx.lineTo(x * S + .5, H * S); ctx.stroke(); }
     for (let y = 1; y < H; y++) { ctx.beginPath(); ctx.moveTo(0, y * S + .5); ctx.lineTo(W * S, y * S + .5); ctx.stroke(); }
@@ -139,7 +139,7 @@
   }
 
   function drawNext() {
-    nctx.fillStyle = '#0f1626';
+    nctx.fillStyle = '#17221c';
     nctx.fillRect(0, 0, nextCv.width, nextCv.height);
     const t = nextQueue[0], m = SHAPES[t];
     const rows = m.filter((r) => r.some((v) => v));

@@ -12,7 +12,7 @@ function currentId() {
 async function showList() {
   const list = await api('/api/tournaments');
   if (!list.length) { app.innerHTML = '<p class="empty">Noch keine Turniere angelegt.</p>'; return; }
-  app.innerHTML = `<h1 class="page-title">Turniere</h1><ul class="t-list">${list.map((t, i) => `
+  app.innerHTML = `<h1 class="page-title vh-sr">Turniere</h1><ul class="t-list">${list.map((t, i) => `
     <li style="--i:${i}"><a href="#t=${t.id}">
       <span class="t-name">${esc(t.name)}</span>
       <span class="t-meta">${[SPORT_LABEL[t.sport] || SPORT_LABEL.tabletennis, fmtDate(t.event_date), t.location, FORMAT_LABEL[t.format], `${t.player_count} ${t.sport === 'football' ? 'Teams' : 'Teilnehmer'}`].filter(Boolean).map(esc).join(', ')}</span>
@@ -218,7 +218,7 @@ function renderDetail(opts = {}) {
     <h1 class="page-title">${esc(t.name)}</h1>
     <p class="t-meta">${[fmtDate(t.event_date), t.location, ...modeParts(t)].filter(Boolean).map(esc).join(', ')}
       <span class="t-head-status">${statusHtml(t, liveCount)}</span>
-      <a class="link" href="/tischtennis/live#t=${t.id}">📺 Liveansicht für den Bildschirm</a></p>
+      <a class="link" href="/tischtennis/live#t=${t.id}">Liveansicht für den Bildschirm</a></p>
     <div class="champ-slot">${winnerBanner(d)}</div>
     ${renderTabs(tabs, state.tab)}
     <div class="tab-body ${opts.anim ? 'tab-in' : ''}">${bodyHtml(d)}</div>

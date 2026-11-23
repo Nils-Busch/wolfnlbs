@@ -18,7 +18,7 @@ function qrSvg(text) {
 function bar(extra = '') {
   const s = Q.state;
   return `<header class="qs-bar">
-    <span class="title">❓ ${esc(s?.title || 'Quiz')}</span>
+    <span class="title">${esc(s?.title || 'Quiz')}</span>
     ${extra}
     <span class="count">${s ? `${s.players.length} Spieler` : ''}</span>
     <span class="code" title="Raum-Code">${esc(Q.code)}</span>
@@ -26,8 +26,8 @@ function bar(extra = '') {
 }
 
 function foot(buttons, info = '') {
-  return `<footer class="qs-foot"><span class="info">${info}${Q.connected ? '' : ' ⚠️ Verbindung unterbrochen – verbinde neu …'}</span>${buttons}
-    <button class="vh-btn" data-action="fullscreen" title="Vollbild">⛶</button></footer>`;
+  return `<footer class="qs-foot"><span class="info">${info}${Q.connected ? '' : ' Verbindung unterbrochen, verbinde neu …'}</span>${buttons}
+    <button class="vh-btn" data-action="fullscreen" title="Vollbild">Vollbild</button></footer>`;
 }
 
 function answerTiles(q, reveal, answered) {
@@ -126,7 +126,7 @@ function render() {
             .join('')}</ol></div>
         </div>
       </div></main>
-      ${foot(`<button class="vh-btn vh-btn-accent" data-action="next">${last ? '🏆 Zum Ergebnis' : 'Nächste Frage →'}</button>`)}`;
+      ${foot(`<button class="vh-btn vh-btn-accent" data-action="next">${last ? 'Zum Ergebnis' : 'Nächste Frage'}</button>`)}`;
     return;
   }
 

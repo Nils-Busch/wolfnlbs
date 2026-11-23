@@ -1,48 +1,54 @@
 /*
  * Vereinsheim – gemeinsames Design für alle Bereiche.
  *
- * Idee: das Spielbrett von „Mensch ärgere dich nicht“. Vier Farben, vier
- * Bereiche – jede Farbe gehört fest zu einem Bereich und taucht überall dort
- * auf, wo es um diesen Bereich geht (Menü, Knöpfe, Fokus, Fortschritt):
- *   Rot = WoWölfe · Blau = Quiz · Grün = Spielegalerie · Gelb = Turniere
- * Formen kommen von den Spielfiguren und Würfeln: Kreise, Punkte-Pfade,
- * Knöpfe, die sich wie ein Spielstein eindrücken lassen.
+ * Idee: das Vereinsheim selbst. Die Bereiche sind seine Abteilungen
+ * (Werwolf, Quiz, Spiele, Rätsel, Turniere), jede mit eigener Wimpelfarbe,
+ * die überall dort auftaucht, wo es um diese Abteilung geht – im Menü, an
+ * Knöpfen und Links. Schrift wie auf Hallen-Beschilderung (Barlow, eng und
+ * normal breit), Flächen wie eine frisch gestrichene Vereinsheim-Wand.
+ * Auffällig ist nur eine Sache: die Stecktafel auf der Startseite.
  *
- * Alle neuen Werte heißen --vh-*, damit sie nicht mit den eigenen Variablen
- * der Turnier-Seiten kollidieren.
+ * Alle Werte heißen --vh-*, damit sie nicht mit den eigenen Variablen der
+ * Turnier-Seiten kollidieren. Farbthemen (Aussehen) überschreiben sie am
+ * <html>-Element – siehe /shared/theme.js.
  */
 
 /* Schriften liegen selbst gehostet unter /shared/fonts (SIL Open Font License) –
    keine Verbindung zu Google Fonts, also auch keine Datenweitergabe an Dritte. */
-@font-face {
-  font-family: "Bricolage Grotesque";
-  src: url("/shared/fonts/bricolage-grotesque.woff2") format("woff2-variations");
-  font-weight: 200 800; font-stretch: 75% 100%; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: "Figtree";
-  src: url("/shared/fonts/figtree.woff2") format("woff2-variations");
-  font-weight: 300 900; font-style: normal; font-display: swap;
-}
-
+@font-face { font-family: "Barlow"; src: url("/shared/fonts/barlow-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url("/shared/fonts/barlow-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url("/shared/fonts/barlow-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url("/shared/fonts/barlow-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url("/shared/fonts/barlow-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url("/shared/fonts/barlow-condensed-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url("/shared/fonts/barlow-condensed-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url("/shared/fonts/barlow-condensed-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
 @view-transition { navigation: auto; }
 
 :root {
-  /* Spielbrett */
-  --vh-table: #172036;      /* Tisch: Hintergrund, Text, Kopfzeile */
-  --vh-table-2: #222d4a;
-  --vh-board: #f5f6f8;      /* Brett: Flächen und Seiten */
-  --vh-surface: #ffffff;
-  --vh-ink: #172036;
-  --vh-ink-soft: #586179;
-  --vh-line: #dde1e8;
-  --vh-surface-2: #eceff4;  /* zarte Füllung: Reiter, Pillen */
-  --vh-line-strong: #c4cad6;
-  --vh-shadow: rgba(23, 32, 54, .18);
-  --vh-edge: #0d1424;       /* dunkle Kante unter Tisch-Knöpfen */
-  /* Farbthemen (Aussehen) überschreiben diese Werte am <html> – siehe /shared/theme.js */
+  /* Wand, Tinte, Filz */
+  --vh-board: #e6ebe3;      /* Wand: Seitenhintergrund, helles Salbeigrün */
+  --vh-surface: #f8faf6;    /* helle Flächen: Felder, Karten */
+  --vh-surface-2: #e2e6e0;  /* zarte Füllung: Reiter, Markierungen */
+  --vh-ink: #16201b;        /* Schrift */
+  --vh-ink-soft: #56625b;
+  --vh-line: #cdd5cb;
+  --vh-line-strong: #aab4ab;
+  --vh-table: #22322a;      /* Filz der Stecktafel, dunkle Flächen */
+  --vh-table-2: #2e4238;
+  --vh-letter: #f1efe5;     /* Steckbuchstaben */
+  --vh-shadow: rgba(22, 32, 27, .16);
+  --vh-edge: #121c17;
 
-  /* Die vier Figuren */
+  /* Wimpelfarben der Abteilungen */
+  --vh-dep-woelfe: #7c2232;
+  --vh-dep-quiz: #24529f;
+  --vh-dep-spiele: #17694a;
+  --vh-dep-raetsel: #a5720b;
+  --vh-dep-turnier: #b8481a;
+  --vh-club: #17694a;       /* Vereinsgrün: Links und Knöpfe ohne eigene Abteilung */
+
+  /* Spielfarben (Figuren, Steine, Würfel in den Spielen) */
   --vh-red: #e23b3b;
   --vh-blue: #2d6be0;
   --vh-green: #179e5e;
@@ -54,18 +60,27 @@
   --vh-teal: #0fa3a3;
   --vh-teal-deep: #0a7676;
 
-  /* Bereichsfarbe der aktuellen Seite (per style="--vh-area: …" am body) */
-  --vh-area: var(--vh-table);
-  --vh-area-deep: var(--vh-table);
+  /* Abteilungsfarbe der aktuellen Seite (per Klasse am body) */
+  --vh-area: var(--vh-club);
   --vh-area-ink: #ffffff;
 
-  --vh-display: "Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif;
-  --vh-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Spieltische: Filz der Spielseiten (auch in spiele/css/style.css als Rückfall) */
+  --vh-g-bg: #203029;
+  --vh-g-panel: #2a3c33;
+  --vh-g-panel2: #34493e;
+  --vh-g-line: #42594c;
+  --vh-g-input: #1a2721;
+  --vh-g-edge: #111a15;
+  --vh-g-muted: #a8bcaf;
+  --vh-g-text: #f3f5f0;
 
-  --vh-r-board: 22px;
-  --vh-r-field: 12px;
+  --vh-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --vh-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --vh-r-board: 10px;
+  --vh-r-field: 6px;
   --vh-r-pill: 999px;
-  --vh-press: 0 4px 0;      /* Spielstein-Kante unter Knöpfen */
+  --vh-press: 0 0 0;
   --vh-ease-hop: cubic-bezier(.34, 1.56, .64, 1);
   --vh-ease-out: cubic-bezier(.22, 1, .36, 1);
 
@@ -83,230 +98,252 @@
   --radius: var(--vh-r-field);
   --accent: var(--vh-area);
   --accent-ink: var(--vh-area-ink);
-  --accent-woelfe: var(--vh-red);
-  --accent-quiz: var(--vh-blue);
-  --accent-spiele: var(--vh-green);
-  --accent-tischtennis: var(--vh-yellow);
-  --accent-konto: var(--vh-table);
-  --accent-hub: var(--vh-table);
+  --accent-woelfe: var(--vh-dep-woelfe);
+  --accent-quiz: var(--vh-dep-quiz);
+  --accent-spiele: var(--vh-dep-spiele);
+  --accent-tischtennis: var(--vh-dep-turnier);
+  --accent-konto: var(--vh-club);
+  --accent-hub: var(--vh-club);
 }
 
-/* Bereichsfarben – am body gesetzt */
-.vh-area-woelfe  { --vh-area: var(--vh-red);    --vh-area-deep: var(--vh-red-deep); }
-.vh-area-quiz    { --vh-area: var(--vh-blue);   --vh-area-deep: var(--vh-blue-deep); }
-.vh-area-spiele  { --vh-area: var(--vh-green);  --vh-area-deep: var(--vh-green-deep); }
-.vh-area-raetsel { --vh-area: var(--vh-teal);   --vh-area-deep: var(--vh-teal-deep); }
-.vh-area-turnier { --vh-area: var(--vh-yellow); --vh-area-deep: var(--vh-yellow-deep); --vh-area-ink: var(--vh-table); }
-.vh-area-konto   { --vh-area: var(--vh-table);  --vh-area-deep: var(--vh-edge); }
+/* Dunklere Abteilungsfarbe – dort berechnet, wo --vh-area gesetzt wird */
+:root, .vh-body, [class*="vh-area-"] { --vh-area-deep: color-mix(in srgb, var(--vh-area) 78%, #000); }
+
+/* Abteilungsfarben – am body gesetzt */
+.vh-area-woelfe  { --vh-area: var(--vh-dep-woelfe); }
+.vh-area-quiz    { --vh-area: var(--vh-dep-quiz); }
+.vh-area-spiele  { --vh-area: var(--vh-dep-spiele); }
+.vh-area-raetsel { --vh-area: var(--vh-dep-raetsel); }
+.vh-area-turnier { --vh-area: var(--vh-dep-turnier); }
+.vh-area-konto   { --vh-area: var(--vh-club); }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
 [hidden] { display: none !important; }
+.vh-sr { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 body.vh-body {
   background: var(--vh-board);
   color: var(--vh-ink);
   font-family: var(--vh-body);
-  font-size: 1rem;
-  line-height: 1.55;
+  font-size: 1.0625rem;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-kerning: normal;
 }
 a { color: inherit; }
-:focus-visible { outline: 3px solid var(--vh-area); outline-offset: 3px; border-radius: 6px; }
-::selection { background: color-mix(in srgb, var(--vh-area) 30%, transparent); }
+:focus-visible { outline: 3px solid var(--vh-area); outline-offset: 3px; border-radius: 3px; }
+::selection { background: color-mix(in srgb, var(--vh-area) 25%, transparent); }
 
 /* ---------- Kopfzeile ---------- */
 .vh-header {
   position: sticky; top: 0; z-index: 30;
-  display: flex; align-items: center; gap: 1.25rem;
-  padding: .7rem clamp(1rem, 3vw, 2rem);
-  background: var(--vh-table);
-  color: #fff;
+  display: flex; align-items: center; gap: 2rem;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  min-height: 3.75rem;
+  background: var(--vh-board);
+  color: var(--vh-ink);
+  border-bottom: 1px solid var(--vh-line);
   view-transition-name: vh-header;
   font-family: var(--vh-body);
-  border-bottom: 0;
 }
 .vh-header .vh-brand {
-  display: inline-flex; align-items: center; gap: .6rem;
-  font: 750 1.15rem/1 var(--vh-display); letter-spacing: -.01em;
-  color: #fff; text-decoration: none; white-space: nowrap;
-  font-stretch: 90%;
+  display: inline-flex; align-items: center; gap: .55rem;
+  font: 800 1.55rem/1 var(--vh-display); letter-spacing: .005em;
+  color: var(--vh-ink); text-decoration: none; white-space: nowrap;
 }
-/* Logo: vier Figuren im Quadrat */
+/* Logo: ein kleiner Vereinswimpel */
 .vh-header .vh-brand .dot {
-  width: 22px; height: 22px; flex: none; border-radius: 6px; box-shadow: none;
-  background:
-    radial-gradient(circle at 25% 25%, var(--vh-red) 0 4px, transparent 4.5px),
-    radial-gradient(circle at 75% 25%, var(--vh-blue) 0 4px, transparent 4.5px),
-    radial-gradient(circle at 25% 75%, var(--vh-green) 0 4px, transparent 4.5px),
-    radial-gradient(circle at 75% 75%, var(--vh-yellow) 0 4px, transparent 4.5px),
-    var(--vh-table-2);
-  transition: transform .5s var(--vh-ease-hop);
+  width: 1.05rem; height: 1.3rem; flex: none;
+  background: var(--vh-club);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  border-left: 3px solid var(--vh-ink);
 }
-.vh-header .vh-brand:hover .dot { transform: rotate(90deg); }
 
-.vh-header nav { display: flex; gap: .2rem; flex-wrap: wrap; flex: 1; }
+.vh-header nav { display: flex; gap: 1.6rem; flex: 1; align-self: stretch; }
 .vh-header nav a {
-  --c: #fff;
-  position: relative;
-  padding: .45rem .8rem .5rem;
-  border-radius: var(--vh-r-pill);
-  color: rgba(255, 255, 255, .78);
-  text-decoration: none; font-weight: 600; font-size: .92rem;
-  transition: color .2s, background-color .2s;
+  --c: var(--vh-club);
+  display: flex; align-items: center;
+  border-bottom: 3px solid transparent; margin-bottom: -1px; padding-top: 3px;
+  color: var(--vh-ink-soft);
+  text-decoration: none; font-weight: 600; font-size: 1rem;
+  transition: color .15s, border-color .15s;
 }
-.vh-header nav a[href^="/woelfe"] { --c: var(--vh-red); }
-.vh-header nav a[href^="/quiz"] { --c: var(--vh-blue); }
-.vh-header nav a[href^="/spiele"] { --c: var(--vh-green); }
-.vh-header nav a[href^="/tischtennis"] { --c: var(--vh-yellow); }
-.vh-header nav a[href^="/raetsel"] { --c: var(--vh-teal); }
-.vh-header nav a::before {
-  content: ""; display: inline-block; width: .55rem; height: .55rem; border-radius: 50%;
-  background: var(--c); margin-right: .45rem; vertical-align: .05em;
-  transform: scale(.75); transition: transform .3s var(--vh-ease-hop);
-}
-.vh-header nav a:hover { color: #fff; background: rgba(255, 255, 255, .07); }
-.vh-header nav a:hover::before { transform: scale(1) translateY(-2px); }
-.vh-header nav a.is-active { color: #fff; background: rgba(255, 255, 255, .1); view-transition-name: vh-nav-active; }
-.vh-header nav a.is-active::before { transform: scale(1.1); }
+.vh-header nav a[href^="/woelfe"] { --c: var(--vh-dep-woelfe); }
+.vh-header nav a[href^="/quiz"] { --c: var(--vh-dep-quiz); }
+.vh-header nav a[href^="/spiele"] { --c: var(--vh-dep-spiele); }
+.vh-header nav a[href^="/raetsel"] { --c: var(--vh-dep-raetsel); }
+.vh-header nav a[href^="/tischtennis"] { --c: var(--vh-dep-turnier); }
+.vh-header nav a:hover { color: var(--vh-ink); border-bottom-color: color-mix(in srgb, var(--c) 40%, transparent); }
+.vh-header nav a.is-active { color: var(--vh-ink); border-bottom-color: var(--c); view-transition-name: vh-nav-active; }
 
 .vh-header .vh-account {
-  margin-left: auto;
   display: inline-flex; align-items: center; gap: .45rem;
-  padding: .42rem .9rem;
-  border-radius: var(--vh-r-pill);
-  border: 0;
-  background: rgba(255, 255, 255, .1);
-  color: #fff; text-decoration: none; font-weight: 650; font-size: .9rem; white-space: nowrap;
+  padding: .35rem 0;
+  border: 0; background: none;
+  color: var(--vh-ink); text-decoration: none; font-weight: 600; font-size: 1rem; white-space: nowrap;
   box-shadow: none;
-  transition: background-color .2s;
 }
-.vh-header .vh-account:hover { background: rgba(255, 255, 255, .18); transform: none; box-shadow: none; }
+.vh-header .vh-account:hover { color: var(--vh-club); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; transform: none; box-shadow: none; }
 .vh-header .vh-account .vh-badge {
-  background: var(--vh-red); color: #fff; border-radius: var(--vh-r-pill);
-  font-size: .72rem; font-weight: 800; padding: .05rem .45rem; line-height: 1.4;
-  animation: vh-pulse 2s ease-in-out infinite;
+  background: var(--vh-dep-woelfe); color: #fff; border-radius: var(--vh-r-pill);
+  font-size: .75rem; font-weight: 700; padding: .05rem .45rem; line-height: 1.4;
 }
 .vh-header nav + .vh-account { margin-left: 0; }
 
 @media (max-width: 760px) {
-  .vh-header { flex-wrap: wrap; gap: .5rem .75rem; }
+  .vh-header { flex-wrap: wrap; gap: 0 1rem; padding-top: .5rem; }
   .vh-header nav {
-    order: 3; flex-basis: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; margin: 0 -.25rem;
-    scroll-behavior: smooth; padding-right: 1.5rem;
+    order: 3; flex-basis: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none;
+    gap: 1.25rem; min-height: 2.6rem; padding-right: 1.5rem;
     -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent);
     mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent);
   }
   .vh-header nav::-webkit-scrollbar { display: none; }
-  .vh-header nav a { white-space: nowrap; font-size: .88rem; padding: .4rem .65rem; }
+  .vh-header nav a { white-space: nowrap; font-size: .95rem; }
   .vh-header .vh-account { margin-left: auto; }
 }
 
+/* ---------- Wimpel (Filz, mit Emblem) – Startseite und Kopf der Bereichsseiten ---------- */
+.wimpel { width: 20rem; height: auto; display: block; overflow: visible; }
+.w-stab { fill: #6e4a28; }
+.w-tuch { transform-origin: 7px 48px; transform-box: view-box; }
+@keyframes wehen {
+  30% { transform: skewY(-2.5deg) scaleX(1.03); }
+  60% { transform: skewY(1.5deg) scaleX(.99); }
+}
+.w-filz { fill: var(--c, var(--vh-area)); filter: url(#filz); }
+.w-naht { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 1.6; stroke-dasharray: 6 5; }
+.w-emblem { fill: var(--vh-letter); }
+.w-symbol { color: var(--c, var(--vh-area)); }
+.w-name { fill: #fff; font: 700 27px var(--vh-display); letter-spacing: .05em; }
+@media (prefers-reduced-motion: reduce) { .w-tuch { animation: none !important; } }
+
+/* ---------- Filztafel mit Steckbuchstaben (Startseite, Tagesrätsel) ---------- */
+.vh-filz {
+  --g: 9px;
+  padding: clamp(.9rem, 2.5vw, 1.4rem) clamp(1.1rem, 3vw, 2rem);
+  font: 600 clamp(1.15rem, 3vw, 1.8rem)/1.2 var(--vh-display);
+  letter-spacing: .09em; text-transform: uppercase;
+  color: var(--vh-letter);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .55), 0 3px 4px rgba(0, 0, 0, .3);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(180deg, transparent 0 calc(var(--g) - 2px), rgba(0, 0, 0, .3) calc(var(--g) - 2px) calc(var(--g) - 1px), rgba(255, 255, 255, .04) calc(var(--g) - 1px) var(--g)),
+    var(--vh-table);
+  border: 10px solid #8a5c33;
+  border-image: repeating-linear-gradient(97deg, #9c6b3c 0 6px, #8a5a31 6px 9px, #a87849 9px 17px, #93633a 17px 21px) 10;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, .5), 0 14px 24px -16px rgba(40, 25, 10, .55);
+}
+.vh-filz p { margin: 0; }
+
 /* ---------- Typografie ---------- */
 .vh-h1 {
-  font: 800 clamp(2rem, 5vw, 3.2rem)/1.02 var(--vh-display);
-  letter-spacing: -.025em;
-  font-stretch: 88%;
-  margin: .2rem 0 .7rem;
+  font: 800 clamp(2.3rem, 5.5vw, 3.6rem)/.95 var(--vh-display);
+  margin: .2rem 0 .8rem;
   text-wrap: balance;
 }
-.vh-eyebrow {
-  display: inline-flex; align-items: center; gap: .45rem;
-  font: 650 .95rem var(--vh-body); color: var(--vh-ink-soft);
+.vh-eyebrow { display: block; font: 600 1rem var(--vh-body); color: var(--vh-ink-soft); }
+.vh-hint { color: var(--vh-ink-soft); font-size: .92rem; }
+.vh-error { color: #b4252a; font-weight: 600; min-height: 1.2em; margin: .5rem 0 0; }
+.vh-ok { color: #0f7646; font-weight: 600; }
+
+/* Kopf einer Bereichsseite: Wimpel links, Einleitung rechts */
+.vh-kopf {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center;
+  column-gap: clamp(1.5rem, 4vw, 3rem); row-gap: .8rem;
+  margin-bottom: clamp(1.75rem, 4vw, 2.75rem);
 }
-.vh-eyebrow::before {
-  content: ""; width: .7rem; height: .7rem; border-radius: 50%; background: var(--vh-area);
+.vh-kopf h1 { margin: 0; }
+.vh-kopf .wimpel { width: clamp(17rem, 32vw, 24rem); transform: rotate(-1.2deg); }
+.vh-kopf p { margin: 0; font-size: 1.1rem; max-width: 46ch; }
+@media (max-width: 720px) {
+  .vh-kopf { grid-template-columns: 1fr; }
+  .vh-kopf .wimpel { width: min(19rem, 90%); }
 }
-.vh-hint { color: var(--vh-ink-soft); font-size: .9rem; }
-.vh-error { color: var(--vh-red-deep); font-weight: 650; min-height: 1.2em; margin: .5rem 0 0; }
-.vh-ok { color: var(--vh-green-deep); font-weight: 650; }
 
 /* ---------- Flächen ---------- */
-.vh-wrap { max-width: 1040px; margin: 0 auto; padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 3vw, 1.5rem) 4rem; }
+.vh-wrap { max-width: 1120px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem) 4rem; }
 .vh-narrow { max-width: 460px; margin-left: auto; margin-right: auto; }
 .vh-card {
   background: var(--vh-surface);
-  border-radius: var(--vh-r-board);
+  border-radius: 14px;
   padding: clamp(1.1rem, 3vw, 1.6rem);
-  border: 1.5px solid var(--vh-line);
+  border: 1px solid var(--vh-line);
   position: relative;
 }
-/* "pinned" = wichtigste Karte der Seite: Farbkante im Bereichston */
-.vh-card.pinned { border-color: transparent; box-shadow: inset 0 6px 0 var(--vh-area), 0 1px 0 var(--vh-line); padding-top: calc(clamp(1.1rem, 3vw, 1.6rem) + 6px); }
+/* "pinned" = wichtigste Karte der Seite: Kante oben in der Abteilungsfarbe */
+.vh-card.pinned { border-top: 4px solid var(--vh-area); }
 .vh-card.taped { background: var(--vh-surface); }
 .vh-card.pinned::before, .vh-card.taped::after { content: none; }
-.vh-card h2 { font: 750 1.3rem/1.15 var(--vh-display); letter-spacing: -.01em; margin: 0 0 .8rem; font-stretch: 92%; }
+.vh-card h2 { font: 700 1.55rem/1.1 var(--vh-display); margin: 0 0 .8rem; }
 
-/* ---------- Knöpfe: Spielsteine zum Drücken ---------- */
+/* ---------- Knöpfe ---------- */
 .vh-btn {
-  --b: var(--vh-surface); --b-ink: var(--vh-ink); --b-edge: var(--vh-line);
-  font: 700 .97rem/1 var(--vh-body);
+  --b: var(--vh-surface); --b-ink: var(--vh-ink); --b-edge: var(--vh-line-strong);
+  font: 600 1rem/1 var(--vh-body);
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  padding: .78rem 1.25rem .74rem;
-  border-radius: var(--vh-r-pill);
+  min-height: 2.75rem; padding: .7rem 1.15rem;
+  border-radius: 10px;
   border: 1.5px solid var(--b-edge);
   background: var(--b); color: var(--b-ink);
-  box-shadow: var(--vh-press) var(--b-edge);
   cursor: pointer; text-decoration: none;
-  transform: translateY(0);
-  transition: transform .12s ease, box-shadow .12s ease, background-color .2s, filter .2s;
+  transition: transform .15s var(--vh-ease-out), background-color .15s, border-color .15s;
   user-select: none;
 }
-.vh-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--b-edge); }
-.vh-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--b-edge); }
-.vh-btn.vh-btn-accent { --b: var(--vh-area); --b-ink: var(--vh-area-ink); --b-edge: var(--vh-area-deep); }
-.vh-btn.vh-btn-danger { --b: var(--vh-surface); --b-ink: var(--vh-red-deep); --b-edge: color-mix(in srgb, var(--vh-red) 45%, var(--vh-line)); }
-.vh-btn.vh-btn-small { padding: .5rem .9rem .48rem; font-size: .86rem; box-shadow: 0 3px 0 var(--b-edge); }
-.vh-btn.vh-btn-small:hover { box-shadow: 0 4px 0 var(--b-edge); }
-.vh-btn.vh-btn-small:active { transform: translateY(3px); box-shadow: 0 0 0 var(--b-edge); }
-.vh-btn[disabled], .vh-btn[aria-disabled="true"] { opacity: .45; cursor: default; transform: none; box-shadow: var(--vh-press) var(--b-edge); }
-.vh-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 650; color: var(--vh-area-deep); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; cursor: pointer; }
-.vh-konto .vh-link, .vh-area-konto .vh-link { color: var(--vh-blue-deep); }
+.vh-btn:hover { border-color: var(--vh-ink-soft); background: color-mix(in srgb, var(--b) 92%, var(--vh-ink)); }
+.vh-btn:active { transform: scale(.97); }
+.vh-btn.vh-btn-accent { --b: var(--vh-area); --b-ink: var(--vh-area-ink); --b-edge: var(--vh-area); }
+.vh-btn.vh-btn-accent:hover { --b: var(--vh-area-deep); border-color: var(--vh-area-deep); background: var(--vh-area-deep); }
+.vh-btn.vh-btn-danger { --b-ink: #b4252a; --b-edge: color-mix(in srgb, #b4252a 40%, var(--vh-line)); }
+.vh-btn.vh-btn-small { min-height: 2.2rem; padding: .45rem .8rem; font-size: .9rem; border-radius: 8px; }
+.vh-btn[disabled], .vh-btn[aria-disabled="true"] { opacity: .45; cursor: default; transform: none; }
+.vh-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--vh-area-deep); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; cursor: pointer; }
 
 /* ---------- Formulare ---------- */
-.vh-field { display: grid; gap: .35rem; margin-bottom: 1rem; font-size: .9rem; font-weight: 650; color: var(--vh-ink); }
+.vh-field { display: grid; gap: .35rem; margin-bottom: 1rem; font-size: .92rem; font-weight: 600; color: var(--vh-ink); }
 .vh-field input, .vh-field textarea, .vh-field select, .vh-input {
-  font: 450 1rem var(--vh-body); color: var(--vh-ink);
-  background: var(--vh-board);
-  border: 1.5px solid var(--vh-line);
-  border-radius: var(--vh-r-field);
-  padding: .7rem .85rem; width: 100%;
-  transition: border-color .2s, box-shadow .2s, background-color .2s;
+  font: 400 1rem var(--vh-body); color: var(--vh-ink);
+  background: var(--vh-surface);
+  border: 1.5px solid var(--vh-line-strong);
+  border-radius: 8px;
+  padding: .68rem .85rem; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
 }
-.vh-field input:hover, .vh-field textarea:hover { border-color: var(--vh-line-strong); }
+.vh-field input:hover, .vh-field textarea:hover { border-color: var(--vh-ink-soft); }
 .vh-field input:focus, .vh-field textarea:focus, .vh-field select:focus, .vh-input:focus {
-  outline: none; border-color: var(--vh-area); background: var(--vh-surface);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--vh-area) 18%, transparent);
+  outline: none; border-color: var(--vh-area);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vh-area) 22%, transparent);
 }
-.vh-check { display: flex; gap: .6rem; align-items: flex-start; font-size: .94rem; margin: .4rem 0; cursor: pointer; }
+.vh-check { display: flex; gap: .6rem; align-items: flex-start; font-size: .96rem; margin: .4rem 0; cursor: pointer; }
 .vh-check input { margin-top: .22rem; width: 1.05rem; height: 1.05rem; accent-color: var(--vh-area); flex: none; }
 .vh-row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
 
-/* ---------- Reiter mit gleitender Markierung ---------- */
+/* ---------- Reiter ---------- */
 .vh-tabs {
-  display: inline-flex; gap: .25rem; margin-bottom: 1.25rem; flex-wrap: wrap;
-  background: var(--vh-surface-2); padding: .3rem; border-radius: var(--vh-r-pill);
+  display: inline-flex; gap: 1.4rem; margin-bottom: 1.4rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--vh-line); padding: 0; background: none; border-radius: 0;
 }
 .vh-tabs button {
-  font: 650 .92rem var(--vh-body); padding: .5rem 1rem; cursor: pointer;
-  background: transparent; border: 0; border-radius: var(--vh-r-pill); color: var(--vh-ink-soft);
-  transition: background-color .25s var(--vh-ease-out), color .2s, box-shadow .25s;
+  font: 600 1rem var(--vh-body); padding: .5rem 0 .55rem; margin-bottom: -1px; cursor: pointer;
+  background: transparent; border: 0; border-bottom: 3px solid transparent; border-radius: 0; color: var(--vh-ink-soft);
+  transition: color .15s, border-color .15s;
 }
-.vh-tabs button:hover { color: var(--vh-ink); }
-.vh-tabs button[aria-selected="true"] { background: var(--vh-surface); color: var(--vh-ink); box-shadow: 0 2px 6px var(--vh-shadow); }
+.vh-tabs button:hover { color: var(--vh-ink); border-bottom-color: var(--vh-line-strong); }
+.vh-tabs button[aria-selected="true"] { color: var(--vh-ink); border-bottom-color: var(--vh-area); box-shadow: none; background: transparent; }
 
 /* ---------- Tabellen, Pillen ---------- */
 .vh-table-wrap { overflow-x: auto; }
 .vh-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .vh-table th, .vh-table td { padding: .55rem .5rem; border-bottom: 1px solid var(--vh-line); text-align: left; }
-.vh-table th { font-size: .8rem; color: var(--vh-ink-soft); font-weight: 650; }
-.vh-pill { display: inline-flex; align-items: center; gap: .3rem; font-size: .76rem; font-weight: 700; padding: .12rem .55rem; border-radius: var(--vh-r-pill); background: var(--vh-surface-2); color: var(--vh-ink-soft); border: 0; }
+.vh-table th { font-size: .85rem; color: var(--vh-ink-soft); font-weight: 600; }
+.vh-pill { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem; font-weight: 600; padding: .12rem .55rem; border-radius: var(--vh-r-pill); background: var(--vh-surface-2); color: var(--vh-ink-soft); border: 0; }
 
 /* Stempel (ältere Seiten) als farbige Marke */
 .vh-stamp {
   display: inline-flex; align-items: center; gap: .4rem;
-  font: 700 .82rem var(--vh-body); color: var(--vh-area-ink);
-  background: var(--vh-area); padding: .25rem .7rem; border-radius: var(--vh-r-pill);
+  font: 600 .85rem var(--vh-body); color: var(--vh-area-ink);
+  background: var(--vh-area); padding: .2rem .65rem; border-radius: 6px;
   border: 0; transform: none; mix-blend-mode: normal;
 }
 
@@ -314,18 +351,18 @@ a { color: inherit; }
 .vh-toast {
   position: fixed; left: 50%; bottom: 1.5rem; z-index: 60;
   transform: translateX(-50%) translateY(140%) scale(.96);
-  background: var(--vh-table); color: #fff; font-weight: 600;
-  padding: .8rem 1.15rem .8rem 1rem; border-radius: var(--vh-r-field);
+  background: var(--vh-ink); color: var(--vh-board); font-weight: 600;
+  padding: .8rem 1.15rem .8rem 1rem; border-radius: 10px;
   box-shadow: 0 14px 30px -12px var(--vh-shadow);
   display: flex; align-items: center; gap: .6rem;
   max-width: calc(100vw - 2rem);
   opacity: 0; visibility: hidden;
   transition: transform .35s var(--vh-ease-hop), opacity .25s, visibility .25s;
 }
-.vh-toast::before { content: ""; width: .65rem; height: .65rem; border-radius: 50%; background: var(--vh-green); flex: none; }
+.vh-toast::before { content: ""; width: .65rem; height: .65rem; border-radius: 50%; background: #3fbf7f; flex: none; }
 .vh-toast.error::before { background: var(--vh-red); }
 .vh-toast.show { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; visibility: visible; }
-.vh-toast.error { background: var(--vh-red-deep); }
+.vh-toast.error { background: #8e1f24; color: #fff; }
 
 .vh-footer { text-align: center; padding: 2.5rem 1rem 3rem; color: var(--vh-ink-soft); font-size: .88rem; }
 
@@ -373,7 +410,7 @@ a { color: inherit; }
 }
 
 /* Geräusche an/aus (Bildschirm-Ansichten) */
-.vh-sound-btn { position: fixed; left: 1rem; bottom: 1rem; z-index: 70; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; font-size: 1.2rem; background: rgba(23, 32, 54, .85); color: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .3); cursor: pointer; transition: opacity .3s, transform .2s; }
+.vh-sound-btn { position: fixed; left: 1rem; bottom: 1rem; z-index: 70; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; font-size: 1.2rem; background: rgba(22, 32, 27, .85); color: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .3); cursor: pointer; transition: opacity .3s, transform .2s; }
 .vh-sound-btn:hover { transform: scale(1.08); }
 
 /* Privat-Hinweis & Datenschutz (von /shared/pwa.js eingefügt) */
@@ -383,41 +420,39 @@ a { color: inherit; }
 .vh-install[hidden] { display: none; }
 
 /* Turnier-Gäste (Gastlink): ohne Menü, mit Hinweis oben – vom Worker eingefügt */
-.vh-guest-pill { margin-left: auto; padding: .3rem .8rem; border-radius: var(--vh-r-pill); background: rgba(255, 255, 255, .14); color: #fff; font: 700 .82rem var(--vh-body); white-space: nowrap; }
+.vh-guest-pill { margin-left: auto; padding: .3rem .8rem; border-radius: 6px; background: var(--vh-surface-2); color: var(--vh-ink); font: 600 .88rem var(--vh-body); white-space: nowrap; }
 .vh-guest .vh-account { display: none; }
 
 /* ---------- Aussehen: Pinsel-Knopf und Auswahl (/shared/look.js) ---------- */
 .vh-look-btn {
-  width: 38px; height: 38px; flex: none; display: inline-grid; place-items: center; padding: 0;
-  border: 0; border-radius: 50%; background: rgba(255, 255, 255, .1); color: #fff; font-size: 1.05rem; cursor: pointer;
-  box-shadow: none; filter: none;
-  transition: background-color .2s, transform .35s var(--vh-ease-hop);
+  flex: none; padding: .35rem 0; border: 0; background: none; color: var(--vh-ink-soft);
+  font: 600 1rem var(--vh-body); cursor: pointer; box-shadow: none; filter: none;
 }
-.vh-header .vh-look-btn:hover:not(:disabled), .vh-header .vh-look-btn:active:not(:disabled) { box-shadow: none; filter: none; }
+.vh-header .vh-look-btn:hover:not(:disabled), .vh-header .vh-look-btn:active:not(:disabled) { box-shadow: none; filter: none; transform: none; }
 /* Seiten der Spielegalerie haben eigene Knopf-Regeln – im Auswahlfeld zurücksetzen */
 .vh-look button { box-shadow: none; filter: none; font-family: inherit; line-height: 1.3; }
 .vh-look button:hover:not(:disabled), .vh-look button:active:not(:disabled) { box-shadow: none; filter: none; }
 .vh-header .vh-look-btn { margin-left: auto; }
-.vh-header .vh-look-btn + .vh-account, .vh-header .vh-look-btn + .vh-guest-pill { margin-left: 0; }
-.vh-look-btn:hover { background: rgba(255, 255, 255, .18); transform: rotate(-12deg); }
-.vh-look-btn[aria-expanded="true"] { background: rgba(255, 255, 255, .24); }
-@media (max-width: 760px) { .vh-header .vh-look-btn { margin-left: auto; } .vh-header .vh-look-btn + .vh-account { margin-left: 0; } }
+.vh-header .vh-look-btn + .vh-account, .vh-header .vh-look-btn + .vh-guest-pill { margin-left: 1.4rem; }
+.vh-look-btn:hover { color: var(--vh-ink); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+.vh-look-btn[aria-expanded="true"] { color: var(--vh-ink); }
+@media (max-width: 760px) { .vh-header .vh-look-btn { margin-left: auto; } .vh-header .vh-look-btn + .vh-account { margin-left: 1rem; } }
 
 .vh-look-pop {
   position: absolute; z-index: 90; width: min(360px, calc(100vw - 16px)); text-align: left;
-  padding: 1rem; border-radius: var(--vh-r-board);
-  background: var(--vh-surface); color: var(--vh-ink); border: 1.5px solid var(--vh-line);
-  box-shadow: 0 22px 50px -18px var(--vh-shadow), 0 2px 0 var(--vh-line);
+  padding: 1rem; border-radius: 14px;
+  background: var(--vh-surface); color: var(--vh-ink); border: 1px solid var(--vh-line);
+  box-shadow: 0 22px 50px -18px var(--vh-shadow);
   font-family: var(--vh-body); font-size: .92rem; line-height: 1.4;
   animation: vh-look-in .28s var(--vh-ease-hop) both; transform-origin: top right;
 }
 @keyframes vh-look-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
-.vh-look-pop .vh-look-theme[aria-pressed="true"], .vh-look .vh-look-theme[aria-pressed="true"]:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--vh-blue) 25%, transparent); }
-.vh-look-title { margin: 0 0 .7rem; font: 750 1.05rem var(--vh-display); }
+.vh-look-pop .vh-look-theme[aria-pressed="true"], .vh-look .vh-look-theme[aria-pressed="true"]:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--vh-club) 25%, transparent); }
+.vh-look-title { margin: 0 0 .7rem; font: 700 1.35rem var(--vh-display); }
 .vh-look-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: .45rem; margin-bottom: .8rem; }
 .vh-look-theme {
   display: grid; gap: .1rem; justify-items: start; text-align: left; padding: .45rem .5rem .5rem;
-  border-radius: var(--vh-r-field); border: 1.5px solid var(--vh-line); background: var(--vh-board); color: var(--vh-ink);
+  border-radius: 8px; border: 1.5px solid var(--vh-line); background: var(--vh-board); color: var(--vh-ink);
   font: inherit; cursor: pointer; transition: border-color .2s, transform .2s var(--vh-ease-hop);
 }
 .vh-look-theme:hover { transform: translateY(-2px); border-color: var(--vh-line-strong); }
@@ -425,13 +460,13 @@ a { color: inherit; }
 .vh-look-theme .sw i { display: block; }
 .vh-look-theme b { font-size: .86rem; }
 .vh-look-theme small { color: var(--vh-ink-soft); font-size: .74rem; }
-.vh-look-theme[aria-pressed="true"] { border-color: var(--vh-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--vh-blue) 25%, transparent); }
+.vh-look-theme[aria-pressed="true"] { border-color: var(--vh-club); box-shadow: 0 0 0 3px color-mix(in srgb, var(--vh-club) 25%, transparent); }
 .vh-look-row { display: grid; grid-template-columns: 6.8rem 1fr; align-items: center; gap: .5rem; margin: .45rem 0; }
 .vh-look-row .lbl { color: var(--vh-ink-soft); font-weight: 650; font-size: .84rem; }
-.vh-look-seg { display: flex; gap: .2rem; padding: .2rem; border-radius: var(--vh-r-pill); background: var(--vh-surface-2); }
+.vh-look-seg { display: flex; gap: .2rem; padding: .2rem; border-radius: 8px; background: var(--vh-surface-2); }
 .vh-look-seg button {
-  flex: 1; padding: .38rem .55rem; border: 0; border-radius: var(--vh-r-pill); background: transparent; color: var(--vh-ink-soft);
-  font: 650 .82rem var(--vh-body); cursor: pointer; white-space: nowrap; transition: background-color .2s, color .2s;
+  flex: 1; padding: .38rem .55rem; border: 0; border-radius: 6px; background: transparent; color: var(--vh-ink-soft);
+  font: 600 .86rem var(--vh-body); cursor: pointer; white-space: nowrap; transition: background-color .2s, color .2s;
 }
 .vh-look-seg button[aria-pressed="true"] { background: var(--vh-surface); color: var(--vh-ink); box-shadow: 0 1px 4px var(--vh-shadow); }
 .vh-look-note { margin: .7rem 0 0; color: var(--vh-ink-soft); font-size: .78rem; }
@@ -443,17 +478,13 @@ a { color: inherit; }
 /* Nachtschicht (dunkel) */
 :root[data-theme="nacht"] .vh-error { color: #ff9494; }
 :root[data-theme="nacht"] .vh-ok { color: #63d99e; }
-:root[data-theme="nacht"] .vh-link { color: color-mix(in srgb, var(--vh-area) 55%, #fff); }
-:root[data-theme="nacht"] .vh-konto .vh-link, :root[data-theme="nacht"] .vh-area-konto .vh-link { color: #9db9ff; }
-:root[data-theme="nacht"] .vh-area-konto { --vh-area: #3a4f8c; --vh-area-deep: #24315c; }
+:root[data-theme="nacht"] .vh-link { color: color-mix(in srgb, var(--vh-area) 50%, #fff); }
 :root[data-theme="nacht"] .vh-btn.vh-btn-danger { --b-ink: #ff9494; }
-:root[data-theme="nacht"] .vh-field input:focus, :root[data-theme="nacht"] .vh-field textarea:focus, :root[data-theme="nacht"] .vh-field select:focus { background: var(--vh-surface-2); }
 :root[data-theme="nacht"] .vh-look-theme .sw { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .15); }
+:root[data-theme="nacht"] .dep-text, :root[data-theme="nacht"] .g-desc { color: var(--vh-ink-soft); }
+:root[data-theme="nacht"] .dep-go, :root[data-theme="nacht"] .g-rec { color: color-mix(in srgb, var(--c, var(--vh-area)) 45%, #fff); }
 /* Kontrast: kräftige Linien, unterstrichene Links, deutlicher Fokus */
-:root[data-theme="kontrast"] .vh-card { border-width: 2px; }
-:root[data-theme="kontrast"] .vh-btn { border-width: 2px; }
-:root[data-theme="kontrast"] .vh-header nav a { color: #fff; }
-:root[data-theme="kontrast"] .vh-hint, :root[data-theme="kontrast"] .vh-eyebrow { color: var(--vh-ink); }
-:root[data-theme="kontrast"] main :is(p, li, td) > a:not(.vh-btn) { text-decoration: underline; text-underline-offset: 3px; }
+:root[data-theme="kontrast"] .vh-card, :root[data-theme="kontrast"] .vh-btn, :root[data-theme="kontrast"] .g { border-width: 2px; border-color: #000; }
+:root[data-theme="kontrast"] .vh-hint, :root[data-theme="kontrast"] .vh-eyebrow, :root[data-theme="kontrast"] .vh-header nav a { color: #000; }
+:root[data-theme="kontrast"] main :is(p, li, td) > a:not(.vh-btn):not(.g) { text-decoration: underline; text-underline-offset: 3px; }
 :root[data-theme="kontrast"] :focus-visible { outline: 4px solid #0040c0; outline-offset: 3px; }
-:root[data-theme="kontrast"] .vh-area-turnier { --vh-area-deep: #6b4f00; }

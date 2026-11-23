@@ -19,7 +19,7 @@ function trend(h) {
 function render() {
   const d = R.data;
   const fb = R.sport === 'football';
-  const tabs = renderTabs([['tabletennis', '🏓 Tischtennis'], ['football', '⚽ Fußball']], R.sport);
+  const tabs = renderTabs([['tabletennis', 'Tischtennis'], ['football', 'Fußball']], R.sport);
   let body;
   if (!d) body = '<p class="empty">Lädt …</p>';
   else if (!d.players.length) body = `<p class="empty">Noch keine gewerteten Spiele${fb ? '' : ' im Einzel'}. Die Rangliste füllt sich mit jedem eingetragenen Ergebnis.</p>`;
@@ -27,7 +27,7 @@ function render() {
     let rank = 0, last = null;
     body = `<p class="t-meta">${d.players.length} ${fb ? 'Teams' : 'Personen'} · ${d.games} Spiele aus ${d.tournaments} ${d.tournaments === 1 ? 'Turnier' : 'Turnieren'}</p>
       <div class="scroll"><table class="standings ranking">
-      <thead><tr><th>Platz</th><th class="left">${fb ? 'Team' : 'Name'}</th><th>Wertung</th><th class="hide-s">Verlauf</th><th title="Spiele">Sp</th><th>${fb ? 'S-U-N' : 'S:N'}</th><th title="Turniersiege">🏆</th></tr></thead>
+      <thead><tr><th>Platz</th><th class="left">${fb ? 'Team' : 'Name'}</th><th>Wertung</th><th class="hide-s">Verlauf</th><th title="Spiele">Sp</th><th>${fb ? 'S-U-N' : 'S:N'}</th><th title="Turniersiege">Siege</th></tr></thead>
       <tbody>${d.players.map((p, i) => { if (p.rating !== last) { rank = i + 1; last = p.rating; } return `
         <tr style="--i:${Math.min(i, 20)}" class="${rank <= 3 ? 'top' + rank : ''}">
           <td class="num"><span class="rk">${rank}</span></td>

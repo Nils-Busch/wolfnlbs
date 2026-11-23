@@ -89,7 +89,7 @@
       ${won ? `<div>${g.guesses.length}/6 Versuche in ${fmtTime(g.seconds)}</div>` : `<div>Gesucht war:</div><div class="sol">${esc(g.solution)}</div>`}
       ${canSubmit ? `<form id="submitForm"><input name="n" maxlength="16" placeholder="Dein Name" required value="${esc(store.get('gg-name') || '')}"><button>In die Bestenliste</button></form>` : ''}
       <div class="row">
-        <button class="ghost" id="shareBtn" type="button">📋 Ergebnis kopieren</button>
+        <button class="ghost" id="shareBtn" type="button">Ergebnis kopieren</button>
         ${g.mode === 'free' ? '<button id="againBtn" type="button">Neues Wort</button>' : '<button class="ghost" id="toFree" type="button">Noch eins (frei)</button>'}
       </div>`;
     const f = $('submitForm');
@@ -126,7 +126,7 @@
   function renderBoard(board, mark, date) {
     const el = $('board');
     const today = date ? new Date(date + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Heute';
-    el.innerHTML = `<h2>🏆 Tagesrätsel</h2><p class="muted" style="margin-top:-.4rem">${esc(today)}</p>${
+    el.innerHTML = `<h2>Tagesbestenliste</h2><p class="muted" style="margin-top:-.4rem">${esc(today)}</p>${
       board.length
         ? `<ol class="wd-board">${board.map((e) => `<li class="${mark && e.name === mark ? 'me' : ''}"><span>${esc(e.name)}</span><b>${e.attempts}/6</b><small>${fmtTime(e.seconds)}</small></li>`).join('')}</ol>`
         : '<p class="muted">Heute hat es noch niemand gelöst – sei die oder der Erste!</p>'
@@ -138,7 +138,7 @@
       const r = await api('/board');
       renderBoard(r.board, W.submittedName, r.date);
     } catch {
-      $('board').innerHTML = '<h2>🏆 Tagesrätsel</h2><p class="muted">Bestenliste gerade nicht erreichbar.</p>';
+      $('board').innerHTML = '<h2>Tagesbestenliste</h2><p class="muted">Bestenliste gerade nicht erreichbar.</p>';
     }
   }
 
@@ -166,7 +166,7 @@
     const st = store.get('wordle-stats') || { played: 0, won: 0, streak: 0, best: 0, dist: [0, 0, 0, 0, 0, 0] };
     const max = Math.max(1, ...st.dist);
     const mine = W.game && W.game.mode === 'daily' && W.game.status === 'won' ? W.game.guesses.length - 1 : -1;
-    $('stats').innerHTML = `<h2>📊 Deine Statistik</h2>
+    $('stats').innerHTML = `<h2>Deine Statistik</h2>
       <div class="nums"><div><b>${st.played}</b><span>gespielt</span></div><div><b>${st.played ? Math.round((st.won / st.played) * 100) : 0}%</b><span>gelöst</span></div>
       <div><b>${st.streak}</b><span>Serie</span></div><div><b>${st.best}</b><span>Rekord</span></div></div>
       <div class="wd-dist">${st.dist.map((n, i) => `<div><span>${i + 1}</span><i class="${i === mine ? 'me' : ''}" style="width:${Math.max(8, (n / max) * 100)}%">${n}</i></div>`).join('')}</div>

@@ -1,5 +1,9 @@
 (() => {
   'use strict';
+  // Gezeichnete Mine und Fahne
+  const MINE = '<svg class="ms-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5v17M1.5 10h17M4 4l12 12M16 4L4 16" stroke="#111" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="10" r="5.5" fill="#111"/><circle cx="8" cy="8" r="1.6" fill="#fff"/></svg>';
+  const FLAG = '<svg class="ms-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 2.5l9 4-9 4z" fill="#e23b3b"/></svg>';
+  const WRONG = '<svg class="ms-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16" stroke="#ff5d5d" stroke-width="3" stroke-linecap="round"/></svg>';
   const LEVELS = {
     s9: { w: 9, h: 9, m: 10, id: 'mines9', label: 'Klein 9×9' },
     s16: { w: 16, h: 16, m: 40, id: 'mines16', label: 'Groß 16×16' },
@@ -47,7 +51,7 @@
     $('time').textContent = '0';
     $('overlay').hidden = true;
     document.querySelectorAll('.levels button').forEach((b) => b.classList.toggle('on', b.dataset.lvl === lvlKey));
-    hs = Scores.panel($('scores'), L.id, { unit: 's', title: `🏆 ${L.label} – schnellste Zeit` });
+    hs = Scores.panel($('scores'), L.id, { unit: 's', title: `${L.label}: schnellste Zeit` });
     build();
     render();
   }
@@ -129,11 +133,11 @@
       let cls = 'c', txt = '';
       if (c.open) {
         cls += ' open';
-        if (c.mine) { txt = '💣'; if (c.boom) cls += ' boom'; }
+        if (c.mine) { txt = MINE; if (c.boom) cls += ' boom'; }
         else if (c.n) { txt = c.n; cls += ' n' + c.n; }
-      } else if (c.flag) txt = over && !c.mine ? '❌' : '🚩';
+      } else if (c.flag) txt = over && !c.mine ? WRONG : FLAG;
       b.className = cls;
-      b.textContent = txt;
+      b.innerHTML = txt;
       b.setAttribute('aria-label', c.open ? (c.mine ? 'Mine' : `${c.n} Minen in der Nähe`) : c.flag ? 'Fahne' : 'verdeckt');
     });
     $('mines').textContent = L.m - flags;
@@ -145,7 +149,7 @@
     cells[i].boom = true;
     cells.forEach((c) => { if (c.mine && !c.flag) c.open = true; });
     render();
-    showOverlay('💥 Boom! Leider verloren.');
+    showOverlay('Boom! Leider verloren.');
   }
 
   function win() {
@@ -156,7 +160,7 @@
     cells.forEach((c) => { if (c.mine) c.flag = true; });
     flags = L.m;
     render();
-    showOverlay(`🎉 Geschafft in ${secs} Sekunden!`);
+    showOverlay(`Geschafft in ${secs} Sekunden!`);
     hs.offer(secs);
   }
 
@@ -169,7 +173,7 @@
   $('flagMode').onclick = () => {
     flagMode = !flagMode;
     $('flagMode').classList.toggle('on', flagMode);
-    $('flagMode').textContent = flagMode ? '🚩 Fahnen-Modus an' : '🚩 Fahnen-Modus';
+    $('flagMode').innerHTML = FLAG + (flagMode ? ' Fahnen-Modus an' : ' Fahnen-Modus');
   };
   $('ovBtn').onclick = start;
   $('newGame').onclick = start;

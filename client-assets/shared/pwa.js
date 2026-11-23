@@ -42,7 +42,7 @@
     b.title = 'Aussehen';
     b.setAttribute('aria-label', 'Aussehen ändern');
     b.setAttribute('aria-expanded', 'false');
-    b.innerHTML = '<span aria-hidden="true">🎨</span>';
+    b.textContent = 'Aussehen';
     header.insertBefore(b, header.querySelector('.vh-account, .vh-guest-pill'));
     b.addEventListener('click', () => {
       if (window.VHLookUI) return window.VHLookUI.toggle(b);

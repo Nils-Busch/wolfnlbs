@@ -64,7 +64,7 @@
 
     if (!won && grid.some((v) => v >= 2048)) {
       won = true;
-      showOverlay('2048 erreicht! 🎉', [['Weiterspielen', hideOverlay], ['Neues Spiel', start]]);
+      showOverlay('2048 erreicht!', [['Weiterspielen', hideOverlay], ['Neues Spiel', start]]);
     } else if (!canMove()) {
       over = true;
       showOverlay(`Keine Züge mehr – ${score} Punkte`, [['Nochmal', start]]);

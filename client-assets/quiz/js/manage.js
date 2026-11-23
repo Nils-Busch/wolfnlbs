@@ -57,7 +57,7 @@ function quizItem(q) {
     ${q.description ? `<p class="desc">${esc(q.description)}</p>` : ''}
     <div class="actions">
       <button class="vh-btn vh-btn-accent vh-btn-small" data-action="start" data-id="${q.id}" ${q.question_count ? '' : 'disabled title="Noch keine Fragen"'}>▶ Starten</button>
-      ${q.can_edit ? `<a class="vh-btn vh-btn-small" href="#edit=${q.id}">✎ Bearbeiten</a>` : ''}
+      ${q.can_edit ? `<a class="vh-btn vh-btn-small" href="#edit=${q.id}">Bearbeiten</a>` : ''}
       ${M.canCreate && !q.mine ? `<button class="vh-btn vh-btn-small" data-action="copy" data-id="${q.id}">Kopieren</button>` : ''}
       ${q.can_edit ? `<button class="vh-btn vh-btn-small vh-btn-danger" data-action="delete" data-id="${q.id}">Löschen</button>` : ''}
     </div>
@@ -73,10 +73,10 @@ async function homeView() {
   }
   const list = (M.list || []).filter((q) => M.filter === 'all' || (M.filter === 'mine' ? q.mine : !q.mine));
   app.innerHTML = `
-    <div class="qz-top"><div>
-      <h1 class="vh-h1">Party-Quiz</h1>
+    <div class="vh-kopf" data-wind>
+      <h1><span class="vh-sr">Party-Quiz</span>${document.getElementById('wimpelQuiz')?.innerHTML || ''}</h1>
       <p>Fragen auf dem Fernseher, Antworten am Handy. Wer schneller richtig liegt, bekommt mehr Punkte.</p>
-    </div></div>
+    </div>
     <div class="qz-hero">${joinCard()}${hostCard()}</div>
     ${
       M.me
@@ -126,7 +126,7 @@ function renderEditor() {
       <div class="qz-savebar">
         <span class="state${M.dirty ? ' dirty' : ''}">${d.questions.length} Frage${d.questions.length === 1 ? '' : 'n'}${M.dirty ? ', nicht gespeichert' : ''}</span>
         <button type="button" class="vh-btn" data-action="back">Abbrechen</button>
-        <button class="vh-btn vh-btn-accent" ${M.saving ? 'disabled' : ''}>💾 Speichern</button>
+        <button class="vh-btn vh-btn-accent" ${M.saving ? 'disabled' : ''}>Speichern</button>
       </div>
     </form>`;
 }
@@ -138,7 +138,7 @@ function questionCard(q, i, total) {
         <button type="button" data-action="up" data-q="${i}" ${i === 0 ? 'disabled' : ''} title="Nach oben">↑</button>
         <button type="button" data-action="down" data-q="${i}" ${i === total - 1 ? 'disabled' : ''} title="Nach unten">↓</button>
         <button type="button" data-action="dup" data-q="${i}" title="Duplizieren">⧉</button>
-        <button type="button" data-action="del" data-q="${i}" title="Löschen">🗑</button>
+        <button type="button" data-action="del" data-q="${i}" title="Löschen" aria-label="Frage löschen"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></button>
       </span></div>
     <label class="vh-field">Frage<textarea data-field="text" rows="2" maxlength="300" placeholder="Wie heißt …?">${esc(q.text)}</textarea></label>
     <div class="qz-answers">${q.answers
@@ -150,7 +150,7 @@ function questionCard(q, i, total) {
         </div>`
       )
       .join('')}</div>
-    <div class="row2">⏱ Zeit zum Antworten
+    <div class="row2">Zeit zum Antworten
       <select data-field="seconds">${SECONDS.map((s) => `<option value="${s}" ${q.seconds === s ? 'selected' : ''}>${s} Sekunden</option>`).join('')}</select>
     </div>
   </section>`;

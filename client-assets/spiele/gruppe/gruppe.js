@@ -28,7 +28,10 @@
   const normCode = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
   const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const vibrate = (p) => { if (navigator.vibrate) try { navigator.vibrate(p); } catch {} };
-  const ICON = { wwe: '🫵', slf: '🔤', kniffel: '🎲', maexchen: '🥤', draw: '🖍️', agent: '🕵️', explain: '🐻' };
+  // Gezeichnete Symbole der Gruppenspiele (wie in der Spielegalerie)
+  const ICON = { wwe: "<svg class=\"gp-ico\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"18\" r=\"5\" fill=\"var(--vh-ink)\" opacity=\".35\"/><path d=\"M3 40c0-8 3.6-13 8-13s8 5 8 13z\" fill=\"var(--vh-ink)\" opacity=\".35\"/><circle cx=\"37\" cy=\"18\" r=\"5\" fill=\"var(--vh-ink)\" opacity=\".35\"/><path d=\"M29 40c0-8 3.6-13 8-13s8 5 8 13z\" fill=\"var(--vh-ink)\" opacity=\".35\"/><g class=\"a-hoch\"><circle cx=\"24\" cy=\"13\" r=\"6.5\" fill=\"var(--vh-red)\"/><path d=\"M13 42c0-10 5-16 11-16s11 6 11 16z\" fill=\"var(--vh-red)\"/></g></svg>", slf: "<svg class=\"gp-ico\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g class=\"a-dreh\"><rect x=\"5\" y=\"5\" width=\"22\" height=\"22\" rx=\"4\" fill=\"var(--vh-yellow)\"/><text x=\"16\" y=\"23\" text-anchor=\"middle\" font-family=\"Barlow Condensed, sans-serif\" font-weight=\"800\" font-size=\"19\" fill=\"var(--vh-ink)\">B</text></g><rect x=\"31\" y=\"9\" width=\"12\" height=\"3.5\" rx=\"1.75\" fill=\"var(--vh-ink)\" opacity=\".35\"/><rect x=\"31\" y=\"18\" width=\"9\" height=\"3.5\" rx=\"1.75\" fill=\"var(--vh-ink)\" opacity=\".35\"/><rect class=\"a-schreib\" x=\"5\" y=\"33\" width=\"38\" height=\"3.5\" rx=\"1.75\" fill=\"var(--vh-ink)\" opacity=\".35\"/><rect class=\"a-schreib a-spaet\" x=\"5\" y=\"41\" width=\"26\" height=\"3.5\" rx=\"1.75\" fill=\"var(--vh-ink)\" opacity=\".35\"/></svg>", kniffel: "<svg class=\"gp-ico\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g class=\"a-wuerfel\"><g transform=\"rotate(-10 15.0 27.0)\"><rect x=\"4\" y=\"16\" width=\"22\" height=\"22\" rx=\"4.4\" fill=\"#fff\" stroke=\"var(--vh-ink)\" stroke-width=\"2\"/><circle cx=\"9.7\" cy=\"21.7\" r=\"2.2\" fill=\"var(--vh-ink)\"/><circle cx=\"15.0\" cy=\"27.0\" r=\"2.2\" fill=\"var(--vh-ink)\"/><circle cx=\"20.3\" cy=\"32.3\" r=\"2.2\" fill=\"var(--vh-ink)\"/></g></g><g class=\"a-wuerfel a-spaet\"><g transform=\"rotate(12 32.0 17.0)\"><rect x=\"21\" y=\"6\" width=\"22\" height=\"22\" rx=\"4.4\" fill=\"var(--vh-red)\" stroke=\"var(--vh-ink)\" stroke-width=\"2\"/><circle cx=\"26.7\" cy=\"11.7\" r=\"2.2\" fill=\"#fff\"/><circle cx=\"37.3\" cy=\"11.7\" r=\"2.2\" fill=\"#fff\"/><circle cx=\"32.0\" cy=\"17.0\" r=\"2.2\" fill=\"#fff\"/><circle cx=\"26.7\" cy=\"22.3\" r=\"2.2\" fill=\"#fff\"/><circle cx=\"37.3\" cy=\"22.3\" r=\"2.2\" fill=\"#fff\"/></g></g></svg>", maexchen: "<svg class=\"gp-ico\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g class=\"a-wackel\"><rect x=\"12\" y=\"3\" width=\"24\" height=\"42\" rx=\"5\" fill=\"none\" stroke=\"var(--vh-ink)\" stroke-width=\"2.5\"/><rect x=\"20\" y=\"40\" width=\"8\" height=\"2\" rx=\"1\" fill=\"var(--vh-ink)\"/><g class=\"\"><g transform=\"rotate(0 24.0 22.0)\"><rect x=\"15\" y=\"13\" width=\"18\" height=\"18\" rx=\"3.6\" fill=\"var(--vh-red)\" stroke=\"var(--vh-ink)\" stroke-width=\"2\"/><circle cx=\"20.0\" cy=\"18.0\" r=\"1.8\" fill=\"#fff\"/><circle cx=\"28.0\" cy=\"26.0\" r=\"1.8\" fill=\"#fff\"/></g></g></g></svg>", draw: "<svg class=\"gp-ico\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path class=\"a-zeichne\" pathLength=\"100\" d=\"M7 40V22L21 10l14 12v18z\" fill=\"none\" stroke=\"var(--vh-blue)\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path class=\"a-zeichne a-spaet\" pathLength=\"100\" d=\"M17 40v-9h8v9\" fill=\"none\" stroke=\"var(--vh-blue)\" stroke-width=\"3\" stroke-linejoin=\"round\"/><g class=\"a-stift\"><g transform=\"rotate(40 38 30)\"><rect x=\"35\" y=\"12\" width=\"6\" height=\"22\" rx=\"1\" fill=\"var(--vh-yellow)\"/><path d=\"M35 34h6l-3 6z\" fill=\"var(--vh-ink)\"/></g></g></svg>", agent: "<svg class=\"gp-ico\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><rect class=\"a-karte\" style=\"--n:0\" x=\"3\" y=\"3\" width=\"13\" height=\"13\" rx=\"2\" fill=\"var(--vh-red)\"/><rect class=\"a-karte\" style=\"--n:1\" x=\"18\" y=\"3\" width=\"13\" height=\"13\" rx=\"2\" fill=\"var(--vh-blue)\"/><rect class=\"a-karte\" style=\"--n:2\" x=\"33\" y=\"3\" width=\"13\" height=\"13\" rx=\"2\" fill=\"#d8cfb6\"/><rect class=\"a-karte\" style=\"--n:3\" x=\"3\" y=\"18\" width=\"13\" height=\"13\" rx=\"2\" fill=\"#d8cfb6\"/><rect class=\"a-karte\" style=\"--n:4\" x=\"18\" y=\"18\" width=\"13\" height=\"13\" rx=\"2\" fill=\"var(--vh-ink)\"/><rect class=\"a-karte\" style=\"--n:5\" x=\"33\" y=\"18\" width=\"13\" height=\"13\" rx=\"2\" fill=\"var(--vh-red)\"/><rect class=\"a-karte\" style=\"--n:6\" x=\"3\" y=\"33\" width=\"13\" height=\"13\" rx=\"2\" fill=\"var(--vh-blue)\"/><rect class=\"a-karte\" style=\"--n:7\" x=\"18\" y=\"33\" width=\"13\" height=\"13\" rx=\"2\" fill=\"var(--vh-red)\"/><rect class=\"a-karte\" style=\"--n:8\" x=\"33\" y=\"33\" width=\"13\" height=\"13\" rx=\"2\" fill=\"var(--vh-blue)\"/></svg>", explain: "<svg class=\"gp-ico\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g class=\"a-kipp\"><rect x=\"11\" y=\"4\" width=\"26\" height=\"4\" rx=\"2\" fill=\"var(--vh-ink)\"/><rect x=\"11\" y=\"40\" width=\"26\" height=\"4\" rx=\"2\" fill=\"var(--vh-ink)\"/><path d=\"M14 8h20c0 9-7 12-7 16s7 7 7 16H14c0-9 7-12 7-16s-7-7-7-16z\" fill=\"none\" stroke=\"var(--vh-ink)\" stroke-width=\"2.5\"/><path d=\"M17 12h14c-1 4-5 7-7 9-2-2-6-5-7-9zM24 30c3 2 7 4 7 9H17c0-5 4-7 7-9z\" fill=\"var(--vh-yellow)\"/></g></svg>" };
+  const BOT = "<svg class=\"ico-bot\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><rect x=\"3\" y=\"6\" width=\"14\" height=\"11\" rx=\"3\" fill=\"currentColor\"/><rect x=\"9.2\" y=\"2\" width=\"1.6\" height=\"4\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"2.2\" r=\"1.6\" fill=\"currentColor\"/><circle cx=\"7.5\" cy=\"11.5\" r=\"1.6\" fill=\"var(--bg)\"/><circle cx=\"12.5\" cy=\"11.5\" r=\"1.6\" fill=\"var(--bg)\"/></svg>";
+  const MINE = "<svg class=\"ag-mine\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 1.5v17M1.5 10h17M4 4l12 12M16 4L4 16\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"10\" cy=\"10\" r=\"5.5\" fill=\"currentColor\"/></svg>";
   const TEAM_GAMES = new Set(['agent', 'explain']);
   const TEAM = ['Rot', 'Blau'];
 
@@ -129,7 +132,7 @@
   }
   const clock = { off: 0, sync(n) { if (n) this.off = n - Date.now(); }, left(t) { return t ? Math.max(0, t - (Date.now() + this.off)) : 0; } };
 
-  const G = { mode: null, code: null, sock: null, s: null, connected: false, tick: null, typing: null, lastPhaseKey: '', ink: { rev: -1, strokes: [] }, pen: { c: '#172036', w: 14 } };
+  const G = { mode: null, code: null, sock: null, s: null, connected: false, tick: null, typing: null, lastPhaseKey: '', ink: { rev: -1, strokes: [] }, pen: { c: '#16201b', w: 14 } };
 
   async function act(event, payload) {
     const r = await G.sock.emit(event, payload);
@@ -167,13 +170,13 @@
       </form>
       <h2 class="gp-sub">Neuen Raum eröffnen</h2>
       <div class="gp-games">${GAME_CARDS.map(([g, t, d, tag]) => `
-        <article class="gp-game ${g} ${want === g ? 'want' : ''}" data-tilt>
+        <article class="gp-game ${g} ${want === g ? 'want' : ''}">
           <span class="gp-icon">${ICON[g]}</span>
           <h2>${t}</h2>
           <p>${d}</p>
           <span class="gp-tag">${tag}</span>
           <button data-create="${g}">Raum eröffnen &amp; mitspielen</button>
-          <button class="ghost small gp-tvonly" data-create-tv="${g}" title="Der Fernseher leitet, du spielst nicht mit">📺 Nur als Bildschirm</button>
+          <button class="ghost small gp-tvonly" data-create-tv="${g}" title="Der Fernseher leitet, du spielst nicht mit">Nur als Bildschirm</button>
         </article>`).join('')}</div>`;
     app.querySelectorAll('[data-create]').forEach((b) => (b.onclick = () => create(b.dataset.create)));
     app.querySelectorAll('[data-create-tv]').forEach((b) => (b.onclick = () => create(b.dataset.createTv, true)));
@@ -261,7 +264,7 @@
   }
   const byId = (s) => Object.fromEntries(s.players.map((p) => [p.id, p]));
   const sortScore = (s) => [...s.players].sort((a, b) => b.score - a.score);
-  const pname = (p) => `${p.bot ? '🤖 ' : ''}${esc(p.name)}`;
+  const pname = (p) => `${p.bot ? BOT : ''}${esc(p.name)}`;
 
   /* ---------- Spieleabend ---------- */
   const GAME_LIST = ['wwe', 'slf', 'kniffel', 'maexchen', 'draw', 'agent', 'explain'];
@@ -271,8 +274,8 @@
   function eveningTable(s) {
     const ev = s.evening;
     if (!ev) return '';
-    return `<section class="ev-table"><h3>🏆 Spieleabend <span>${ev.played.length} ${ev.played.length === 1 ? 'Spiel' : 'Spiele'}</span></h3>
-      <ol>${ev.ranking.map((r, i) => `<li data-k="ev${r.id}" class="${G.s?.me?.id === r.id ? 'me' : ''}"><span class="pl">${i + 1}</span><span class="n">${esc(r.name)}</span><span class="w" title="${r.wins} Siege">${'🥇'.repeat(Math.min(r.wins, 3))}</span><b>${r.points}</b></li>`).join('')}</ol>
+    return `<section class="ev-table"><h3>Spieleabend <span>${ev.played.length} ${ev.played.length === 1 ? 'Spiel' : 'Spiele'}</span></h3>
+      <ol>${ev.ranking.map((r, i) => `<li data-k="ev${r.id}" class="${G.s?.me?.id === r.id ? 'me' : ''}"><span class="pl">${i + 1}</span><span class="n">${esc(r.name)}</span><span class="w" title="${r.wins} Siege">${'<i class="medal-dot"></i>'.repeat(Math.min(r.wins, 3))}</span><b>${r.points}</b></li>`).join('')}</ol>
       <p class="muted small">Platz 1 bekommt 10 Abendpunkte, Platz 2 sieben, dann 5, 3, 2 und 1.</p></section>`;
   }
   function finaleHtml(s) {
@@ -291,8 +294,8 @@
   function galleryHtml(s) {
     const list = s.galleryMeta || [];
     if (!list.length) return '';
-    return `<section class="gal"><h3>🖍️ Bilder des Abends</h3><div class="gal-grid">${list.map((m) => `<figure class="gal-it" data-k="g${m.i}-${esc(m.word)}"><canvas class="gal-cv" data-gal="${m.i}" width="400" height="300" aria-label="Zeichnung: ${esc(m.word)}"></canvas>
-      <figcaption><b>${esc(m.word)}</b> <span>von ${esc(m.drawer)}</span></figcaption><button type="button" class="ghost small" data-dl="${m.i}">⬇ Bild speichern</button></figure>`).join('')}</div></section>`;
+    return `<section class="gal"><h3>Bilder des Abends</h3><div class="gal-grid">${list.map((m) => `<figure class="gal-it" data-k="g${m.i}-${esc(m.word)}"><canvas class="gal-cv" data-gal="${m.i}" width="400" height="300" aria-label="Zeichnung: ${esc(m.word)}"></canvas>
+      <figcaption><b>${esc(m.word)}</b> <span>von ${esc(m.drawer)}</span></figcaption><button type="button" class="ghost small" data-dl="${m.i}">Bild speichern</button></figure>`).join('')}</div></section>`;
   }
   G.gal = {};
   async function galleryLoad() {
@@ -316,7 +319,7 @@
     const ctx = ctxOf(cv);
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     for (const st of g.strokes) paintStroke(ctx, st);
-    ctx.fillStyle = '#172036'; ctx.font = 'bold 34px system-ui, sans-serif';
+    ctx.fillStyle = '#16201b'; ctx.font = 'bold 34px system-ui, sans-serif';
     ctx.fillText(`${g.word} – gezeichnet von ${g.drawer}`, 24, H + 46);
     const a = document.createElement('a');
     a.href = cv.toDataURL('image/png');
@@ -339,7 +342,7 @@
     const fresh = key !== G.lastPhaseKey;
     G.lastPhaseKey = key;
     const bodyKey = phaseKey(s, key);
-    const head = `<header class="gp-bar"><span class="t">${s.phase === 'FINALE' ? '🏆 Spieleabend' : `${ICON[s.game] || ''} ${esc(s.gameName)}`}</span>${s.round && s.game !== 'maexchen' && !TEAM_GAMES.has(s.game) && s.phase !== 'FINALE' && s.phase !== 'LOBBY' ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}${s.game === 'agent' && s.ag && s.settings.rounds > 1 && s.phase !== 'LOBBY' && s.phase !== 'FINALE' ? `<span class="r">Partie ${s.ag.match} von ${s.settings.rounds}</span>` : ''}${s.game === 'explain' && s.ex && !['LOBBY', 'FINALE', 'END'].includes(s.phase) ? `<span class="r">Zug ${Math.min(s.ex.turnNo + 1, s.ex.total)} von ${s.ex.total}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
+    const head = `<header class="gp-bar"><span class="t">${s.phase === 'FINALE' ? 'Spieleabend' : `${ICON[s.game] || ''} ${esc(s.gameName)}`}</span>${s.round && s.game !== 'maexchen' && !TEAM_GAMES.has(s.game) && s.phase !== 'FINALE' && s.phase !== 'LOBBY' ? `<span class="r">Runde ${s.round} von ${s.settings.rounds}</span>` : ''}${s.game === 'agent' && s.ag && s.settings.rounds > 1 && s.phase !== 'LOBBY' && s.phase !== 'FINALE' ? `<span class="r">Partie ${s.ag.match} von ${s.settings.rounds}</span>` : ''}${s.game === 'explain' && s.ex && !['LOBBY', 'FINALE', 'END'].includes(s.phase) ? `<span class="r">Zug ${Math.min(s.ex.turnNo + 1, s.ex.total)} von ${s.ex.total}</span>` : ''}<span class="code">${esc(s.code)}</span>${G.connected ? '' : '<span class="warn">Verbindung unterbrochen …</span>'}</header>`;
     let body = '';
     let foot = '';
     if (s.phase === 'LOBBY') {
@@ -354,7 +357,7 @@
         ${settingsHtml(s)}
         ${eveningTable(s)}
       </div>`;
-      foot = `<button class="big" data-host="start" ${s.players.length < (TEAM_GAMES.has(s.game) ? 4 : 2) ? 'disabled' : ''}>${ICON[s.game]} ${esc(s.gameName)} starten</button>${s.evening ? '<button class="ghost" data-host="finale">🏆 Siegerehrung</button>' : ''}`;
+      foot = `<button class="big" data-host="start" ${s.players.length < (TEAM_GAMES.has(s.game) ? 4 : 2) ? 'disabled' : ''}>${ICON[s.game]} ${esc(s.gameName)} starten</button>${s.evening ? '<button class="ghost" data-host="finale">Siegerehrung</button>' : ''}`;
     } else if (s.phase === 'FINALE') {
       body = finaleHtml(s);
       foot = `<button data-host="restart">Weiter spielen</button>`;
@@ -368,7 +371,7 @@
         const r = s.result;
         const max = Math.max(1, ...r.ranking.map((x) => x.votes));
         body = `<div class="wwe-q small"><p class="kick">Wer würde eher …</p><h2>${esc(s.question.replace(/^… ?/, ''))}</h2></div>
-          ${r.winners.length ? `<div class="wwe-win"><span class="crown">👑</span><b>${r.winners.map(esc).join(' & ')}</b></div>` : '<p class="center muted">Niemand hat abgestimmt.</p>'}
+          ${r.winners.length ? `<div class="wwe-win"><span class="crown" aria-hidden="true"></span><b>${r.winners.map(esc).join(' & ')}</b></div>` : '<p class="center muted">Niemand hat abgestimmt.</p>'}
           <div class="wwe-bars">${r.ranking.map((x, i) => `<div class="b" style="--w:${(x.votes / max) * 100}%; animation-delay:${0.3 + i * 0.12}s">${av({ name: x.name })}<span class="n">${esc(x.name)}</span><span class="bar"><i></i></span><b>${x.votes}</b></div>`).join('')}</div>`;
         foot = `<button data-host="next">${s.round >= s.settings.rounds ? 'Zum Ergebnis' : 'Nächste Frage'}</button>`;
       } else if (s.phase === 'END') {
@@ -401,7 +404,7 @@
       if (s.phase === 'WRITING') {
         body = `<div class="slf-letter spin" id="slfLetter"><span>${esc(s.letter)}</span></div>
           <p class="slf-cats">${s.settings.categories.map((c, i) => `<span style="animation-delay:${2.6 + i * 0.08}s">${esc(c)}</span>`).join('')}</p>${timerBar()}
-          ${s.stoppedBy ? `<p class="slf-stop">✋ ${esc(s.stoppedBy)} ist fertig – noch 10 Sekunden!</p>` : ''}
+          ${s.stoppedBy ? `<p class="slf-stop">${esc(s.stoppedBy)} ist fertig, noch 10 Sekunden!</p>` : ''}
           <div class="gp-voted">${s.players.map((p) => `<span class="${s.done.includes(p.id) ? 'in' : ''}" data-k="v${p.id}">${av(p)}</span>`).join('')}</div>`;
         foot = `<button data-host="next">Stopp – auswerten</button>`;
       } else if (s.phase === 'REVIEW' || s.phase === 'SCORES') {
@@ -415,7 +418,7 @@
             const fl = (s.flags[k] || []).length;
             const pts = scores ? scores.detail[p.id]?.[c] ?? 0 : null;
             const bad = auto.has(k) || (scores && v && pts === 0);
-            return `<td class="${bad ? 'bad' : ''} ${!v ? 'empty' : ''}">${v ? esc(v) : '–'}${fl ? `<small class="fl">👎 ${fl}</small>` : ''}${pts !== null ? `<em class="pts p${pts}">${pts}</em>` : ''}</td>`;
+            return `<td class="${bad ? 'bad' : ''} ${!v ? 'empty' : ''}">${v ? esc(v) : '–'}${fl ? `<small class="fl">✗ ${fl}</small>` : ''}${pts !== null ? `<em class="pts p${pts}">${pts}</em>` : ''}</td>`;
           }).join('')}${scores ? `<td class="sum">+${scores.scores[p.id] || 0}</td>` : ''}</tr>`).join('')}
           </tbody></table></div>
           ${scores ? `<div class="slf-rank">${sortScore(s).map((p, i) => `<span class="gp-chip" data-k="k${p.id}" style="animation-delay:${0.2 + i * 0.08}s">${i + 1}. ${av(p)}<b>${esc(p.name)}</b><em>${p.score}</em></span>`).join('')}</div>` : ''}`;
@@ -427,10 +430,10 @@
     }
     if (s.phase === 'END') {
       body += `<div class="ev-after">${s.game === 'draw' ? galleryHtml(s) : ''}${gamePicker(s, 'Als Nächstes spielen')}${eveningTable(s)}</div>`;
-      foot = `<button data-host="restart">🔁 Nochmal ${esc(s.gameName)}</button><button class="ghost" data-host="finale">🏆 Siegerehrung</button>`;
+      foot = `<button data-host="restart">Nochmal ${esc(s.gameName)}</button><button class="ghost" data-host="finale">Siegerehrung</button>`;
     }
     app.className = `gp gp-host g-${s.game}`;
-    morph(app, `${head}<main class="gp-stage"><div class="gp-body" data-k="${bodyKey}">${body}</div></main><footer class="gp-foot">${foot}<button class="ghost" data-host="full" title="Vollbild">⛶</button></footer>`);
+    morph(app, `${head}<main class="gp-stage"><div class="gp-body" data-k="${bodyKey}">${body}</div></main><footer class="gp-foot">${foot}<button class="ghost" data-host="full" title="Vollbild" aria-label="Vollbild"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></footer>`);
     bindHost();
     runTimer();
     afterRender(s, fresh);
@@ -451,7 +454,7 @@
     if (s.game === 'maexchen') {
       return `<form class="gp-settings" id="setForm"><label>Deckel pro Person <select name="lives">${[3, 5, 7].map((n) => `<option value="${n}" ${s.settings.lives === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
         <label>Computer spielen <select name="botLevel">${[['easy', 'Leicht'], ['medium', 'Mittel'], ['hard', 'Schwer']].map(([k, l]) => `<option value="${k}" ${s.settings.botLevel === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-        <button type="button" class="ghost small" data-addbot>🤖 Computer dazuholen</button></form>`;
+        <button type="button" class="ghost small" data-addbot>Computer dazuholen</button></form>`;
     }
     if (s.game === 'draw') {
       return `<form class="gp-settings" id="setForm"><label>Jede Person zeichnet <select name="rounds">${[1, 2, 3].map((n) => `<option value="${n}" ${s.settings.rounds === n ? 'selected' : ''}>${n}×</option>`).join('')}</select></label>
@@ -604,7 +607,7 @@
           <p class="kn-tray-h"><b>Du bist dran</b>${rollDots(kn)}</p>
           ${knDice(kn, true, canHold)}
           <p class="kn-tip">${kn.rollsLeft === 3 ? 'Los geht’s – würfeln!' : canHold ? 'Würfel antippen = festhalten' : 'Keine Würfe mehr – trag ein Ergebnis ein.'}</p>
-          <button class="kn-roll" data-roll ${kn.rollsLeft ? '' : 'disabled'}>🎲 Würfeln${kn.rollsLeft && kn.rollsLeft < 3 ? ` <small>noch ${kn.rollsLeft}</small>` : ''}</button>
+          <button class="kn-roll" data-roll ${kn.rollsLeft ? '' : 'disabled'}>Würfeln${kn.rollsLeft && kn.rollsLeft < 3 ? ` <small>noch ${kn.rollsLeft}</small>` : ''}</button>
         </div>
         <h3 class="kn-h">Oben</h3>
         <div class="kn-opts">${s.cats.slice(0, 6).map(opt).join('')}</div>
@@ -624,7 +627,7 @@
       ${knRank(s)}
       ${bonusBar}
       <div class="kn-opts mini">${s.cats.map((c) => `<div class="kn-opt ${sheet[c.key] != null ? 'done' : ''}"><span>${esc(c.name)}</span><b>${sheet[c.key] == null ? '' : sheet[c.key] === 0 ? '–' : sheet[c.key]}</b></div>`).join('')}</div>
-      <details class="kn-all" data-k="knall"><summary>📋 Block aller ansehen</summary><div class="kn-sheet-wrap">${knSheetTable(s)}</div></details>
+      <details class="kn-all" data-k="knall"><summary>Block aller ansehen</summary><div class="kn-sheet-wrap">${knSheetTable(s)}</div></details>
     </div>`;
   }
 
@@ -647,12 +650,12 @@
     if (s.phase === 'END') {
       const ranking = [...(mx?.order || [])].filter((id) => P[id]).sort((a, b) => (P[b].score || 0) - (P[a].score || 0));
       return `<div class="gp-end mx-end"><p class="kick">Mäxchen</p><h2>${mx?.winner ? `${esc(name(mx.winner))} gewinnt!` : 'Spielende'}</h2>
-        <ol class="gp-rest">${ranking.map((id, i) => `<li>${i + 1}. ${esc(name(id))}${id === mx.winner ? ' 🏆' : ''}</li>`).join('')}</ol></div>`;
+        <ol class="gp-rest">${ranking.map((id, i) => `<li>${i + 1}. ${esc(name(id))}${id === mx.winner ? ' <span class="win-tag">Sieg</span>' : ''}</li>`).join('')}</ol></div>`;
     }
     const isMe = me && mx.cur === me.id;
     const coasters = (id) => Array.from({ length: mx.maxLives }, (_, k) => `<i class="${k < (mx.lives[id] || 0) ? '' : 'gone'}"></i>`).join('');
     const players = `<ul class="mx-players">${mx.order.map((id) => `<li data-k="mp${id}" class="${id === mx.cur ? 'turn' : ''} ${(mx.lives[id] || 0) <= 0 ? 'out' : ''} ${me && id === me.id ? 'me' : ''}">
-        <span class="nm">${P[id] ? pname(P[id]) : '?'}${P[id] && !P[id].connected ? ' 💤' : ''}</span><span class="lives" aria-label="${mx.lives[id] || 0} Deckel">${coasters(id)}</span></li>`).join('')}</ul>`;
+        <span class="nm">${P[id] ? pname(P[id]) : '?'}${P[id] && !P[id].connected ? ' <small class="off-tag">nicht da</small>' : ''}</span><span class="lives" aria-label="${mx.lives[id] || 0} Deckel">${coasters(id)}</span></li>`).join('')}</ul>`;
     let said;
     if (mx.step === 'reveal' && mx.reveal) {
       const r = mx.reveal;
@@ -679,7 +682,7 @@
       status = (mx.lives[me.id] || 0) <= 0 ? 'Du bist raus – schau zu, wer gewinnt.' : `${esc(name(mx.cur))} ist dran …`;
     } else if (mx.step === 'decide') {
       status = 'Du bist dran!';
-      if (!mx.prev) actions = '<button data-mx="roll">🎲 Würfeln</button>';
+      if (!mx.prev) actions = '<button data-mx="roll">Würfeln</button>';
       else if (mx.prev.value === 21) actions = '<button data-mx="reveal">Aufdecken!</button><button class="ghost" data-mx="believe">Aufgeben (1 Deckel)</button>';
       else actions = '<button data-mx="reveal">Aufdecken!</button><button class="ghost" data-mx="believe">Glauben &amp; würfeln</button>';
     } else if (mx.step === 'rolled') {
@@ -731,9 +734,9 @@
         return `<div class="dr-phone draw"><div class="dr-head"><span>Zeichne:</span> ${maskHtml(dr)}</div>${timerBar()}
           ${canvasHtml('cv-me', 'can-draw')}
           <div class="dr-tools" role="toolbar" aria-label="Stift">
-            <div class="dr-colors">${dr.colors.map((c) => `<button class="sw ${G.pen.c === c ? 'on' : ''} ${c === '#ffffff' ? 'eraser' : ''}" data-pen-c="${c}" style="--c:${c}" aria-label="${c === '#ffffff' ? 'Radiergummi' : 'Farbe'}">${c === '#ffffff' ? '🧽' : ''}</button>`).join('')}</div>
+            <div class="dr-colors">${dr.colors.map((c) => `<button class="sw ${G.pen.c === c ? 'on' : ''} ${c === '#ffffff' ? 'eraser' : ''}" data-pen-c="${c}" style="--c:${c}" aria-label="${c === '#ffffff' ? 'Radiergummi' : 'Farbe'}">${c === '#ffffff' ? '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 15l8-8 6 6-5 5H8z" fill="#e0457b"/><path d="M8 18h12" stroke="#16201b" stroke-width="2" stroke-linecap="round"/></svg>' : ''}</button>`).join('')}</div>
             <div class="dr-widths">${dr.widths.map((w) => `<button class="wd ${G.pen.w === w ? 'on' : ''}" data-pen-w="${w}" aria-label="Strichstärke ${w}"><i style="--s:${Math.max(4, w / 2.2)}px"></i></button>`).join('')}
-              <button class="ghost" data-undo aria-label="Rückgängig">↶</button><button class="ghost" data-clear aria-label="Alles löschen">🗑</button></div>
+              <button class="ghost" data-undo aria-label="Rückgängig">↶</button><button class="ghost" data-clear aria-label="Alles löschen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></button></div>
           </div>
           <p class="muted small center">${dr.guessed.length} von ${s.players.length - 1} haben es erraten</p></div>`;
       }
@@ -851,12 +854,12 @@
     const col = (t) => {
       const list = P.filter((p) => teamOf(s, p.id) === t);
       return `<section class="tm-col t${t}" data-k="tc${t}"><h3>Team ${TEAM[t]} <span>${list.length}</span></h3>
-        <div class="tm-list">${list.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'} ${p.id === me ? 'me' : ''}" data-k="tm${p.id}">${av(p)}<b>${esc(p.name)}</b>${p.id === s.hostPlayer ? ' 👑' : ''}${canMove ? `<button class="x" data-move="${p.id}" data-to="${1 - t}" title="Ins Team ${TEAM[1 - t]}" aria-label="${esc(p.name)} ins Team ${TEAM[1 - t]}">⇄</button>` : ''}${kick && p.id !== me ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('') || '<p class="muted small">Noch niemand</p>'}</div>
+        <div class="tm-list">${list.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'} ${p.id === me ? 'me' : ''}" data-k="tm${p.id}">${av(p)}<b>${esc(p.name)}</b>${p.id === s.hostPlayer ? ' <span class="crown" title="Spielleitung"></span>' : ''}${canMove ? `<button class="x" data-move="${p.id}" data-to="${1 - t}" title="Ins Team ${TEAM[1 - t]}" aria-label="${esc(p.name)} ins Team ${TEAM[1 - t]}">⇄</button>` : ''}${kick && p.id !== me ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('') || '<p class="muted small">Noch niemand</p>'}</div>
         ${me && teamOf(s, me) !== t && !canMove ? `<button type="button" class="ghost small" data-team="${t}">Ins Team ${TEAM[t]}</button>` : ''}</section>`;
     };
     const short = [0, 1].some((t) => P.filter((p) => teamOf(s, p.id) === t).length < 2);
     return `<div class="tm-teams"><div class="tm-cols">${col(0)}${col(1)}</div>
-      ${canMove ? `<p class="center"><button type="button" class="ghost small" data-host="shuffleTeams">🔀 Teams neu mischen</button></p>` : ''}
+      ${canMove ? `<p class="center"><button type="button" class="ghost small" data-host="shuffleTeams">Teams neu mischen</button></p>` : ''}
       ${short ? '<p class="muted small center">Jedes Team braucht mindestens 2 Personen.</p>' : ''}</div>`;
   }
   // Punktestand beider Teams
@@ -879,7 +882,7 @@
   function teamEnd(s) {
     const w = teamWinner(s);
     const my = teamOf(s, s.me.id);
-    return `<div class="gp-wait tm-final ${w == null ? '' : `t${w}`}"><p class="kick">Spielende</p><p class="big">${w == null ? 'Unentschieden!' : w === my ? 'Gewonnen! 🎉' : 'Knapp verloren'}</p>${teamScore(s)}</div>`;
+    return `<div class="gp-wait tm-final ${w == null ? '' : `t${w}`}"><p class="kick">Spielende</p><p class="big">${w == null ? 'Unentschieden!' : w === my ? 'Gewonnen!' : 'Knapp verloren'}</p>${teamScore(s)}</div>`;
   }
 
   // Agentenrunde
@@ -891,7 +894,7 @@
     return `<div class="ag-board ${canTap ? 'can' : ''} ${ag.iSpy && s.phase === 'PLAYING' ? 'spy' : ''}">${ag.cards.map((c, i) => {
       const k = c.k == null ? '' : `k-${AG_K[c.k]}`;
       return `<div class="ag-card ${k} ${c.open ? 'open' : ''} ${c.mine ? 'mine' : ''} ${c.marks.length && !c.open ? 'marked' : ''}" data-k="ag${i}" ${canTap && !c.open ? `data-tap="${i}" role="button" tabindex="0" aria-label="${esc(c.w)}${c.mine ? ', nochmal tippen zum Aufdecken' : ''}"` : ''}>
-        <span class="w">${esc(c.w)}</span>${c.open && c.k === 'x' ? '<span class="ic" aria-hidden="true">💣</span>' : ''}${c.open && c.by && !phone ? `<span class="by">${esc(c.by)}</span>` : ''}${c.marks.length && !c.open ? `<span class="mk">${c.marks.map((n) => `<i title="${esc(n)}">${esc(initials(n))}</i>`).join('')}</span>` : ''}</div>`;
+        <span class="w">${esc(c.w)}</span>${c.open && c.k === 'x' ? '<span class="ic" aria-hidden="true">${MINE}</span>' : ''}${c.open && c.by && !phone ? `<span class="by">${esc(c.by)}</span>` : ''}${c.marks.length && !c.open ? `<span class="mk">${c.marks.map((n) => `<i title="${esc(n)}">${esc(initials(n))}</i>`).join('')}</span>` : ''}</div>`;
     }).join('')}</div>`;
   }
   function agStatus(s) {
@@ -909,7 +912,7 @@
   function agLog(s) {
     const log = (s.ag.log || []).slice().reverse();
     if (!log.length) return '';
-    const sym = { r: '🟥', b: '🟦', n: '⬜', x: '💣' };
+    const sym = { r: '<i class="ag-dot r"></i>', b: '<i class="ag-dot b"></i>', n: '<i class="ag-dot n"></i>', x: MINE };
     return `<ul class="ag-log">${log.map((l, i) => `<li class="t${l.team}" data-k="lg${log.length - i}"><b>${l.word ? `${esc(l.word)} ${l.n}` : 'kein Hinweis'}</b>${l.picks.map((p) => `<span>${sym[AG_K[p.k]]} ${esc(p.w)}</span>`).join('')}</li>`).join('')}</ul>`;
   }
   function agHost(s) {
@@ -929,7 +932,7 @@
         top = `<form class="ag-clueform" id="agClue" data-k="cf${ag.match}-${ag.log.length}"><p class="kick">Du bist Funker – gib deinem Team einen Hinweis</p>
           <input name="word" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ein Wort" aria-label="Hinweiswort">
           <div class="ag-nums" role="radiogroup" aria-label="Wie viele Karten">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<label><input type="radio" name="n" value="${n}" ${n === (G.agN || 2) ? 'checked' : ''}><span>${n}</span></label>`).join('')}</div>
-          <button>Hinweis geben</button><p class="muted small">Farbig umrandet: deine Agenten. 💣 = Doppelagent, unbedingt vermeiden.</p></form>`;
+          <button>Hinweis geben</button><p class="muted small">Farbig umrandet: deine Agenten. Die Karte mit der Mine ist der Doppelagent, unbedingt vermeiden.</p></form>`;
       } else if (ag.iSpy) {
         top = `<p class="ag-me t${my}">Du bist Funker für Team ${TEAM[my]}. ${ag.turn === my ? 'Dein Team rät gerade – du darfst nichts sagen!' : 'Das andere Team ist dran.'}</p>`;
       } else if (ag.step === 'guess' && ag.turn === my) {
@@ -945,7 +948,7 @@
   }
 
   // Erklärbär
-  const EX_SYM = { ok: '✅', skip: '⏭️', buzz: '🚫' };
+  const EX_SYM = { ok: '✓', skip: '»', buzz: '✗' };
   function exLog(log, cls = '') {
     if (!log || !log.length) return '';
     return `<ul class="ex-log ${cls}">${log.map((l, i) => `<li class="${l.r}" data-k="xl${i}"><span>${EX_SYM[l.r]}</span>${esc(l.t)}${l.r === 'buzz' && l.by ? ` <small>(${esc(l.by)})</small>` : ''}</li>`).join('')}</ul>`;
@@ -979,7 +982,7 @@
       return `<div class="ex-phone">${timerBar()}${cardHtml}<div class="ex-btns"><button type="button" class="ghost" data-mark="skip" data-pos="${ex.pos}">Überspringen</button><button type="button" class="ok" data-mark="ok" data-pos="${ex.pos}">✓ Erraten</button></div><p class="muted small center">Diese Runde: ${exPts(ex.log) >= 0 ? '+' : ''}${exPts(ex.log)}</p></div>`;
     }
     if (my !== ex.team && card) {
-      return `<div class="ex-phone">${timerBar()}<p class="ex-who">${esc(ex.explainerName || '?')} erklärt für Team ${TEAM[ex.team]}</p>${cardHtml}<button type="button" class="ex-buzz" data-mark="buzz" data-pos="${ex.pos}">🚫 Verboten!</button></div>`;
+      return `<div class="ex-phone">${timerBar()}<p class="ex-who">${esc(ex.explainerName || '?')} erklärt für Team ${TEAM[ex.team]}</p>${cardHtml}<button type="button" class="ex-buzz" data-mark="buzz" data-pos="${ex.pos}">Verboten!</button></div>`;
     }
     return `<div class="gp-wait ex-wait t${ex.team}">${timerBar()}<p class="kick">Rate laut!</p><p class="big">${esc(ex.explainerName || '?')} erklärt</p><p class="ex-count"><b data-v="${ex.log.filter((l) => l.r === 'ok').length}">${ex.log.filter((l) => l.r === 'ok').length}</b> erraten</p>${exLog(ex.log.slice().reverse(), 'small')}</div>`;
   }
@@ -1063,7 +1066,7 @@
           store.set('gp-join-' + code, { ...j, hostKey: p.hostKey });
           store.set('gp-host-' + code, p.hostKey);
           vibrate([40, 40, 40]);
-          toast('Du leitest jetzt das Spiel 👑');
+          toast('Du leitest jetzt das Spiel.');
         }
       },
       onGone: () => renderStart('Der Raum ist abgelaufen.'),
@@ -1080,11 +1083,11 @@
       ${!host && s.evening ? `<p class="muted small">Als Nächstes: <b>${ICON[s.game]} ${esc(s.gameName)}</b></p>` : ''}
       ${host ? `<div class="sh-invite"><div class="gp-qr small">${qr(joinUrl())}</div>
         <div><p class="muted small">Freunde scannen den QR-Code oder öffnen <b>${esc(location.host)}/spiele/gruppe</b> und geben den Code ein.</p>
-        <button class="ghost small" data-share>📨 Einladung teilen</button></div></div>` : '<p class="muted">Gleich geht’s los – die Spielleitung startet.</p>'}
-      ${TEAM_GAMES.has(s.game) ? teamsHtml(s, { canMove: host, kick: host }) : `<div class="gp-people">${P.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b>${p.id === s.hostPlayer ? ' 👑' : ''}${host && p.id !== s.me.id ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('')}</div>`}
+        <button class="ghost small" data-share>Einladung teilen</button></div></div>` : '<p class="muted">Gleich geht’s los – die Spielleitung startet.</p>'}
+      ${TEAM_GAMES.has(s.game) ? teamsHtml(s, { canMove: host, kick: host }) : `<div class="gp-people">${P.map((p) => `<span class="gp-chip ${p.connected ? '' : 'off'}" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b>${p.id === s.hostPlayer ? ' <span class="crown" title="Spielleitung"></span>' : ''}${host && p.id !== s.me.id ? `<button class="x" data-kick="${p.id}" title="Entfernen">✕</button>` : ''}</span>`).join('')}</div>`}
       ${host ? `${gamePicker(s)}${settingsHtml(s)}<button class="big" data-host="start" ${P.length < (TEAM_GAMES.has(s.game) ? 4 : 2) ? 'disabled' : ''}>${P.length < (TEAM_GAMES.has(s.game) ? 4 : 2) ? 'Warte auf Mitspielende …' : `${ICON[s.game]} ${esc(s.gameName)} starten`}</button>
-        ${s.evening ? '<button class="ghost" data-host="finale">🏆 Siegerehrung</button>' : ''}
-        ${key ? `<p class="muted small center"><a href="/spiele/gruppe/#host=${esc(s.code)}&k=${encodeURIComponent(key)}" target="_blank" rel="noopener">📺 Zusätzlich auf einem Fernseher zeigen</a></p>` : ''}` : ''}
+        ${s.evening ? '<button class="ghost" data-host="finale">Siegerehrung</button>' : ''}
+        ${key ? `<p class="muted small center"><a href="/spiele/gruppe/#host=${esc(s.code)}&k=${encodeURIComponent(key)}" target="_blank" rel="noopener">Zusätzlich auf einem Fernseher zeigen</a></p>` : ''}` : ''}
       ${eveningTable(s)}
     </div>`;
   }
@@ -1099,25 +1102,25 @@
       const btn = document.getElementById('slfStop');
       if (btn) btn.disabled = !!s.stoppedBy;
       const st = document.getElementById('slfStopped');
-      if (st) st.textContent = s.stoppedBy ? `✋ ${s.stoppedBy} ist fertig – noch 10 Sekunden!` : '';
+      if (st) st.textContent = s.stoppedBy ? `${s.stoppedBy} ist fertig, noch 10 Sekunden!` : '';
       return;
     }
     G.lastPhaseKey = key;
     const bodyKey = phaseKey(s, key);
-    const top = `<header class="gp-me">${av(s.me)}<b>${esc(s.me.name)}</b>${s.me.host ? '<span class="crown" title="Spielleitung">👑</span>' : ''}${TEAM_GAMES.has(s.game) ? teamTag(s.me.team) : ''}<span class="pts">${s.game === 'maexchen' ? `${s.mx?.lives?.[s.me.id] ?? s.settings.lives} Deckel` : TEAM_GAMES.has(s.game) ? '' : `${s.me.score} Pkt`}</span><span class="code">${esc(s.code)}</span><button type="button" class="gp-leave" data-leave title="Gruppe verlassen" aria-label="Gruppe verlassen">🚪</button></header>`;
+    const top = `<header class="gp-me">${av(s.me)}<b>${esc(s.me.name)}</b>${s.me.host ? '<span class="crown" title="Spielleitung"></span>' : ''}${TEAM_GAMES.has(s.game) ? teamTag(s.me.team) : ''}<span class="pts">${s.game === 'maexchen' ? `${s.mx?.lives?.[s.me.id] ?? s.settings.lives} Deckel` : TEAM_GAMES.has(s.game) ? '' : `${s.me.score} Pkt`}</span><span class="code">${esc(s.code)}</span><button type="button" class="gp-leave" data-leave title="Gruppe verlassen" aria-label="Gruppe verlassen">Verlassen</button></header>`;
     let body = '';
     if (s.phase === 'LOBBY') {
       body = s.selfHost || s.me.host ? selfHostLobby(s) : `<div class="gp-wait"><p class="big">Du bist drin!</p><p class="muted">Als Nächstes: <b>${ICON[s.game]} ${esc(s.gameName)}</b></p><p class="muted">Gleich geht’s los – die Spielleitung startet am Bildschirm.</p><div class="gp-people">${s.players.map((p) => `<span class="gp-chip" data-k="c${p.id}">${av(p)}<b>${pname(p)}</b></span>`).join('')}</div>${eveningTable(s)}</div>`;
     } else if (s.phase === 'FINALE') {
       const mine = s.evening?.ranking.findIndex((r) => r.id === s.me.id);
-      body = `<div class="gp-wait ev-me"><p class="kick">Siegerehrung</p><p class="big">${mine === 0 ? 'Sieg des Abends! 🏆' : mine >= 0 ? `Platz ${mine + 1} am Abend` : 'Spieleabend'}</p>
+      body = `<div class="gp-wait ev-me"><p class="kick">Siegerehrung</p><p class="big">${mine === 0 ? 'Sieg des Abends!' : mine >= 0 ? `Platz ${mine + 1} am Abend` : 'Spieleabend'}</p>
         ${(s.evening?.titles || []).filter((t) => t.name === s.me.name).map((t) => `<p class="ev-mytitle">${ICON[t.game]} ${esc(t.title)}</p>`).join('')}</div>${eveningTable(s)}${galleryHtml(s)}`;
     } else if (s.game === 'wwe') {
       body = wwePhone(s);
     } else if (s.game === 'kniffel') {
       body = s.phase === 'PLAYING' ? knPhone(s) : endPhone(sortScore(s));
       // Hinweis, wenn man an die Reihe kommt
-      if (s.phase === 'PLAYING' && s.kn.current === s.me.id && prev?.kn && prev.kn.current !== s.me.id) { vibrate([60, 60, 60]); toast('Du bist dran! 🎲'); }
+      if (s.phase === 'PLAYING' && s.kn.current === s.me.id && prev?.kn && prev.kn.current !== s.me.id) { vibrate([60, 60, 60]); toast('Du bist dran!'); }
     } else if (s.game === 'maexchen') {
       body = mxHtml(s, s.me);
       if (s.phase === 'PLAYING' && s.mx.cur === s.me.id && s.mx.step === 'decide' && prev?.mx && (prev.mx.cur !== s.me.id || prev.mx.step !== 'decide')) vibrate([60, 60, 60]);
@@ -1139,9 +1142,9 @@
             <div class="gp-voted small">${s.players.map((p) => `<span class="${s.done.includes(p.id) ? 'in' : ''}" data-k="v${p.id}" title="${esc(p.name)}">${av(p)}</span>`).join('')}</div>
             <p class="muted small">${s.done.length} von ${s.players.filter((p) => p.connected).length} haben abgegeben</p></div>`
           : `<div class="slf-top"><div class="slf-letter small spin"><span>${esc(s.letter)}</span></div>${timerBar()}</div>
-            <p class="slf-stop" id="slfStopped">${s.stoppedBy ? `✋ ${esc(s.stoppedBy)} ist fertig – noch 10 Sekunden!` : ''}</p>
+            <p class="slf-stop" id="slfStopped">${s.stoppedBy ? `${esc(s.stoppedBy)} ist fertig, noch 10 Sekunden!` : ''}</p>
             <form class="slf-form" id="slfForm">${s.settings.categories.map((c) => `<label>${esc(c)}<input name="${esc(c)}" value="${esc(vals[c] || '')}" maxlength="40" autocomplete="off" autocapitalize="words" placeholder="${esc(s.letter)} …"></label>`).join('')}
-            <div class="row"><button type="button" class="ghost" id="slfStop" ${s.stoppedBy ? 'disabled' : ''}>✋ Stopp!</button><button>Abgeben</button></div></form>`;
+            <div class="row"><button type="button" class="ghost" id="slfStop" ${s.stoppedBy ? 'disabled' : ''}>Stopp!</button><button>Abgeben</button></div></form>`;
       } else if (s.phase === 'REVIEW') {
         const auto = new Set(s.auto);
         body = `<p class="kick">Buchstabe ${esc(s.letter)} – Antworten prüfen</p><p class="muted small">Tippe auf eine Antwort, die nicht zählen soll. Nochmal tippen nimmt es zurück.</p>
@@ -1151,7 +1154,7 @@
             const fl = s.flags[k] || [];
             const mine = p.id === s.me.id;
             const flagged = fl.includes(s.me.id);
-            return `<button class="a ${mine ? 'mine' : ''} ${flagged ? 'flagged' : ''} ${auto.has(k) ? 'auto' : ''} ${!v ? 'empty' : ''}" ${mine || !v || auto.has(k) ? 'disabled' : ''} data-flag="${p.id}" data-cat="${esc(c)}"><small>${esc(p.name)}</small>${v ? esc(v) : '–'}${fl.length ? ` <em>👎 ${fl.length}</em>` : ''}</button>`;
+            return `<button class="a ${mine ? 'mine' : ''} ${flagged ? 'flagged' : ''} ${auto.has(k) ? 'auto' : ''} ${!v ? 'empty' : ''}" ${mine || !v || auto.has(k) ? 'disabled' : ''} data-flag="${p.id}" data-cat="${esc(c)}"><small>${esc(p.name)}</small>${v ? esc(v) : '–'}${fl.length ? ` <em>✗ ${fl.length}</em>` : ''}</button>`;
           }).join('')}</div></div>`).join('')}${hostWait(s, 'vergibt gleich die Punkte.')}`;
       } else if (s.phase === 'SCORES') {
         const pts = s.roundScores.scores[s.me.id] || 0;
@@ -1167,7 +1170,7 @@
     if (s.phase === 'END' && !s.me.host) body += `${s.game === 'draw' ? galleryHtml(s) : ''}${eveningTable(s)}<p class="muted small center">Die Spielleitung wählt das nächste Spiel.</p>`;
     if (s.me.host && s.phase !== 'LOBBY') {
       body += s.phase === 'END'
-        ? `<div class="sh-ctl open">${s.game === 'draw' ? galleryHtml(s) : ''}<button data-host="restart">🔁 Nochmal ${esc(s.gameName)}</button>${gamePicker(s, 'Oder ein anderes Spiel')}<button class="ghost" data-host="finale">🏆 Siegerehrung</button>${eveningTable(s)}</div>`
+        ? `<div class="sh-ctl open">${s.game === 'draw' ? galleryHtml(s) : ''}<button data-host="restart">Nochmal ${esc(s.gameName)}</button>${gamePicker(s, 'Oder ein anderes Spiel')}<button class="ghost" data-host="finale">Siegerehrung</button>${eveningTable(s)}</div>`
         : s.phase === 'FINALE'
         ? `<div class="sh-ctl open"><button data-host="restart">Weiter spielen</button></div>`
         : (() => {
@@ -1214,7 +1217,7 @@
       const max = Math.max(1, ...r.ranking.map((x) => x.votes));
       const mine = r.ranking.find((x) => x.id === s.me.id);
       return `<div class="wwe-q small phone"><p class="kick">Wer würde eher …</p><h2>${q}</h2></div>
-        ${r.winners.length ? `<div class="wwe-win"><span class="crown">👑</span><b>${r.winners.map(esc).join(' & ')}</b></div>` : '<p class="center muted">Niemand hat abgestimmt.</p>'}
+        ${r.winners.length ? `<div class="wwe-win"><span class="crown" aria-hidden="true"></span><b>${r.winners.map(esc).join(' & ')}</b></div>` : '<p class="center muted">Niemand hat abgestimmt.</p>'}
         <div class="wwe-bars">${r.ranking.map((x, i) => `<div class="b" data-k="wb${x.id}" style="--w:${(x.votes / max) * 100}%; animation-delay:${0.3 + i * 0.12}s">${av({ name: x.name })}<span class="n">${esc(x.name)}</span><span class="bar"><i></i></span><b>${x.votes}</b></div>`).join('')}</div>
         <p class="muted center small">${mine ? `Für dich gab es ${mine.votes} ${mine.votes === 1 ? 'Stimme' : 'Stimmen'}.` : 'Für dich hat diesmal niemand gestimmt.'}</p>
         ${hostWait(s, s.round >= s.settings.rounds ? 'zeigt gleich das Ergebnis.' : 'startet gleich die nächste Frage.')}`;
@@ -1237,7 +1240,7 @@
 
   function endPhone(list) {
     const i = list.findIndex((p) => p.name === G.s.me.name);
-    return `<div class="gp-wait"><p class="kick">Spielende</p><p class="big">${i === 0 ? 'Platz 1! 🎉' : `Platz ${i + 1}`}</p><p class="muted">${list[i] ? `${list[i].score} ${list[i].score === 1 ? 'Punkt' : 'Punkte'}` : ''}</p>
+    return `<div class="gp-wait"><p class="kick">Spielende</p><p class="big">${i === 0 ? 'Platz 1!' : `Platz ${i + 1}`}</p><p class="muted">${list[i] ? `${list[i].score} ${list[i].score === 1 ? 'Punkt' : 'Punkte'}` : ''}</p>
       <ol class="gp-rest">${list.map((p) => `<li>${esc(p.name)} <b>${p.score}</b></li>`).join('')}</ol></div>`;
   }
 

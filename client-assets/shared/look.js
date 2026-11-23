@@ -11,7 +11,7 @@
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var GROUPS = [
     ['night', 'Abends', [['off', 'Thema behalten'], ['auto', 'Wie das Gerät']]],
-    ['font', 'Schrift', [['play', 'Verspielt'], ['calm', 'Schlicht']]],
+    ['font', 'Überschriften', [['play', 'Schmal'], ['calm', 'Breit']]],
     ['size', 'Schriftgröße', [['m', 'Normal'], ['l', 'Groß']]],
     ['motion', 'Animationen', [['full', 'Alle'], ['less', 'Weniger']]],
   ];

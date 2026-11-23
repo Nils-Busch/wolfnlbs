@@ -11,7 +11,7 @@ function session() {
 
 function topline() {
   const s = P.state;
-  return `<div class="topline"><span>Raum <b>${esc(P.code)}</b>${s && s.index >= 0 && s.phase !== 'END' ? `, Frage ${s.index + 1} von ${s.total}` : ''}${P.connected ? '' : ' – ⚠️ offline'}</span>
+  return `<div class="topline"><span>Raum <b>${esc(P.code)}</b>${s && s.index >= 0 && s.phase !== 'END' ? `, Frage ${s.index + 1} von ${s.total}` : ''}${P.connected ? '' : ' <span class="qz-offline">offline</span>'}</span>
     ${s && s.me ? `<span class="score" title="${esc(s.me.name)}">${s.me.score} Pkt</span>` : ''}</div>`;
 }
 
@@ -19,7 +19,6 @@ function joinForm(error = '') {
   const s = store.get('quiz-play');
   app.innerHTML = `
     <div class="qz-center">
-      <div class="big">❓</div>
       <h2>Quiz mitspielen</h2>
       <form class="vh-card pinned" data-form="join" style="width:100%;text-align:left">
         <label class="vh-field">Raum-Code<input name="code" class="qz-code-input" maxlength="4" value="${esc(P.code)}" autocomplete="off" autocapitalize="characters" required></label>
@@ -34,12 +33,12 @@ function joinForm(error = '') {
 function render() {
   clearInterval(P.tick);
   if (P.gone) {
-    app.innerHTML = `<div class="qz-center"><div class="big">🏁</div><h2>Dieser Raum ist vorbei.</h2>
+    app.innerHTML = `<div class="qz-center"><h2>Dieser Raum ist vorbei.</h2>
       <p>Der Raum existiert nicht mehr.</p><a class="vh-btn" href="/quiz/">Zur Quiz-Übersicht</a></div>`;
     return;
   }
   if (P.kicked) {
-    app.innerHTML = `<div class="qz-center"><div class="big">👋</div><h2>Du wurdest aus dem Raum entfernt.</h2>
+    app.innerHTML = `<div class="qz-center"><h2>Du wurdest aus dem Raum entfernt.</h2>
       <button class="vh-btn vh-btn-accent" data-action="rejoin">Neu beitreten</button></div>`;
     return;
   }
@@ -52,7 +51,7 @@ function render() {
 
   let body = '';
   if (s.phase === 'LOBBY') {
-    body = `<div class="qz-center"><div class="big">✅</div><h2>Du bist drin, ${esc(s.me.name)}!</h2>
+    body = `<div class="qz-center"><div class="qz-haken" aria-hidden="true"></div><h2>Du bist drin, ${esc(s.me.name)}!</h2>
       <p>Schau auf den großen Bildschirm – gleich geht's los.</p>
       <p class="vh-hint">${s.playerCount} Spieler im Raum</p>
       <button class="vh-link" data-action="leave">Doch nicht mitspielen</button></div>`;
@@ -76,19 +75,19 @@ function render() {
     const cls = none ? 'none' : r.wasCorrect ? 'ok' : 'no';
     body = `<div class="qz-center">
       <div class="qz-result ${cls}">
-        <div class="big">${none ? '⏰' : r.wasCorrect ? '✓' : '✗'}</div>
+        <div class="big">${none ? '–' : r.wasCorrect ? '✓' : '✗'}</div>
         <h2>${none ? 'Keine Antwort' : r.wasCorrect ? `Richtig! +${r.gain}` : 'Leider falsch'}</h2>
         ${!r.wasCorrect ? `<p>Richtig war: <strong>${ANSWER_STYLE[r.correct].shape} ${esc(s.question.answers[r.correct])}</strong></p>` : ''}
       </div>
       <p class="qz-score">Du hast <b data-count="${s.me.score}" data-from="${s.me.score - (r.gain || 0)}">${s.me.score}</b> Punkte und bist auf <b>Platz ${s.me.rank}</b> von ${s.playerCount}.</p>
       <p class="vh-hint">Gleich kommt die nächste Frage …</p></div>`;
   } else if (s.phase === 'END') {
-    const medal = ['🥇', '🥈', '🥉'][s.me.rank - 1] || '🎉';
-    body = `<div class="qz-center"><div class="big">${medal}</div>
+    const medal = `<span class="medal${s.me.rank <= 3 ? ' m' + s.me.rank : ''}">${s.me.rank}</span>`;
+    body = `<div class="qz-center"><div class="qz-platz">${medal}</div>
       <h2>Platz ${s.me.rank} von ${s.playerCount}</h2>
       <p class="qz-score">mit <b>${s.me.score}</b> Punkten</p>
       <div class="vh-card" style="width:100%"><strong>Siegertreppchen</strong>
-        <ol class="qz-podium-mini">${s.final.podium.map((p) => `<li>${['🥇', '🥈', '🥉'][p.rank - 1] || ''} ${esc(p.name)} – ${p.score}</li>`).join('')}</ol></div>
+        <ol class="qz-podium-mini">${s.final.podium.map((p) => `<li><span class="medal m${p.rank}">${p.rank}</span> ${esc(p.name)}: ${p.score}</li>`).join('')}</ol></div>
       <a class="vh-btn" href="/quiz/">Fertig</a></div>`;
   }
   app.innerHTML = topline() + body;

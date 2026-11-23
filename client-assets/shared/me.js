@@ -18,7 +18,7 @@
     input.title = 'Eingetragen wird mit deinem Konto';
     const hint = document.createElement('small');
     hint.className = 'vh-account-hint';
-    hint.textContent = '🔒 Mit deinem Konto';
+    hint.textContent = 'Mit deinem Konto';
     (input.closest('form') || input.parentElement).appendChild(hint);
   }
 

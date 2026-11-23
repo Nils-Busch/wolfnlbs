@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/shared/theme.js"></script>
 <title>Nicht gefunden – Vereinsheim</title>
+<link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/shared/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#172036">
+<meta name="theme-color" content="#e6ebe3">
 <script src="/shared/pwa.js" defer></script>
 </head>
 <body class="vh-body">
@@ -27,10 +28,10 @@
   .nf-die {
     width: 84px; height: 84px; margin: 0 auto; padding: 14px; border-radius: 22px; background: #fff;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 4px 22px;
-    box-shadow: 0 6px 0 #c9cfdb, 0 14px 24px -10px rgba(0,0,0,.35);
+    box-shadow: inset 0 -4px 0 rgba(0,0,0,.12), 0 14px 24px -10px rgba(0,0,0,.35);
     animation: nf-roll 1.1s cubic-bezier(.3,.7,.4,1) both;
   }
-  .nf-die i { border-radius: 50%; background: var(--vh-red); aspect-ratio: 1; width: 100%; align-self: center; }
+  .nf-die i { border-radius: 50%; background: #16201b; aspect-ratio: 1; width: 100%; align-self: center; }
   @keyframes nf-roll {
     0% { transform: translate(-120px, -60px) rotate(-540deg); opacity: 0; }
     60% { transform: translate(8px, 0) rotate(12deg); opacity: 1; }

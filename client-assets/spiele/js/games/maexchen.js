@@ -8,6 +8,9 @@
  */
 (function () {
   'use strict';
+  // Kleine Symbole für Computer und Mensch
+  const BOT = '<svg class="ico-bot" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="6" width="14" height="11" rx="3" fill="currentColor"/><rect x="9.2" y="2" width="1.6" height="4" fill="currentColor"/><circle cx="10" cy="2.2" r="1.6" fill="currentColor"/><circle cx="7.5" cy="11.5" r="1.6" fill="var(--bg)"/><circle cx="12.5" cy="11.5" r="1.6" fill="var(--bg)"/></svg>';
+  const MENSCH = '<svg class="ico-mensch" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="4" fill="currentColor"/><path d="M2.5 19c0-5 3.4-8 7.5-8s7.5 3 7.5 8z" fill="currentColor"/></svg>';
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const store = {
@@ -51,7 +54,7 @@
     $('mxGame').hidden = true;
     $('mxSeats').innerHTML = seats.map((s, i) => `
       <li class="${s.bot ? 'bot' : 'human'}">
-        <span class="seat-ico" aria-hidden="true">${s.bot ? '🤖' : '🙂'}</span>
+        <span class="seat-ico" aria-hidden="true">${s.bot ? BOT : MENSCH}</span>
         ${s.bot ? `<span class="seat-name">${esc(s.name)}</span>` :
           `<input value="${esc(s.name)}" maxlength="14" data-i="${i}" aria-label="Name von Platz ${i + 1}">`}
         <button class="ghost seat-x" data-x="${i}" ${seats.length <= 2 ? 'disabled' : ''} aria-label="Platz entfernen">✕</button>
@@ -299,7 +302,7 @@
     const p = cur();
     $('mxPlayers').innerHTML = G.players.map((q, i) => `
       <li class="${i === G.cur && G.phase !== 'over' ? 'turn' : ''} ${q.out ? 'out' : ''} ${G.phase === 'over' && i === G.winner ? 'champ' : ''}">
-        <span class="nm">${q.bot ? '🤖 ' : ''}${esc(q.name)}</span>
+        <span class="nm">${q.bot ? BOT : ''}${esc(q.name)}</span>
         <span class="lives" aria-label="${q.lives} Deckel">${coasters(q)}</span>
       </li>`).join('');
 
@@ -328,7 +331,7 @@
     const act = $('mxActions');
     const status = $('mxStatus');
     if (G.phase === 'over') {
-      status.textContent = G.players[G.winner].bot ? `${G.players[G.winner].name} gewinnt.` : G.players[G.winner].name === 'Du' ? 'Du gewinnst! 🎉' : `${G.players[G.winner].name} gewinnt! 🎉`;
+      status.textContent = G.players[G.winner].bot ? `${G.players[G.winner].name} gewinnt.` : G.players[G.winner].name === 'Du' ? 'Du gewinnst!' : `${G.players[G.winner].name} gewinnt!`;
       act.innerHTML = '';
       $('mxAgain').hidden = false;
     } else {
@@ -342,7 +345,7 @@
         $('mxHandoff').onclick = () => { G.handoff = null; renderTable(); };
       } else if (G.phase === 'decide') {
         status.textContent = p.name === 'Du' ? 'Du bist dran' : `${p.name}, du bist dran`;
-        if (!G.prev) act.innerHTML = '<button id="mxRoll">🎲 Würfeln</button>';
+        if (!G.prev) act.innerHTML = '<button id="mxRoll">Würfeln</button>';
         else if (G.prev.value === 21) act.innerHTML = '<button id="mxReveal">Aufdecken!</button><button id="mxBelieve" class="ghost">Aufgeben (1 Deckel)</button>';
         else act.innerHTML = '<button id="mxReveal">Aufdecken!</button><button id="mxBelieve" class="ghost">Glauben &amp; würfeln</button>';
         if ($('mxRoll')) $('mxRoll').onclick = doRoll;

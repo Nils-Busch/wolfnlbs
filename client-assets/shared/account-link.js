@@ -19,14 +19,14 @@
   const a = document.createElement('a');
   a.className = 'vh-account';
   a.href = '/konto/';
-  a.textContent = '👤 Anmelden';
+  a.textContent = 'Anmelden';
   header.appendChild(a);
   fetch('/api/konto/auth/me', { credentials: 'same-origin' })
     .then((r) => (r.ok ? r.json() : null))
     .then((me) => {
       if (!me || !me.user) return;
       if (window.VHLook) window.VHLook.sync(me.user.prefs && me.user.prefs.look); // Aussehen vom Konto
-      a.textContent = '👤 ' + me.user.display_name;
+      a.textContent = me.user.display_name;
       a.title = 'Mein Konto';
       if (me.pendingCount > 0) {
         a.href = '/konto/#users';

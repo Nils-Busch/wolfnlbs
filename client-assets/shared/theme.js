@@ -8,8 +8,8 @@
  * (Abgleich über /shared/account-link.js, Speichern über PUT /api/konto/prefs).
  *
  * Ein Thema setzt nur CSS-Variablen am <html>-Element:
- *   --vh-*    Flächen und Schrift der normalen Seiten („Brett“ und „Tisch“)
- *   --vh-g-*  die dunklen Spielflächen (Spielegalerie, Gruppenspiele, Rätsel)
+ *   --vh-*    Wand, Flächen und Schrift der normalen Seiten, die Filztafel
+ *   --vh-g-*  die Spieltische (Spielseiten, Gruppenspiele, Rätsel)
  * Farben, die zum Spiel gehören (Spielsteine, Würfel, Karten), bleiben gleich.
  */
 (function () {
@@ -17,44 +17,51 @@
   var KEY = 'vh-look';
   var root = document.documentElement;
 
+  // Felder je Thema: Wand (--vh-board), helle Flächen, Schrift, Linien, die Filztafel
+  // (--vh-table) und die Spieltische der Spielseiten (--vh-g-*). Die Grundwerte
+  // („Vereinsheim“) stehen in vereinsheim.css und spiele/css/style.css.
   var THEMES = {
-    vereinsheim: { name: 'Vereinsheim', hint: 'Wie gewohnt', meta: '#172036', swatch: ['#172036', '#f5f6f8', '#2d6be0'], vars: {} },
+    vereinsheim: { name: 'Vereinsheim', hint: 'Salbei und Filz', meta: '#e6ebe3', swatch: ['#e6ebe3', '#203029', '#17694a'], vars: {} },
     nacht: {
-      name: 'Nachtschicht', hint: 'Dunkel', dark: true, meta: '#0a0f1e', swatch: ['#0a0f1e', '#182038', '#5b8cff'],
+      name: 'Nachtschicht', hint: 'Dunkel', dark: true, meta: '#141c18', swatch: ['#141c18', '#1c2722', '#f2c230'],
       vars: {
-        '--vh-table': '#0a0f1e', '--vh-table-2': '#161e36', '--vh-board': '#0f1528', '--vh-surface': '#182038',
-        '--vh-surface-2': '#222b47', '--vh-ink': '#e7ebf5', '--vh-ink-soft': '#9ba5bf', '--vh-line': '#2a3453',
-        '--vh-line-strong': '#3c4870', '--vh-shadow': 'rgba(0, 0, 0, .5)', '--vh-edge': '#05080f',
-        '--vh-g-bg': '#0a0f1e', '--vh-g-panel': '#151c33', '--vh-g-panel2': '#1f2843', '--vh-g-line': '#2b3556',
-        '--vh-g-input': '#111830', '--vh-g-edge': '#05080f', '--vh-g-muted': '#9aa3bd',
+        '--vh-board': '#141c18', '--vh-surface': '#1c2722', '--vh-surface-2': '#25332c', '--vh-ink': '#e6ece6',
+        '--vh-ink-soft': '#9db0a4', '--vh-line': '#2d3d35', '--vh-line-strong': '#42574b', '--vh-table': '#0d1411',
+        '--vh-table-2': '#18231d', '--vh-letter': '#e9e6da', '--vh-shadow': 'rgba(0, 0, 0, .5)', '--vh-edge': '#070b09',
+        '--vh-g-bg': '#121a16', '--vh-g-panel': '#1b2620', '--vh-g-panel2': '#24322b', '--vh-g-line': '#33463c',
+        '--vh-g-input': '#0f1612', '--vh-g-edge': '#070b09', '--vh-g-muted': '#95a99c',
       },
     },
+    // Die Kennung „filz“ bleibt (gespeicherte Einstellungen), das Thema heißt jetzt Turnhalle
     filz: {
-      name: 'Filztisch', hint: 'Grün und ruhig', meta: '#12482b', swatch: ['#12482b', '#eef3ec', '#179e5e'],
+      name: 'Turnhalle', hint: 'Blau und kühl', meta: '#e5eaf0', swatch: ['#e5eaf0', '#1b2638', '#24529f'],
       vars: {
-        '--vh-table': '#12482b', '--vh-table-2': '#1b5c38', '--vh-board': '#eef3ec', '--vh-surface': '#ffffff',
-        '--vh-surface-2': '#e1eadf', '--vh-ink': '#102a1b', '--vh-ink-soft': '#4c6656', '--vh-line': '#d0ddd2',
-        '--vh-line-strong': '#afc2b4', '--vh-shadow': 'rgba(16, 48, 28, .18)', '--vh-edge': '#0a2a18',
-        '--vh-g-bg': '#12482b', '--vh-g-panel': '#1a5a36', '--vh-g-panel2': '#216b41', '--vh-g-line': '#2f7a50',
-        '--vh-g-input': '#154f30', '--vh-g-edge': '#0a2a18', '--vh-g-muted': '#a9c9b5',
+        '--vh-board': '#e5eaf0', '--vh-surface': '#f7f9fb', '--vh-surface-2': '#dde3ea', '--vh-ink': '#141c26',
+        '--vh-ink-soft': '#536173', '--vh-line': '#cbd3dd', '--vh-line-strong': '#a7b2c0', '--vh-table': '#1d2a3e',
+        '--vh-table-2': '#26354d', '--vh-letter': '#eef1f6', '--vh-shadow': 'rgba(20, 28, 38, .18)', '--vh-edge': '#0e1522',
+        '--vh-club': '#24529f',
+        '--vh-g-bg': '#1b2638', '--vh-g-panel': '#243149', '--vh-g-panel2': '#2d3b56', '--vh-g-line': '#3a4a68',
+        '--vh-g-input': '#172133', '--vh-g-edge': '#0e1522', '--vh-g-muted': '#a3aec4',
       },
     },
     bonbon: {
-      name: 'Bonbon', hint: 'Bunt', meta: '#4a2270', swatch: ['#4a2270', '#fbf4ff', '#e0457b'],
+      name: 'Bonbon', hint: 'Bunt', meta: '#f7eef6', swatch: ['#f7eef6', '#3d1d4b', '#d6457c'],
       vars: {
-        '--vh-table': '#4a2270', '--vh-table-2': '#5b2d86', '--vh-board': '#fbf4ff', '--vh-surface': '#ffffff',
-        '--vh-surface-2': '#f1e4fa', '--vh-ink': '#2a1540', '--vh-ink-soft': '#6c5884', '--vh-line': '#e9d8f5',
-        '--vh-line-strong': '#d1b8e6', '--vh-shadow': 'rgba(74, 34, 112, .2)', '--vh-edge': '#2a0f44',
-        '--vh-g-bg': '#3f1d60', '--vh-g-panel': '#4f2775', '--vh-g-panel2': '#5e3189', '--vh-g-line': '#7042a2',
-        '--vh-g-input': '#46216a', '--vh-g-edge': '#26103c', '--vh-g-muted': '#d6c4ea',
+        '--vh-board': '#f7eef6', '--vh-surface': '#fffafd', '--vh-surface-2': '#f0e1ee', '--vh-ink': '#2b1530',
+        '--vh-ink-soft': '#6e5374', '--vh-line': '#ead6e6', '--vh-line-strong': '#d4b5cf', '--vh-table': '#4a2259',
+        '--vh-table-2': '#5a2c6b', '--vh-letter': '#fbeef8', '--vh-shadow': 'rgba(74, 34, 89, .2)', '--vh-edge': '#220e2c',
+        '--vh-club': '#b8336a',
+        '--vh-g-bg': '#3d1d4b', '--vh-g-panel': '#4b2759', '--vh-g-panel2': '#5a3169', '--vh-g-line': '#6d4280',
+        '--vh-g-input': '#341842', '--vh-g-edge': '#220e2c', '--vh-g-muted': '#dcc6e4',
       },
     },
     kontrast: {
-      name: 'Kontrast', hint: 'Gut lesbar', meta: '#000000', swatch: ['#000000', '#ffffff', '#0040c0'],
+      name: 'Kontrast', hint: 'Gut lesbar', meta: '#ffffff', swatch: ['#ffffff', '#000000', '#0040c0'],
       vars: {
-        '--vh-table': '#000000', '--vh-table-2': '#1c1c1c', '--vh-board': '#ffffff', '--vh-surface': '#ffffff',
-        '--vh-surface-2': '#ececec', '--vh-ink': '#000000', '--vh-ink-soft': '#262626', '--vh-line': '#000000',
-        '--vh-line-strong': '#000000', '--vh-shadow': 'rgba(0, 0, 0, .35)', '--vh-edge': '#000000',
+        '--vh-board': '#ffffff', '--vh-surface': '#ffffff', '--vh-surface-2': '#ececec', '--vh-ink': '#000000',
+        '--vh-ink-soft': '#1f1f1f', '--vh-line': '#000000', '--vh-line-strong': '#000000', '--vh-table': '#000000',
+        '--vh-table-2': '#1c1c1c', '--vh-letter': '#ffffff', '--vh-shadow': 'rgba(0, 0, 0, .35)', '--vh-edge': '#000000',
+        '--vh-club': '#0040c0',
         '--vh-g-bg': '#000000', '--vh-g-panel': '#141414', '--vh-g-panel2': '#262626', '--vh-g-line': '#8c8c8c',
         '--vh-g-input': '#0d0d0d', '--vh-g-edge': '#000000', '--vh-g-muted': '#e6e6e6', '--vh-g-text': '#ffffff',
       },
@@ -63,7 +70,7 @@
   var OPTIONS = {
     theme: Object.keys(THEMES),
     night: ['off', 'auto'],   // abends: Thema behalten oder dem Gerät folgen (dunkel = Nachtschicht)
-    font: ['play', 'calm'],   // verspielt (Bricolage Grotesque) oder schlicht (Figtree)
+    font: ['play', 'calm'],   // schmal (Barlow Condensed) oder breit (Barlow) für Überschriften
     size: ['m', 'l'],         // normal oder groß
     motion: ['full', 'less'], // alle Animationen oder weniger
   };
@@ -114,7 +121,7 @@
     setVars = [];
     var vars = Object.assign({}, t.vars);
     if (prefs.font === 'calm') {
-      vars['--vh-display'] = '"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif';
+      vars['--vh-display'] = '"Barlow", system-ui, -apple-system, "Segoe UI", sans-serif';
       vars['--vh-g-display'] = vars['--vh-display'];
     }
     Object.keys(vars).forEach(function (k) { root.style.setProperty(k, vars[k]); setVars.push(k); });

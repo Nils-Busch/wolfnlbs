@@ -37,7 +37,7 @@ const Scores = (() => {
       .join('')}</ol>`;
   }
 
-  function panel(el, game, { unit = '', title = '🏆 Bestenliste' } = {}) {
+  function panel(el, game, { unit = '', title = 'Bestenliste' } = {}) {
     el.classList.add('panel');
     el.innerHTML = `<h2>${title}</h2><div class="hs-form" hidden></div><div class="hs-list"><p class="muted">Lade …</p></div>`;
     const listEl = el.querySelector('.hs-list');

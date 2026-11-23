@@ -45,12 +45,12 @@ test("Montagsmaler: Striche prüfen, Galerie speichern", () => {
   const r = started();
   r.drChoose(0);
   const d = r.s.dr.drawer;
-  const ink = r.drInk(d, { sid: "a1", c: r.s.dr.colors?.[0] || "#172036", w: 14, pts: [10, 10, 2000, -5], rev: r.s.dr.rev });
+  const ink = r.drInk(d, { sid: "a1", c: r.s.dr.colors?.[0] || "#16201b", w: 14, pts: [10, 10, 2000, -5], rev: r.s.dr.rev });
   assert.deepEqual(ink.pts, [10, 10, 1000, 0], "Koordinaten werden begrenzt");
-  r.drInk(d, { sid: "a1", c: "#172036", w: 14, pts: [20, 20], rev: r.s.dr.rev });
+  r.drInk(d, { sid: "a1", c: "#16201b", w: 14, pts: [20, 20], rev: r.s.dr.rev });
   assert.equal(r.s.dr.strokes.length, 1, "gleiche Strich-ID wird fortgesetzt");
   assert.throws(() => r.drInk(d, { sid: "a2", c: "#123456", w: 14, pts: [1, 1], rev: r.s.dr.rev }), /Stift/);
-  assert.equal(r.drInk(d, { sid: "x", c: "#172036", w: 14, pts: [1, 1], rev: r.s.dr.rev - 1 }), null, "alte Fassung wird ignoriert");
+  assert.equal(r.drInk(d, { sid: "x", c: "#16201b", w: 14, pts: [1, 1], rev: r.s.dr.rev - 1 }), null, "alte Fassung wird ignoriert");
   r.drEndTurn("time");
   assert.equal(r.s.gallery.length, 1);
   assert.equal(r.pendingImgs.length, 1);

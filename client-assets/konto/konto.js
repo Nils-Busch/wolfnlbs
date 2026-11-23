@@ -52,7 +52,6 @@ function loggedOutView() {
   if (S.registered) {
     app.innerHTML = `
       <div class="vh-card pinned vh-narrow success-box">
-        <div class="big">📬</div>
         <h2>Fast geschafft!</h2>
         <p>Dein Konto ist angelegt und wartet jetzt auf <strong>Freischaltung durch den Admin</strong>.
         Sobald das passiert ist, kannst du dich hier anmelden.</p>
@@ -96,9 +95,9 @@ function loggedOutView() {
 
 /* ---------- Angemeldet ---------- */
 function shell(content) {
-  const tabs = [['account', 'Mein Konto'], ['look', '🎨 Aussehen']];
+  const tabs = [['account', 'Mein Konto'], ['look', 'Aussehen']];
   if (can('users.manage')) tabs.push(['users', `Konten & Rechte${S.pendingCount ? ` (${S.pendingCount} neu)` : ''}`]);
-  if (can('users.manage')) tabs.push(['access', '🚪 Zugang']);
+  if (can('users.manage')) tabs.push(['access', 'Zugang']);
   app.innerHTML = `
     <div class="konto-head">
       <div class="konto-hello"><span class="avatar" aria-hidden="true">${esc((S.me.display_name || '?').trim().charAt(0).toUpperCase())}</span><h1 class="vh-h1">Hallo, ${esc(S.me.display_name)}!</h1></div>
@@ -111,9 +110,9 @@ function shell(content) {
 function accountView() {
   const mine = S.info.filter((p) => can(p.key));
   const links = [];
-  if (can('quiz.create') || can('quiz.manage')) links.push(['/quiz/', '❓ Meine Quizze verwalten']);
-  else links.push(['/quiz/', '❓ Quiz starten']);
-  if (can('tournaments.manage') || can('players.manage') || can('results.enter')) links.push(['/tischtennis/admin', '🏆 Turnierleitung']);
+  if (can('quiz.create') || can('quiz.manage')) links.push(['/quiz/', 'Meine Quizze verwalten']);
+  else links.push(['/quiz/', 'Quiz starten']);
+  if (can('tournaments.manage') || can('players.manage') || can('results.enter')) links.push(['/tischtennis/admin', 'Turnierleitung']);
   shell(`
     <div class="konto-grid">
       <section class="vh-card pinned">
@@ -125,7 +124,7 @@ function accountView() {
             : '<p class="vh-hint">Du hast noch keine besonderen Rechte. Du kannst freigegebene Quizze starten; alles andere schaltet der Admin frei.</p>'
         }
         <div class="links">${links.map(([h, l]) => `<a class="vh-btn" href="${h}">${l}</a>`).join('')}</div>
-        <p class="vh-hint konto-keep">${S.me.keep ? '✅ Auf diesem Gerät bleibst du angemeldet, solange du die Seite ab und zu öffnest.' : '⏱️ Auf diesem Gerät endet die Anmeldung nach 12 Stunden. Für länger beim Anmelden „Angemeldet bleiben“ ankreuzen.'}</p>
+        <p class="vh-hint konto-keep">${S.me.keep ? 'Auf diesem Gerät bleibst du angemeldet, solange du die Seite ab und zu öffnest.' : 'Auf diesem Gerät endet die Anmeldung nach 12 Stunden. Für länger beim Anmelden „Angemeldet bleiben“ ankreuzen.'}</p>
         <p><button class="vh-link" data-action="logout-all">Auf allen Geräten abmelden</button></p>
       </section>
       <form class="vh-card taped" data-form="password">
@@ -269,7 +268,7 @@ async function accessView() {
               </div>
               <div class="vh-hint">${i.uses ? `${i.uses}× geöffnet, zuletzt ${fmtDate(i.last_used)}` : 'noch nicht geöffnet'}</div>
               <div class="vh-row">
-                <button class="vh-btn vh-btn-small" data-action="copy-invite" data-id="${i.id}">🔗 Link kopieren</button>
+                <button class="vh-btn vh-btn-small" data-action="copy-invite" data-id="${i.id}">Link kopieren</button>
                 <button class="vh-btn vh-btn-small" data-action="qr-invite" data-id="${i.id}">QR-Code</button>
                 <button class="vh-btn vh-btn-small vh-btn-danger" data-action="del-invite" data-id="${i.id}">Löschen</button>
               </div>

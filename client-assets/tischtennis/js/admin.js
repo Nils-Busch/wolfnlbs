@@ -116,8 +116,8 @@ async function tournamentView() {
     <p class="t-meta">${[fmtDate(t.event_date), t.location, ...modeParts(t)].filter(Boolean).map(esc).join(', ')}
       <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span>
       <a class="link" href="/tischtennis/#t=${t.id}" target="_blank" rel="noopener">Besucheransicht öffnen</a>
-      <a class="link" href="/tischtennis/live#t=${t.id}" target="_blank" rel="noopener">📺 Liveansicht (Bildschirm)</a>
-      ${can('tournaments.manage') ? `<button class="link" type="button" data-action="visitor-qr">🔗 Gastlink &amp; QR-Code</button>` : ''}</p>
+      <a class="link" href="/tischtennis/live#t=${t.id}" target="_blank" rel="noopener">Liveansicht (Bildschirm)</a>
+      ${can('tournaments.manage') ? `<button class="link" type="button" data-action="visitor-qr">Gastlink &amp; QR-Code</button>` : ''}</p>
     <div id="qrbox"></div>
     ${actions.length ? `<div class="actions">${actions.join('')}</div>` : ''}
     ${renderTabs(tabs, S.tab)}
@@ -513,7 +513,7 @@ function showVisitorQr(url, until) {
         <p class="qr-url"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url.replace(/^https?:\/\//, ''))}</a></p>
         <div class="row no-print">
           <button class="primary" type="button" data-action="copy-visitor-link" data-url="${esc(url)}">Link kopieren</button>
-          <button type="button" data-action="print-qr">🖨 Drucken</button>
+          <button type="button" data-action="print-qr">Drucken</button>
           <button class="link" type="button" data-action="close-qr">Schließen</button>
         </div>
         <div class="guestbox no-print">

@@ -1,9 +1,19 @@
 (() => {
   'use strict';
-  const SYMBOLS = ['🍎', '🚀', '🎸', '🐙', '🌵', '⚽', '🎲', '🦊'];
+  // Acht gezeichnete Motive, jedes zweimal im Spiel
+  const SYMBOLS = [
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 40C11 31 6 25 6 18a9 9 0 0 1 18-2 9 9 0 0 1 18 2c0 7-5 13-18 22z" fill="#e23b3b"/></svg>',
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5l5.6 11.6 12.8 1.8-9.3 9 2.2 12.7L24 34.2l-11.3 5.9 2.2-12.7-9.3-9 12.8-1.8z" fill="#f2b705"/></svg>',
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M30 6a18 18 0 1 0 12 30A15 15 0 1 1 30 6z" fill="#5b8de0"/></svg>',
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 40C8 18 22 8 42 8c0 20-10 34-32 34z" fill="#179e5e"/><path d="M10 38L32 16" stroke="#0c5a36" stroke-width="2.5" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5c8 11 14 18 14 25a14 14 0 0 1-28 0c0-7 6-14 14-25z" fill="#0fa3a3"/></svg>',
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M27 4L9 27h13l-4 17 21-25H26z" fill="#ff8a3d"/></svg>',
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l17 20-17 20L7 24z" fill="#a979d8"/></svg>',
+    '<svg viewBox="0 0 48 48" aria-hidden="true"><g fill="#e0457b"><circle cx="24" cy="12" r="8"/><circle cx="36" cy="24" r="8"/><circle cx="24" cy="36" r="8"/><circle cx="12" cy="24" r="8"/></g><circle cx="24" cy="24" r="6" fill="#f2c230"/></svg>',
+  ];
   const $ = (id) => document.getElementById(id);
   const boardEl = $('board');
-  const hs = Scores.panel($('scores'), 'memory', { unit: 'Züge', title: '🏆 Bestenliste (wenigste Züge)' });
+  const hs = Scores.panel($('scores'), 'memory', { unit: 'Züge', title: 'Bestenliste (wenigste Züge)' });
 
   let cards, open, moves, found, locked, startTime, clock;
 
@@ -87,7 +97,7 @@
   function finish() {
     clearInterval(clock);
     tick();
-    $('ovText').textContent = `Geschafft in ${moves} Zügen (${$('time').textContent}) 🎉`;
+    $('ovText').textContent = `Geschafft in ${moves} Zügen (${$('time').textContent})`;
     setTimeout(() => {
       $('overlay').hidden = false;
       $('ovBtn').focus();

@@ -1,0 +1,78 @@
+/* Tagesrätsel-Übersicht: Wimpel, Filztafel mit Stand und Uhr, darunter
+   die fünf Rätsel als helle Karten. Die kleinen Bilder oben auf den Karten
+   bewegen sich beim Drüberfahren. */
+
+.rt-tafel { display: flex; justify-content: space-between; align-items: center; gap: .5rem 2rem; flex-wrap: wrap; margin-bottom: clamp(1.5rem, 4vw, 2.25rem); }
+.rt-uhr span { font-variant-numeric: tabular-nums; color: #f6d96b; }
+
+/* fünf Rätsel: oben drei, unten zwei breitere Karten */
+.rt-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+.rt-grid > .rt-card { grid-column: span 2; }
+.rt-grid > .rt-card:nth-child(n+4) { grid-column: span 3; }
+@media (max-width: 1000px) {
+  .rt-grid { grid-template-columns: repeat(2, 1fr); }
+  .rt-grid > .rt-card, .rt-grid > .rt-card:nth-child(n+4) { grid-column: auto; }
+  .rt-grid > .rt-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) { .rt-grid { grid-template-columns: 1fr; } .rt-grid > .rt-card:last-child:nth-child(odd) { grid-column: auto; } }
+
+.rt-card {
+  position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: .45rem;
+  padding: 1.2rem 1.25rem 1.25rem; border-radius: 14px; text-decoration: none; color: var(--vh-ink);
+  background: var(--vh-surface); border: 1px solid var(--vh-line);
+  transition: border-color .15s, box-shadow .2s;
+}
+.rt-card:hover { border-color: color-mix(in srgb, var(--vh-area) 55%, var(--vh-line)); box-shadow: 0 8px 20px -12px rgba(22, 32, 27, .35); }
+.rt-card h2 { margin: .25rem 0 0; font: 700 1.9rem/1 var(--vh-display); }
+.rt-card p { margin: 0; color: var(--vh-ink-soft); font-size: 1rem; line-height: 1.45; }
+.rt-card .rt-state {
+  justify-self: start; margin-top: .3rem; padding: .35rem .75rem; border-radius: 8px;
+  font-weight: 600; font-size: .92rem; background: var(--vh-area); color: #fff;
+}
+.rt-card.solved .rt-state { background: #17694a; }
+.rt-card.solved::after {
+  content: ""; position: absolute; top: 1rem; right: 1rem; width: 2rem; height: 2rem; border-radius: 50%;
+  background: #17694a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 60% no-repeat;
+  animation: rt-haken .4s .3s var(--vh-ease-hop) both;
+}
+@keyframes rt-haken { from { transform: scale(0); } }
+
+/* kleine Bilder oben auf den Karten */
+.rt-art { height: 72px; display: flex; align-items: center; gap: 5px; }
+.rt-art .t { width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center; font: 800 1.15rem var(--vh-display); color: #fff; background: #8b968f; font-style: normal; }
+.rt-art .t.g { background: #179e5e; } .rt-art .t.y { background: #f2b705; color: #16201b; }
+.rt-card:hover .rt-art .t { animation: rt-welle .5s var(--vh-ease-hop); }
+.rt-card:hover .rt-art .t:nth-child(2) { animation-delay: .05s; } .rt-card:hover .rt-art .t:nth-child(3) { animation-delay: .1s; }
+.rt-card:hover .rt-art .t:nth-child(4) { animation-delay: .15s; } .rt-card:hover .rt-art .t:nth-child(5) { animation-delay: .2s; }
+@keyframes rt-welle { 40% { transform: translateY(-8px); } }
+.rt-art svg { height: 72px; width: auto; overflow: visible; }
+.rt-art .de { fill: #dfe6da; stroke: #aab4ab; stroke-width: 1; }
+.rt-art .pin path { fill: #e23b3b; }
+.rt-art .pin { transform-box: fill-box; transform-origin: 50% 100%; }
+.rt-card:hover .rt-art .pin { animation: rt-pin .6s var(--vh-ease-hop); }
+@keyframes rt-pin { 40% { transform: translateY(-12px); } }
+.rt-art .nono { display: grid; grid-template-columns: repeat(5, 13px); gap: 3px; }
+.rt-art .nono i { width: 13px; height: 13px; border-radius: 3px; background: #dfe6da; }
+.rt-art .nono i.f { background: #16201b; }
+.rt-card:hover .rt-art .nono i.f { animation: rt-blink .5s ease; }
+@keyframes rt-blink { 50% { background: var(--vh-area); } }
+.rt-art .conn-art { display: grid; grid-template-columns: repeat(4, 13px); gap: 3px; }
+.rt-art .conn-art i { width: 13px; height: 13px; border-radius: 3px; background: #dfe6da; transition: background .3s; }
+.rt-card:hover .rt-art .conn-art i.y { background: #f2b705; } .rt-card:hover .rt-art .conn-art i.g { background: #179e5e; }
+.rt-card:hover .rt-art .conn-art i.b { background: #2d6be0; } .rt-card:hover .rt-art .conn-art i.p { background: #8a5cf0; }
+.rt-art .jig-art { width: 108px; height: auto; overflow: visible; }
+.rt-art .jig-art path { fill: #dfe6da; stroke: #16201b; stroke-width: 1.5; transition: transform .35s var(--vh-ease-hop), fill .3s; transform-box: fill-box; transform-origin: center; }
+.rt-card:hover .rt-art .jig-art .a { fill: #ff8a5c; transform: translate(-3px, -3px) rotate(-4deg); }
+.rt-card:hover .rt-art .jig-art .b { fill: #f2c230; }
+.rt-card:hover .rt-art .jig-art .c { fill: #5b8de0; transform: translate(3px, -2px) rotate(3deg); }
+.rt-card:hover .rt-art .jig-art .d { fill: #4fbf7f; }
+.rt-card:hover .rt-art .jig-art .e { fill: #e0457b; transform: translate(0, 3px); }
+.rt-card:hover .rt-art .jig-art .f { fill: #a979d8; transform: translate(3px, 2px) rotate(-3deg); }
+
+.rt-lb-link {
+  display: inline-block; margin-top: 1.4rem; font-weight: 600; color: var(--vh-area-deep);
+  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px;
+}
+.rt-uebersicht + .vh-footer { padding-top: 1rem; }
+
+@media (prefers-reduced-motion: reduce) { .rt-card * { animation: none !important; transition: none !important; } }

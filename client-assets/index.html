@@ -6,8 +6,8 @@
 <script src="/shared/theme.js"></script>
 <title>Vereinsheim</title>
 <meta name="description" content="Selbstgebaute Spiele für den Abend: WoWölfe, Party-Quiz, Spielegalerie, Tagesrätsel und Turniere.">
-<meta name="theme-color" content="#172036">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+<meta name="theme-color" content="#e6ebe3">
+<link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
 <link rel="stylesheet" href="/hub.css">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -28,72 +28,118 @@
 </header>
 
 <main class="hub">
-  <div class="hub-intro">
-    <h1 class="hub-title">Was spielen wir heute?</h1>
-    <p class="hub-sub">Spiele für Handy, Fernseher und Vereinsabend. Such dir eins aus – oder lass den Würfel entscheiden.</p>
-  </div>
+  <h1 class="vh-sr">Vereinsheim</h1>
 
-  <section class="board" aria-label="Spiele">
-      <a class="home home-red" href="/woelfe/" data-area="woelfe">
-        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
-        <span class="home-text">
-          <h2>WoWölfe</h2>
-          <p>Werwolf für die ganze Runde: geheime Rollen auf jedem Handy, Wolfsgeflüster in der Nacht.</p>
-          <span class="go">Raum eröffnen</span>
-        </span>
-      </a>
-    <div class="track track-top" aria-hidden="true"></div>
-      <a class="home home-blue" href="/quiz/" data-area="quiz">
-        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
-        <span class="home-text">
-          <h2>Party-Quiz</h2>
-          <p>Fragen auf dem Fernseher, Antworten am Handy. Wer schneller richtig liegt, holt mehr Punkte.</p>
-          <span class="go">Mitspielen</span>
-        </span>
-      </a>
-    <div class="track track-left" aria-hidden="true"></div>
-    <div class="goal">
-      <button class="die" type="button" aria-label="Würfeln – der Würfel sucht ein Spiel aus" data-face="5">
-        <span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span>
+  <!-- Die Wand am Eingang: Stecktafel mit dem, was heute los ist, daneben das Regal mit den Rekorden -->
+    <section class="tafel" aria-label="Heute im Vereinsheim">
+      <p class="tafel-line" data-tafel="date"></p>
+      <a class="tafel-line" data-tafel="daily" href="/raetsel/"></a>
+      <a class="tafel-line" data-tafel="turnier" href="/tischtennis/" hidden></a>
+      <a class="tafel-line" data-tafel="vorschlag" href="/spiele/" hidden></a>
+      <button type="button" class="wuerfeln" aria-label="Würfeln: Spielvorschlag auf die Tafel stecken">
+        <span class="wuerfel" data-face="5" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="wuerfeln-text" aria-hidden="true">Was spielen wir?</span>
       </button>
-      <p class="die-msg" aria-live="polite">Würfeln!</p>
-    </div>
-    <div class="track track-right" aria-hidden="true"></div>
-      <a class="home home-green" href="/spiele/" data-area="spiele">
-        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
-        <span class="home-text">
-          <h2>Spielegalerie</h2>
-          <p>Snake, Mäxchen, Gomoku und Co. – allein, gegen den Computer oder im Duell per Raumcode.</p>
-          <span class="go">Reinschauen</span>
-        </span>
-      </a>
-    <div class="track track-bottom" aria-hidden="true"></div>
-      <a class="home home-yellow" href="/tischtennis/" data-area="turnier">
-        <span class="yard" aria-hidden="true"><span class="spot"><svg class="pawn" viewBox="0 0 40 52" aria-hidden="true"><ellipse class="pawn-shadow" cx="20" cy="49" rx="15" ry="3"/><path class="pawn-body" d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z"/><circle class="pawn-head" cx="20" cy="12" r="9.5"/><circle class="pawn-shine" cx="16.5" cy="8.5" r="3"/></svg></span><span class="spot"></span><span class="spot"></span><span class="spot"></span></span>
-        <span class="home-text">
-          <h2>Turniere</h2>
-          <p>Tischtennis oder Fußball: Gruppen, K.-o.-Baum und eine Liveansicht für die Halle.</p>
-          <span class="go">Turniere ansehen</span>
-        </span>
-      </a>
-  </section>
+    </section>
 
-  <a class="cards" href="/raetsel/" data-area="raetsel">
-    <span class="cards-stack" aria-hidden="true"><i></i><i></i><i><b>?</b></i></span>
-    <span class="cards-text">
-      <h2>Tagesrätsel</h2>
-      <p>Wordle, Städteraten, Connections, Nonogramm und Puzzle – jeden Tag neu, für alle dieselben, mit ewiger Bestenliste.</p>
-    </span>
-    <span class="cards-side">
-      <span class="cards-today" id="hubDaily"></span>
-      <span class="go">Heute rätseln</span>
-    </span>
-  </a>
+    <section class="vitrine" aria-labelledby="vitrineTitel">
+      <h2 id="vitrineTitel" class="vitrine-schild">Vereinsrekorde</h2>
+      <ol class="pokale" id="pokale"></ol>
+      <div class="brett" aria-hidden="true"></div>
+      <div class="ehrentafel" id="ehrentafel" hidden></div>
+    </section>
+
+  <nav class="deps" aria-label="Bereiche">
+    <a class="dep dep-woelfe" href="/woelfe/" data-wind data-dep="woelfe">
+      <svg class="wimpel" viewBox="0 0 340 96" aria-hidden="true">
+        <rect class="w-stab" x="0" y="0" width="7" height="96" rx="3.5"/>
+        <g class="w-tuch">
+          <path class="w-filz" d="M7 6 L326 41 Q334 48 326 55 L7 90 Z"/>
+          <path class="w-naht" d="M15 14 L306 45 Q309 48 306 51 L15 82 Z"/>
+          <circle class="w-emblem" cx="52" cy="48" r="25"/>
+          <svg x="32" y="28" width="40" height="40" viewBox="0 0 48 48" class="w-symbol"><path d="M29 9a15 15 0 1 0 10 26A13 13 0 1 1 29 9z" fill="currentColor"/><circle cx="17" cy="22" r="1.8" fill="currentColor"/><circle cx="24" cy="22" r="1.8" fill="currentColor"/></svg>
+          <text class="w-name" x="90" y="57">WOWÖLFE</text>
+        </g>
+      </svg>
+      <span class="dep-text"><span class="vh-sr">WoWölfe: </span>Werwolf für die ganze Runde. Jede Person sieht ihre geheime Rolle auf dem eigenen Handy.</span>
+      <span class="dep-go">Raum eröffnen</span>
+    </a>
+    <a class="dep dep-quiz" href="/quiz/" data-wind data-dep="quiz">
+      <svg class="wimpel" viewBox="0 0 340 96" aria-hidden="true">
+        <rect class="w-stab" x="0" y="0" width="7" height="96" rx="3.5"/>
+        <g class="w-tuch">
+          <path class="w-filz" d="M7 6 L326 41 Q334 48 326 55 L7 90 Z"/>
+          <path class="w-naht" d="M15 14 L306 45 Q309 48 306 51 L15 82 Z"/>
+          <circle class="w-emblem" cx="52" cy="48" r="25"/>
+          <svg x="32" y="28" width="40" height="40" viewBox="0 0 48 48" class="w-symbol"><path d="M9 12h30a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H22l-8 7v-7H9a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3z" fill="currentColor"/><text x="24" y="30.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="22" fill="#fbfcfa">?</text></svg>
+          <text class="w-name" x="90" y="57">PARTY-QUIZ</text>
+        </g>
+      </svg>
+      <span class="dep-text"><span class="vh-sr">Party-Quiz: </span>Fragen auf dem Fernseher, Antworten am Handy. Wer schnell richtig liegt, holt die meisten Punkte.</span>
+      <span class="dep-go">Mitspielen</span>
+    </a>
+    <a class="dep dep-spiele" href="/spiele/" data-wind data-dep="spiele">
+      <svg class="wimpel" viewBox="0 0 340 96" aria-hidden="true">
+        <rect class="w-stab" x="0" y="0" width="7" height="96" rx="3.5"/>
+        <g class="w-tuch">
+          <path class="w-filz" d="M7 6 L326 41 Q334 48 326 55 L7 90 Z"/>
+          <path class="w-naht" d="M15 14 L306 45 Q309 48 306 51 L15 82 Z"/>
+          <circle class="w-emblem" cx="52" cy="48" r="25"/>
+          <svg x="32" y="28" width="40" height="40" viewBox="0 0 48 48" class="w-symbol"><rect x="8" y="8" width="32" height="32" rx="7" fill="currentColor"/><g fill="#fbfcfa"><circle cx="16" cy="16" r="3"/><circle cx="32" cy="16" r="3"/><circle cx="24" cy="24" r="3"/><circle cx="16" cy="32" r="3"/><circle cx="32" cy="32" r="3"/></g></svg>
+          <text class="w-name" x="90" y="57">SPIELEGALERIE</text>
+        </g>
+      </svg>
+      <span class="dep-text"><span class="vh-sr">Spielegalerie: </span>Kniffel, Stadt-Land-Fluss, Vier gewinnt, Snake: allein, zu zweit oder mit der ganzen Gruppe.</span>
+      <span class="dep-go">Spiel aussuchen</span>
+    </a>
+    <a class="dep dep-raetsel" href="/raetsel/" data-wind data-dep="raetsel">
+      <svg class="wimpel" viewBox="0 0 340 96" aria-hidden="true">
+        <rect class="w-stab" x="0" y="0" width="7" height="96" rx="3.5"/>
+        <g class="w-tuch">
+          <path class="w-filz" d="M7 6 L326 41 Q334 48 326 55 L7 90 Z"/>
+          <path class="w-naht" d="M15 14 L306 45 Q309 48 306 51 L15 82 Z"/>
+          <circle class="w-emblem" cx="52" cy="48" r="25"/>
+          <svg x="32" y="28" width="40" height="40" viewBox="0 0 48 48" class="w-symbol"><g fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/><rect x="19" y="7" width="10" height="10" rx="2" fill-opacity=".3"/><rect x="31" y="7" width="10" height="10" rx="2"/><rect x="7" y="19" width="10" height="10" rx="2" fill-opacity=".3"/><rect x="19" y="19" width="10" height="10" rx="2"/><rect x="31" y="19" width="10" height="10" rx="2" fill-opacity=".3"/><rect x="7" y="31" width="10" height="10" rx="2"/><rect x="19" y="31" width="10" height="10" rx="2"/><rect x="31" y="31" width="10" height="10" rx="2"/></g></svg>
+          <text class="w-name" x="90" y="57">TAGESRÄTSEL</text>
+        </g>
+      </svg>
+      <span class="dep-text"><span class="vh-sr">Tagesrätsel: </span>Wordle, Städteraten, Connections, Nonogramm und Puzzle. Jeden Tag neu, für alle dieselben.</span>
+      <span class="dep-go">Heute rätseln</span>
+    </a>
+    <a class="dep dep-turnier" href="/tischtennis/" data-wind data-dep="turnier">
+      <svg class="wimpel" viewBox="0 0 340 96" aria-hidden="true">
+        <rect class="w-stab" x="0" y="0" width="7" height="96" rx="3.5"/>
+        <g class="w-tuch">
+          <path class="w-filz" d="M7 6 L326 41 Q334 48 326 55 L7 90 Z"/>
+          <path class="w-naht" d="M15 14 L306 45 Q309 48 306 51 L15 82 Z"/>
+          <circle class="w-emblem" cx="52" cy="48" r="25"/>
+          <svg x="32" y="28" width="40" height="40" viewBox="0 0 48 48" class="w-symbol"><circle cx="20" cy="19" r="12" fill="currentColor"/><rect x="17" y="28" width="6" height="14" rx="2.5" transform="rotate(-30 20 35)" fill="currentColor"/><circle cx="36" cy="33" r="4.5" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
+          <text class="w-name" x="90" y="57">TURNIERE</text>
+        </g>
+      </svg>
+      <span class="dep-text"><span class="vh-sr">Turniere: </span>Tischtennis und Fußball mit Gruppen, K.-o.-Baum und einer Liveansicht für die Halle.</span>
+      <span class="dep-go">Turniere ansehen</span>
+    </a>
+  </nav>
 </main>
 
-<footer class="vh-footer">Selbstgebaut fürs Vereinsheim. Läuft auf Cloudflare.<br><button type="button" class="vh-btn vh-install" data-install hidden>📲 Als App installieren</button></footer>
+<footer class="vh-footer" data-install hidden><button type="button" class="vh-link vh-install">Als App installieren</button></footer>
+
+<!-- Filz: feines Rauschen für Wimpel und Stecktafel -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="filz" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="rauschen"/>
+    <feColorMatrix in="rauschen" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.9 .55" result="fasern"/>
+    <feComposite in="fasern" in2="SourceGraphic" operator="in" result="flecken"/>
+    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="flecken"/></feMerge>
+  </filter>
+  <linearGradient id="messing" x1="0" x2="1" y1="0" y2="0">
+    <stop offset="0" stop-color="#9b6a14"/><stop offset=".32" stop-color="#f4d98a"/><stop offset=".5" stop-color="#e2b94c"/><stop offset="1" stop-color="#94640f"/>
+  </linearGradient>
+</svg>
 
 <script src="/raetsel/js/daily.js"></script>
+<script src="/shared/wimpel.js"></script>
 <script src="/hub.js"></script>
 <script src="/shared/account-link.js"></script>
 </body>

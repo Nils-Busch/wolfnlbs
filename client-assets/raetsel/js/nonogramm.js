@@ -233,14 +233,14 @@
   function renderSide() {
     const side = $('side');
     if (mode !== 'daily') {
-      side.innerHTML = `<div class="panel"><h2>🎲 Freies Spiel</h2><p class="muted">Neue Rätsel ohne Bestenliste. 5 × 5 zum Reinkommen, 15 × 15 für lange Abende.</p></div>`;
+      side.innerHTML = `<div class="panel"><h2>Freies Spiel</h2><p class="muted">Neue Rätsel ohne Bestenliste. 5 × 5 zum Reinkommen, 15 × 15 für lange Abende.</p></div>`;
       return;
     }
     const st = store.get('nono-stats') || { played: 0, best: null, streak: 0 };
     side.innerHTML = `
-      <div class="panel"><h2>🏆 Tagesbestenliste</h2><p class="muted st-date">${esc(Daily.longDate(today))}</p>
-        <div id="nnForm"></div><div id="nnLb"><p class="muted">Lade …</p></div><a class="side-lb-link" href="/raetsel/bestenliste.html">🏆 Ewige Bestenliste</a></div>
-      <div class="panel st-stats"><h2>📊 Deine Statistik</h2>
+      <div class="panel"><h2>Tagesbestenliste</h2><p class="muted st-date">${esc(Daily.longDate(today))}</p>
+        <div id="nnForm"></div><div id="nnLb"><p class="muted">Lade …</p></div><a class="side-lb-link" href="/raetsel/bestenliste.html">Ewige Bestenliste</a></div>
+      <div class="panel st-stats"><h2>Deine Statistik</h2>
         <div class="nums"><div><b>${st.played}</b><span>gelöst</span></div><div><b>${st.best === null ? '–' : fmtTime(st.best)}</b><span>Bestzeit</span></div><div><b>${st.streak}</b><span>Serie</span></div></div>
         <p class="hint">Nur Tagesrätsel, gespeichert auf diesem Gerät.</p></div>`;
     Daily.board($('nnLb'), lbKey, fmtTime, P.submitted || null);

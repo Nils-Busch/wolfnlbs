@@ -1,98 +1,203 @@
-// Startseite: Der Würfel in der Mitte sucht ein Spiel aus.
-// 1 = Wölfe, 2 = Quiz, 3 = Spielegalerie, 4 = Turniere, 5 = Tagesrätsel, 6 = nochmal würfeln.
+// Startseite: Die Stecktafel zeigt Datum, Stand der Tagesrätsel und ein
+// Turnier, der Würfel steckt einen Spielvorschlag dazu. Das Regal zeigt die
+// Rekorde der Einzelspiele; ein Pokal klappt seine Ehrentafel auf.
 (function () {
   'use strict';
-  // Tagesrätsel: Rätselnummer und wie viele heute schon gelöst sind
-  const today = document.getElementById('hubDaily');
-  if (today && typeof Daily !== 'undefined') {
-    const d = Daily.today();
-    const w = Daily.store.get('wordle-stats'), s = Daily.store.get('staedte-day'), n = Daily.store.get('nono-day'), c = Daily.store.get('conn-day');
-    const solved = [w && w.lastCounted === d, s && s.date === d && s.guesses.length >= 5, n && n.date === d && n.done, c && c.date === d && c.over].filter(Boolean).length;
-    today.textContent = solved === 4 ? 'Heute alle gelöst' : solved ? `Heute ${solved} von 4 gelöst` : `${Daily.longDate(d)}`;
-  }
-  const die = document.querySelector('.die');
-  const msg = document.querySelector('.die-msg');
-  if (!die || !msg) return;
-  const homes = {
-    1: document.querySelector('.home-red'),
-    2: document.querySelector('.home-blue'),
-    3: document.querySelector('.home-green'),
-    4: document.querySelector('.home-yellow'),
-    5: document.querySelector('.cards'),
-  };
-  const names = { 1: 'WoWölfe', 2: 'Party-Quiz', 3: 'die Spielegalerie', 4: 'ein Turnier', 5: 'die Tagesrätsel' };
-  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let busy = false;
+  const tafel = document.querySelector('.tafel');
+  if (!tafel || typeof Daily === 'undefined') return;
+  const line = (k) => tafel.querySelector(`[data-tafel="${k}"]`);
+  const d = Daily.today();
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // Eine Spielfigur hüpft vom Würfel Feld für Feld zum ausgewählten Bereich.
-  const PAWN = '<svg viewBox="0 0 40 52" aria-hidden="true"><ellipse cx="20" cy="49" rx="15" ry="3" fill="rgba(0,0,0,.25)"/><path d="M14 23h12l-1.5 5.5C30 34 33 40 34 47H6c1-7 4-13 9.5-18.5z" fill="var(--c)" stroke="var(--c-deep)" stroke-width="1.5"/><circle cx="20" cy="12" r="9.5" fill="var(--c)" stroke="var(--c-deep)" stroke-width="1.5"/><circle cx="16.5" cy="8.5" r="3" fill="rgba(255,255,255,.55)"/></svg>';
-  function hopTo(home, steps) {
-    const from = die.getBoundingClientRect();
-    const spot = home.querySelector('.spot:nth-child(2)') || home.querySelector('.cards-stack') || home;
-    const to = spot.getBoundingClientRect();
-    const runner = document.createElement('span');
-    runner.className = 'runner';
-    runner.innerHTML = PAWN;
-    const cs = getComputedStyle(home);
-    runner.style.setProperty('--c', cs.getPropertyValue('--c') || '#fff');
-    runner.style.setProperty('--c-deep', cs.getPropertyValue('--c-deep') || '#000');
-    document.body.appendChild(runner);
-    const W = 34, H = 44;
-    const x0 = from.left + from.width / 2 - W / 2 + scrollX, y0 = from.top + scrollY - H * 0.55;
-    const x1 = to.left + to.width / 2 - W / 2 + scrollX, y1 = to.top + to.height / 2 + scrollY - H * 0.8;
-    const hops = Math.max(3, Math.min(6, steps + 2));
-    const frames = [];
-    for (let i = 0; i <= hops; i++) {
-      const t = i / hops;
-      const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-      frames.push({ transform: `translate(${x}px, ${y}px) scale(1, 1)`, offset: i / hops, easing: 'ease-in' });
-      if (i < hops) {
-        const tm = (i + 0.5) / hops;
-        frames.push({ transform: `translate(${x0 + (x1 - x0) * tm}px, ${y0 + (y1 - y0) * tm - 46}px) scale(.96, 1.06)`, offset: tm, easing: 'ease-out' });
+  // ---------- Stecktafel ----------
+  // Text in einzelne Buchstaben zerlegen (für Bildschirmleser bleibt der ganze Text lesbar)
+  let i = 0;
+  function set(el, text, fresh) {
+    if (fresh) i = 0;
+    el.textContent = '';
+    const sr = document.createElement('span');
+    sr.className = 'vh-sr';
+    sr.textContent = text;
+    const letters = document.createElement('span');
+    letters.setAttribute('aria-hidden', 'true');
+    // Wörter bleiben zusammen, damit die Zeile nur zwischen Wörtern umbricht
+    text.split(' ').forEach((word, wi) => {
+      if (wi) letters.append(' ');
+      const w = document.createElement('span');
+      w.className = 'wort';
+      for (const ch of word) {
+        const l = document.createElement('span');
+        l.className = 'l';
+        l.textContent = ch;
+        l.style.setProperty('--i', i++);
+        w.appendChild(l);
       }
+      letters.appendChild(w);
+    });
+    el.append(sr, letters);
+    if (fresh) {
+      el.classList.remove('neu');
+      void el.offsetWidth;
+      el.classList.add('neu');
     }
-    frames[frames.length - 1].transform = `translate(${x1}px, ${y1}px) scale(1.15, .85)`;
-    const anim = runner.animate(frames, { duration: 260 * hops, fill: 'forwards' });
-    return anim.finished.then(() => runner.animate(
-      [{ transform: `translate(${x1}px, ${y1}px) scale(1.15, .85)` }, { transform: `translate(${x1}px, ${y1 - 10}px) scale(1, 1)`, opacity: 1 }, { transform: `translate(${x1}px, ${y1}px) scale(1)`, opacity: 0 }],
-      { duration: 420, easing: 'ease-out', fill: 'forwards' }
-    ).finished).then(() => runner.remove()).catch(() => runner.remove());
   }
 
-  die.addEventListener('click', () => {
-    if (busy) return;
-    busy = true;
-    Object.values(homes).forEach((h) => h && h.classList.remove('picked'));
-    die.classList.remove('rolling');
+  // Wie viele der fünf Tagesrätsel heute schon fertig sind (gleiche Regeln wie auf /raetsel/)
+  const g = (k) => Daily.store.get(k);
+  const w = g('wordle-stats'), s = g('staedte-day'), c = g('conn-day'), n = g('nono-day'), j = g('jig-day');
+  const solved = [
+    w && w.lastCounted === d,
+    s && s.date === d && s.guesses && s.guesses.length >= 5,
+    c && c.date === d && c.over,
+    n && n.date === d && n.done,
+    j && j.date === d && j.done,
+  ].filter(Boolean).length;
+  const dateText = new Date(d + 'T12:00:00Z').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).replace(',', '');
+  set(line('date'), dateText);
+  set(line('daily'), solved === 5 ? 'Alle 5 Rätsel gelöst' : solved ? `Rätsel: ${solved} von 5 gelöst` : '5 neue Tagesrätsel');
+
+  // Beim ersten Besuch am Tag werden die Buchstaben sichtbar gesteckt
+  if (Daily.store.get('hub-tafel') !== d) {
+    tafel.classList.add('stecken');
+    Daily.store.set('hub-tafel', d);
+  }
+
+  // Turnier: läuft gerade, ist heute oder steht in den nächsten 14 Tagen an
+  fetch('/api/tischtennis/tournaments').then((r) => (r.ok ? r.json() : [])).then((list) => {
+    if (!Array.isArray(list)) return;
+    const soon = new Date(Date.parse(d + 'T12:00:00Z') + 14 * 86400000).toISOString().slice(0, 10);
+    const running = list.find((t) => t.status === 'running');
+    const next = list
+      .filter((t) => t.status !== 'finished' && t.event_date && t.event_date >= d && t.event_date <= soon)
+      .sort((a, b) => a.event_date.localeCompare(b.event_date))[0];
+    const t = running || next;
+    if (!t) return;
+    const el = line('turnier');
+    let text = `${t.name} läuft`;
+    if (!running) {
+      text = t.event_date === d ? `Heute: ${t.name}`
+        : `${t.name} am ${new Date(t.event_date + 'T12:00:00Z').toLocaleDateString('de-DE', { day: 'numeric', month: 'numeric', timeZone: 'UTC' })}`;
+    }
+    el.href = `/tischtennis/#t=${t.id}`;
+    set(el, text);
+    el.hidden = false;
+  }).catch(() => {});
+
+  // ---------- Würfel: steckt einen Spielvorschlag auf die Tafel ----------
+  const IDEEN = [
+    ['WoWölfe', '/woelfe/', 'woelfe'], ['Party-Quiz', '/quiz/', 'quiz'],
+    ['Kniffel', '/spiele/gruppe/', 'spiele'], ['Stadt-Land-Fluss', '/spiele/gruppe/', 'spiele'],
+    ['Wer würde eher', '/spiele/gruppe/', 'spiele'], ['Montagsmaler', '/spiele/gruppe/?new=draw', 'spiele'],
+    ['Agentenrunde', '/spiele/gruppe/?new=agent', 'spiele'], ['Erklärbär', '/spiele/gruppe/?new=explain', 'spiele'],
+    ['Mäxchen', '/spiele/games/maexchen.html', 'spiele'], ['Vier gewinnt', '/spiele/games/connect4.html', 'spiele'],
+    ['Reversi', '/spiele/games/reversi.html', 'spiele'], ['Snake', '/spiele/games/snake.html', 'spiele'],
+    ['Blockfall', '/spiele/games/blockfall.html', 'spiele'], ['Wordle', '/spiele/games/wordle.html', 'raetsel'],
+    ['Connections', '/raetsel/connections.html', 'raetsel'], ['Städteraten', '/raetsel/staedte.html', 'raetsel'],
+  ];
+  const btn = tafel.querySelector('.wuerfeln');
+  const die = tafel.querySelector('.wuerfel');
+  let last = -1, rolling = false;
+  btn.addEventListener('click', () => {
+    if (rolling) return;
+    rolling = true;
+    let pick;
+    do { pick = Math.floor(Math.random() * IDEEN.length); } while (pick === last);
+    last = pick;
+    const [name, href, dep] = IDEEN[pick];
+    const finish = () => {
+      die.dataset.face = String(1 + Math.floor(Math.random() * 6));
+      die.classList.remove('rollt');
+      const el = line('vorschlag');
+      el.href = href;
+      el.hidden = false;
+      set(el, `Wie wär's mit ${name}?`, true);
+      const flag = document.querySelector(`.dep[data-dep="${dep}"]`);
+      if (flag && window.VHWind) window.VHWind.kick(flag, 4);
+      rolling = false;
+    };
+    if (reduced) return finish();
+    die.classList.remove('rollt');
     void die.offsetWidth;
-    die.classList.add('rolling');
-    msg.textContent = 'Rollt …';
-    // Während des Rollens wechseln die Augen
+    die.classList.add('rollt');
     let ticks = 0;
     const shuffle = setInterval(() => {
       die.dataset.face = String(1 + Math.floor(Math.random() * 6));
       if (++ticks > 6) clearInterval(shuffle);
-    }, 90);
-    setTimeout(() => {
-      clearInterval(shuffle);
-      const face = 1 + Math.floor(Math.random() * 6);
-      die.dataset.face = String(face);
-      die.classList.remove('rolling');
-      busy = false;
-      if (face > 5) {
-        msg.textContent = `${face} – nochmal würfeln!`;
-        return;
-      }
-      const home = homes[face];
-      msg.innerHTML = `${face} – heute: <a href="${home.getAttribute('href')}">${names[face]}</a>`;
-      const land = () => {
-        void home.offsetWidth;
-        home.classList.add('picked');
-      };
-      if (reduced) return land();
-      busy = true;
-      home.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      hopTo(home, face).then(() => { busy = false; land(); });
-    }, reduced ? 0 : 760);
+    }, 80);
+    setTimeout(() => { clearInterval(shuffle); finish(); }, 650);
   });
+
+  // ---------- Regal mit Pokalen und Ehrentafel ----------
+  const shelf = document.getElementById('pokale');
+  const board = document.getElementById('ehrentafel');
+  const GAMES = [
+    ['snake', 'Snake', 'snake', 'Pkt.'],
+    ['blockfall', 'Blockfall', 'blockfall', 'Pkt.'],
+    ['2048', '2048', '2048', 'Pkt.'],
+    ['kloetzchen', 'Klötzchen', 'kloetzchen', 'Pkt.'],
+    ['memory', 'Memory', 'memory', 'Züge'],
+    ['mines9', 'Minesweeper', 'minesweeper', 's'],
+  ];
+  const CUPS = {
+    // Henkelpokal (Mitte), Sternsäule und Schale
+    henkel: '<path d="M27 28C9 28 9 58 35 62M73 28c18 0 18 30-8 34" fill="none" stroke="url(#messing)" stroke-width="5" stroke-linecap="round"/><path d="M24 22h52v8c0 26-12 40-26 42-14-2-26-16-26-42z" fill="url(#messing)"/><rect x="21" y="17" width="58" height="7" rx="3" fill="url(#messing)"/><path d="M45 72h10l-2 16h-6z" fill="url(#messing)"/><ellipse cx="50" cy="80" rx="8" ry="3.5" fill="url(#messing)"/><path d="M33 92h34l4 9H29z" fill="url(#messing)"/>',
+    stern: '<path d="M50 6l6.5 13.5 14.8 2-10.8 10.4 2.6 14.7L50 39.6l-13.1 7 2.6-14.7-10.8-10.4 14.8-2z" fill="url(#messing)"/><rect x="45" y="46" width="10" height="38" rx="2" fill="url(#messing)"/><ellipse cx="50" cy="86" rx="11" ry="4" fill="url(#messing)"/><path d="M33 92h34l4 9H29z" fill="url(#messing)"/>',
+    schale: '<path d="M14 42h72c0 20-15 32-36 32S14 62 14 42z" fill="url(#messing)"/><ellipse cx="50" cy="42" rx="36" ry="5" fill="#f6e3a3"/><path d="M45 74h10l-1 12h-8z" fill="url(#messing)"/><ellipse cx="50" cy="86" rx="11" ry="4" fill="url(#messing)"/><path d="M33 92h34l4 9H29z" fill="url(#messing)"/>',
+  };
+  const cup = (shape) => `<svg viewBox="0 0 100 106" aria-hidden="true"><g class="pokal-glanz">${CUPS[shape]}</g><rect x="25" y="101" width="50" height="5" fill="#2b211a"/></svg>`;
+  const fmt = (score, unit) => `${Number(score).toLocaleString('de-DE')} ${unit}`;
+  let picks = [];
+
+  function fillShelf(records) {
+    picks = records.filter((r) => r.list.length).concat(records.filter((r) => !r.list.length)).slice(0, 3);
+    const order = [[1, 'stern'], [0, 'henkel'], [2, 'schale']]; // bester Rekord in die Mitte
+    shelf.innerHTML = order.map(([k, shape]) => {
+      const r = picks[k];
+      const [, label, , unit] = r.game;
+      const top = r.list[0];
+      const plate = top
+        ? `<span>${esc(label)}</span><b>${fmt(top.score, unit)}</b><span>${esc(top.name)}</span>`
+        : `<span>${esc(label)}</span><b>Noch frei</b><span>&nbsp;</span>`;
+      return `<li class="pokal${top ? '' : ' frei'}"><button type="button" class="pokal-knopf" data-k="${k}" aria-expanded="false" aria-controls="ehrentafel">${cup(shape)}<span class="pokal-schild">${plate}</span><span class="vh-sr">Ehrentafel ${esc(label)} öffnen</span></button></li>`;
+    }).join('');
+  }
+
+  function openBoard(k, button) {
+    const r = picks[k];
+    const [, label, page, unit] = r.game;
+    const rows = r.list.slice(0, 5).map((e, idx) => `<li><span class="platz">${idx + 1}.</span><span class="wer">${esc(e.name)}</span><span class="wert">${fmt(e.score, unit)}</span></li>`).join('');
+    board.innerHTML = `
+      <div class="ehrentafel-kopf"><h3>Ehrentafel ${esc(label)}</h3><button type="button" class="ehrentafel-zu" aria-label="Ehrentafel schließen">×</button></div>
+      ${rows ? `<ol>${rows}</ol>` : '<p class="ehrentafel-leer">Noch niemand eingetragen. Der erste Rekord bekommt den Pokal.</p>'}
+      <a class="ehrentafel-los" href="/spiele/games/${page}.html">${esc(label)} spielen</a>`;
+    shelf.querySelectorAll('.pokal-knopf').forEach((b) => b.setAttribute('aria-expanded', String(b === button)));
+    board.hidden = false;
+    board.classList.remove('auf');
+    void board.offsetWidth;
+    board.classList.add('auf');
+    board.querySelector('.ehrentafel-zu').addEventListener('click', () => closeBoard(true));
+  }
+  function closeBoard(focusBack) {
+    const open = shelf.querySelector('[aria-expanded="true"]');
+    board.hidden = true;
+    shelf.querySelectorAll('.pokal-knopf').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    if (focusBack && open) open.focus();
+  }
+  shelf.addEventListener('click', (e) => {
+    const b = e.target.closest('.pokal-knopf');
+    if (!b) return;
+    if (b.getAttribute('aria-expanded') === 'true') closeBoard(false);
+    else openBoard(+b.dataset.k, b);
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !board.hidden) closeBoard(true); });
+  document.addEventListener('click', (e) => {
+    if (!board.hidden && !e.target.closest('.vitrine')) closeBoard(false);
+  });
+
+  Promise.all(GAMES.map((gm) => fetch('/api/spiele/scores/' + gm[0])
+    .then((r) => (r.ok ? r.json() : []))
+    .then((list) => ({ game: gm, list: Array.isArray(list) ? list : [] }))
+    .catch(() => ({ game: gm, list: [] }))))
+    .then(fillShelf);
 })();

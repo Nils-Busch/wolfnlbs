@@ -4,6 +4,8 @@
 //   VH.sound.play('pop' | 'ding' | 'fail' | 'roll' | 'shake' | 'tick' | 'start' | 'reveal' | 'fanfare' | 'gong')
 (function () {
   'use strict';
+  const SOUND_ON = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const SOUND_OFF = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const KEY = 'vh-sound';
   let ctx = null;
   let on = (() => { try { return localStorage.getItem(KEY) !== 'off'; } catch { return true; } })();
@@ -62,7 +64,7 @@
     on = v;
     try { localStorage.setItem(KEY, v ? 'on' : 'off'); } catch {}
     if (v) { audio(); play('pop'); }
-    btn && (btn.textContent = v ? '🔊' : '🔇', btn.setAttribute('aria-pressed', String(v)), btn.title = v ? 'Geräusche aus' : 'Geräusche an');
+    btn && (btn.innerHTML = v ? SOUND_ON : SOUND_OFF, btn.setAttribute('aria-pressed', String(v)), btn.title = v ? 'Geräusche aus' : 'Geräusche an');
   }
   let btn = null;
   // Knopf zum Ein- und Ausschalten; Browser erlauben Ton erst nach einem Klick auf der Seite

@@ -25,15 +25,15 @@ async function api(path, opts = {}) {
   return data;
 }
 
-const SPORT_LABEL = { tabletennis: '🏓 Tischtennis', football: '⚽ Fußball' };
+const SPORT_LABEL = { tabletennis: 'Tischtennis', football: 'Fußball' };
 const isFb = d => !!d && d.tournament && d.tournament.sport === 'football';
 /** Wörter, die sich je nach Sportart unterscheiden. */
 function words(d) {
   return isFb(d)
-    ? { table: 'Platz', tables: 'Auf den Plätzen', entrants: 'Teams', entrant: 'Team', icon: '⚽' }
-    : { table: 'Tisch', tables: 'An den Tischen', entrants: 'Teilnehmer', entrant: 'Spieler', icon: '🏓' };
+    ? { table: 'Platz', tables: 'Auf den Plätzen', entrants: 'Teams', entrant: 'Team', icon: 'Fußball' }
+    : { table: 'Tisch', tables: 'An den Tischen', entrants: 'Teilnehmer', entrant: 'Spieler', icon: 'Tischtennis' };
 }
-/** Kurzbeschreibung des Modus für Kopfzeilen, z. B. "⚽ Fußball, Gruppen + K.-o." */
+/** Kurzbeschreibung des Modus für Kopfzeilen, z. B. "Fußball, Gruppen + K.-o." */
 function modeParts(t) {
   return [SPORT_LABEL[t.sport] || SPORT_LABEL.tabletennis, FORMAT_LABEL[t.format], t.sport === 'football' ? '' : bestOfLabel(t.best_of), t.double_elim ? 'mit Loserbracket' : ''].filter(Boolean);
 }
@@ -105,13 +105,13 @@ function renderScorers(data, limit = 0) {
   </table></div>`;
 }
 
-/** Torschützen eines Spiels als kurze Zeile, z. B. "⚽ Max 2, Tim – Jonas". */
+/** Torschützen eines Spiels als kurze Zeile, z. B. "Tore: Max 2, Tim | Jonas". */
 function scorerLine(m) {
   if (!m.fb || m.status !== 'done') return '';
   const sc = (m.extra && m.extra.scorers) || [];
   if (!sc.length) return '';
   const side = n => sc.filter(x => x.side === n).map(x => esc(x.name) + (x.goals > 1 ? ` ${x.goals}×` : '')).join(', ');
-  return `⚽ ${side(1) || '–'} | ${side(2) || '–'}`;
+  return `Tore: ${side(1) || '–'} | ${side(2) || '–'}`;
 }
 
 function renderStandings(data) {

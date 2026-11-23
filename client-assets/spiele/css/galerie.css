@@ -1,0 +1,146 @@
+/* Spielegalerie: oben der Wimpel der Abteilung, darunter die Spiele nach
+   Spielart. Jedes Spiel hat ein kleines gezeichnetes Symbol, das zeigt, wie
+   es aussieht. */
+
+.gal { max-width: 1160px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem) 2rem; }
+
+.gal-top {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end;
+  column-gap: clamp(1.5rem, 4vw, 3rem); row-gap: 1rem;
+  margin-bottom: clamp(2rem, 5vw, 3.25rem);
+}
+.gal-wimpel { margin: 0; grid-row: span 2; align-self: center; }
+.gal-wimpel .wimpel { width: clamp(17rem, 32vw, 25rem); transform: rotate(-1.2deg); }
+.gal-lead { margin: 0; font-size: 1.12rem; max-width: 46ch; }
+
+/* „Wie viele seid ihr?“ – runde Spielsteine zum Antippen */
+.gal-filter { align-self: start; display: grid; gap: .55rem; }
+.gal-filter-label { font: 700 1.3rem/1 var(--vh-display); }
+.steine { display: flex; flex-wrap: wrap; gap: .45rem; }
+.stein {
+  min-width: 2.9rem; height: 2.9rem; padding: 0 .7rem; border-radius: 999px;
+  display: inline-grid; place-items: center;
+  font: 700 1.15rem/1 var(--vh-display); font-variant-numeric: tabular-nums;
+  color: var(--vh-ink); background: var(--vh-surface);
+  border: 2px solid var(--vh-line-strong);
+  box-shadow: inset 0 -3px 0 rgba(22, 32, 27, .08);
+  cursor: pointer;
+  transition: transform .2s var(--vh-ease-hop), border-color .15s, background-color .15s, color .15s;
+}
+.stein:hover { transform: translateY(-2px); border-color: var(--vh-area); }
+.stein:active { transform: translateY(1px) scale(.96); }
+.stein[aria-pressed="true"] {
+  background: var(--vh-area); border-color: var(--vh-area); color: #fff;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .2);
+  animation: stein-setzen .4s var(--vh-ease-hop);
+}
+@keyframes stein-setzen { 40% { transform: translateY(-6px) scale(1.08); } }
+.gal-filter-out { margin: 0; color: var(--vh-ink-soft); font-size: .95rem; min-height: 1.4em; }
+
+/* Gleiten beim Filtern (View Transitions) */
+::view-transition-group(*) { animation-duration: .35s; animation-timing-function: var(--vh-ease-out); }
+
+.gal-sec {
+  display: grid; grid-template-columns: minmax(12rem, 15rem) 1fr; column-gap: clamp(1.5rem, 4vw, 3rem);
+  margin-bottom: clamp(2.25rem, 5vw, 3.5rem);
+  scroll-margin-top: 5rem;
+}
+.gal-head { padding-top: .6rem; border-top: 3px solid var(--vh-area); }
+.gal-head h2 { font: 700 clamp(1.75rem, 3vw, 2.2rem)/1 var(--vh-display); margin: 0 0 .55rem; }
+.gal-head p { margin: 0; color: var(--vh-ink-soft); font-size: .97rem; max-width: 30ch; }
+
+.gal-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+
+.g {
+  display: grid; grid-template-columns: 4rem minmax(0, 1fr) auto; align-items: baseline; align-content: start;
+  column-gap: .95rem; row-gap: .1rem;
+  height: 100%; padding: .85rem 1rem .95rem .85rem;
+  background: var(--vh-surface); border: 1px solid var(--vh-line); border-radius: 14px;
+  color: var(--vh-ink); text-decoration: none;
+  transition: border-color .15s, box-shadow .2s;
+}
+.g:hover { border-color: color-mix(in srgb, var(--vh-area) 55%, var(--vh-line)); box-shadow: 0 6px 18px -10px rgba(22, 32, 27, .35); }
+.g-icon {
+  grid-row: span 2; align-self: start;
+  width: 4rem; height: 4rem; padding: .5rem;
+  background: var(--vh-board); border-radius: 10px;
+  overflow: visible;
+}
+.g-name { font: 700 1.5rem/1.1 var(--vh-display); }
+.g-meta { font-size: .86rem; font-weight: 500; color: var(--vh-ink-soft); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.g-rec { color: color-mix(in srgb, var(--vh-area) 80%, var(--vh-ink)); font-weight: 600; }
+.g-rec:empty { display: none; }
+.g-desc { grid-column: 2 / -1; color: var(--vh-ink-soft); font-size: .97rem; line-height: 1.45; }
+
+.gal-note { color: var(--vh-ink-soft); margin: 0; }
+.gal-note a { color: var(--vh-area); font-weight: 600; text-underline-offset: 3px; }
+
+
+/* ---------- Kleine Szenen beim Drüberfahren: jedes Symbol zeigt seinen Spielzug ---------- */
+.g-icon [class^="a-"], .g-icon [class*=" a-"] { transform-box: fill-box; transform-origin: center; }
+.g:is(:hover, :focus-visible, :active) .g-icon {
+  --d: 0s;
+}
+.g:is(:hover, :focus-visible, :active) .a-spaet { --d: .15s; }
+.g:is(:hover, :focus-visible, :active) .a-spaeter { --d: .3s; }
+.g:is(:hover, :focus-visible, :active) .a-hoch { animation: a-hoch .6s var(--vh-ease-out) var(--d, 0s) both; }
+.g:is(:hover, :focus-visible, :active) .a-dreh { animation: a-dreh .6s var(--vh-ease-out) var(--d, 0s) both; }
+.g:is(:hover, :focus-visible, :active) .a-schreib { transform-origin: left center; animation: a-schreib .5s var(--vh-ease-out) calc(var(--d, 0s) + .25s) both; }
+.g:is(:hover, :focus-visible, :active) .a-wuerfel { animation: a-wuerfel .7s var(--vh-ease-out) var(--d, 0s) both; }
+.g:is(:hover, :focus-visible, :active) .a-zeichne { stroke-dasharray: 100; animation: a-zeichne .6s ease-out var(--d, 0s) both; }
+.g:is(:hover, :focus-visible, :active) .a-stift { animation: a-stift .75s ease-in-out both; }
+.g:is(:hover, :focus-visible, :active) .a-wackel { animation: a-wackel .5s ease-in-out var(--d, 0s) both; }
+.g:is(:hover, :focus-visible, :active) .a-karte { animation: a-karte .45s var(--vh-ease-out) calc(var(--n) * 45ms) both; }
+.g:is(:hover, :focus-visible, :active) .a-kipp { animation: a-kipp .7s var(--vh-ease-hop) both; }
+.g:is(:hover, :focus-visible, :active) .a-fall { animation: a-fall .55s cubic-bezier(.5, 0, .75, 1.4) var(--d, 0s) both; }
+.g:is(:hover, :focus-visible, :active) circle.a-wende { animation: a-umdrehen .5s ease-in-out var(--d, 0s) both; }
+.g:is(:hover, :focus-visible, :active) g.a-wende { animation: a-dreh .55s var(--vh-ease-out) both; }
+.g:is(:hover, :focus-visible, :active) .a-setz { animation: a-setz .45s var(--vh-ease-hop) .1s both; }
+.g:is(:hover, :focus-visible, :active) .a-fuell { animation: a-fuell .3s ease-out .45s both; }
+.g:is(:hover, :focus-visible, :active) .a-kriech { animation: a-kriech .7s steps(3, end) both; }
+.g:is(:hover, :focus-visible, :active) .a-plopp { animation: a-plopp .45s var(--vh-ease-hop) both; }
+.g:is(:hover, :focus-visible, :active) .a-flagge { transform-origin: left center; animation: a-flagge .6s ease-in-out 2; }
+
+@keyframes a-hoch { 35% { transform: translateY(-5px) scale(1.06); } 60% { transform: translateY(0) scale(.97, 1.03); } }
+@keyframes a-dreh { 50% { transform: scaleX(0); } }
+@keyframes a-schreib { from { transform: scaleX(0); } }
+@keyframes a-wuerfel { 0% { transform: translateY(0) rotate(0); } 40% { transform: translateY(-7px) rotate(200deg); } 75% { transform: translateY(0) rotate(340deg); } 100% { transform: rotate(360deg); } }
+@keyframes a-zeichne { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes a-stift { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-6px, -3px); } 50% { transform: translate(-2px, 4px); } 75% { transform: translate(-7px, 2px); } }
+@keyframes a-wackel { 20% { transform: rotate(-9deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(4deg); } }
+@keyframes a-karte { 50% { transform: scaleX(0); } }
+@keyframes a-kipp { from { transform: rotate(0); } to { transform: rotate(180deg); } }
+@keyframes a-fall { from { transform: translateY(-30px); opacity: 0; } 30% { opacity: 1; } }
+@keyframes a-umdrehen { 0% { fill: #fff; } 49% { transform: scaleX(0); fill: #fff; } 51% { transform: scaleX(0); fill: var(--vh-ink); } 100% { fill: var(--vh-ink); } }
+@keyframes a-setz { from { transform: scale(0); } }
+@keyframes a-fuell { from { opacity: 0; } }
+@keyframes a-kriech { from { transform: translate(-4px, 0); } }
+@keyframes a-plopp { 40% { transform: scale(1.14); } }
+@keyframes a-flagge { 50% { transform: skewY(14deg) scaleX(.85); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .g-icon * { animation: none !important; }
+  .stein[aria-pressed="true"] { animation: none; }
+  ::view-transition-group(*) { animation: none; }
+}
+
+@media (max-width: 960px) {
+  .gal-sec { grid-template-columns: 1fr; }
+  .gal-head { margin-bottom: 1rem; }
+  .gal-head p { max-width: 52ch; }
+}
+@media (max-width: 720px) {
+  .gal-top { grid-template-columns: 1fr; }
+  .gal-wimpel { grid-row: auto; }
+  .gal-wimpel .wimpel { width: min(19rem, 90%); }
+  .gal-list { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .steine { gap: .3rem; }
+  .stein { min-width: 2.5rem; height: 2.5rem; padding: 0 .5rem; font-size: 1.02rem; }
+  .g { grid-template-columns: 3.25rem minmax(0, 1fr); column-gap: .8rem; padding: .75rem .8rem .85rem .7rem; }
+  .g-icon { grid-row: span 3; width: 3.25rem; height: 3.25rem; padding: .4rem; }
+  .g-meta { grid-column: 2; grid-row: 2; text-align: left; white-space: normal; }
+  .g-desc { grid-column: 2; }
+  .g-name { font-size: 1.35rem; }
+}

@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/shared/theme.js"></script>
 <title>Spielegalerie – Vereinsheim</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+<link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/shared/vereinsheim.css">
-<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="stylesheet" href="/spiele/css/galerie.css">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/shared/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#172036">
+<meta name="theme-color" content="#e6ebe3">
 <script src="/shared/pwa.js" defer></script>
 </head>
 <body class="vh-body vh-area-spiele">
@@ -24,164 +24,93 @@
     <a href="/tischtennis/">Turniere</a>
   </nav>
 </header>
-<main class="gallery">
-  <section class="hero">
-    <h1>Spielegalerie</h1>
-    <p>Allein auf Rekordjagd, gegen den Computer oder im Duell – am selben Gerät oder online per Raumcode.</p>
+<main class="gal">
+  <div class="gal-top">
+    <h1 class="gal-wimpel" data-wind><span class="vh-sr">Spielegalerie</span><svg class="wimpel" viewBox="0 0 340 96" aria-hidden="true">
+        <rect class="w-stab" x="0" y="0" width="7" height="96" rx="3.5"/>
+        <g class="w-tuch">
+          <path class="w-filz" d="M7 6 L326 41 Q334 48 326 55 L7 90 Z"/>
+          <path class="w-naht" d="M15 14 L306 45 Q309 48 306 51 L15 82 Z"/>
+          <circle class="w-emblem" cx="52" cy="48" r="25"/>
+          <svg x="32" y="28" width="40" height="40" viewBox="0 0 48 48" class="w-symbol"><rect x="8" y="8" width="32" height="32" rx="7" fill="currentColor"/><g fill="#fbfcfa"><circle cx="16" cy="16" r="3"/><circle cx="32" cy="16" r="3"/><circle cx="24" cy="24" r="3"/><circle cx="16" cy="32" r="3"/><circle cx="32" cy="32" r="3"/></g></svg>
+          <text class="w-name" x="90" y="57">SPIELEGALERIE</text>
+        </g>
+      </svg></h1>
+    <p class="gal-lead">19 Spiele für allein, zu zweit und die ganze Gruppe. Alles läuft im Browser, auch auf dem Handy.</p>
+    <div class="gal-filter" role="group" aria-labelledby="pfLabel">
+      <span class="gal-filter-label" id="pfLabel">Wie viele seid ihr?</span>
+      <div class="steine">
+        <button type="button" class="stein" data-from="1" data-to="1" aria-pressed="false">1</button>
+        <button type="button" class="stein" data-from="2" data-to="2" aria-pressed="false">2</button>
+        <button type="button" class="stein" data-from="3" data-to="3" aria-pressed="false">3</button>
+        <button type="button" class="stein" data-from="4" data-to="4" aria-pressed="false">4</button>
+        <button type="button" class="stein" data-from="5" data-to="6" aria-pressed="false">5–6</button>
+        <button type="button" class="stein" data-from="7" data-to="10" aria-pressed="false">7–10</button>
+        <button type="button" class="stein" data-from="11" data-to="30" aria-pressed="false">11+</button>
+      </div>
+      <p class="gal-filter-out" aria-live="polite">Tippe eure Anzahl an, dann bleiben nur die passenden Spiele stehen.</p>
+    </div>
+  </div>
+
+  <section class="gal-sec" id="gruppe" aria-labelledby="gruppe-h">
+    <div class="gal-head"><h2 id="gruppe-h">Mit der ganzen Gruppe</h2><p>Alle spielen am eigenen Handy. Ein Fernseher als gemeinsamer Bildschirm geht, muss aber nicht.</p></div>
+    <ul class="gal-list">
+      <li data-min="3" data-max="30"><a class="g" href="/spiele/gruppe/"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="11" cy="18" r="5" fill="var(--vh-ink)" opacity=".35"/><path d="M3 40c0-8 3.6-13 8-13s8 5 8 13z" fill="var(--vh-ink)" opacity=".35"/><circle cx="37" cy="18" r="5" fill="var(--vh-ink)" opacity=".35"/><path d="M29 40c0-8 3.6-13 8-13s8 5 8 13z" fill="var(--vh-ink)" opacity=".35"/><g class="a-hoch"><circle cx="24" cy="13" r="6.5" fill="var(--vh-red)"/><path d="M13 42c0-10 5-16 11-16s11 6 11 16z" fill="var(--vh-red)"/></g></svg><span class="g-name">Wer würde eher …?</span><span class="g-meta">ab 3 Personen</span><span class="g-desc">Eine Frage, alle stimmen am Handy ab, wer am ehesten passt. Danach wird aufgelöst.</span></a></li>
+      <li data-min="2" data-max="30"><a class="g" href="/spiele/gruppe/"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-dreh"><rect x="5" y="5" width="22" height="22" rx="4" fill="var(--vh-yellow)"/><text x="16" y="23" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="19" fill="var(--vh-ink)">B</text></g><rect x="31" y="9" width="12" height="3.5" rx="1.75" fill="var(--vh-ink)" opacity=".35"/><rect x="31" y="18" width="9" height="3.5" rx="1.75" fill="var(--vh-ink)" opacity=".35"/><rect class="a-schreib" x="5" y="33" width="38" height="3.5" rx="1.75" fill="var(--vh-ink)" opacity=".35"/><rect class="a-schreib a-spaet" x="5" y="41" width="26" height="3.5" rx="1.75" fill="var(--vh-ink)" opacity=".35"/></svg><span class="g-name">Stadt-Land-Fluss</span><span class="g-meta">ab 2 Personen</span><span class="g-desc">Buchstabe würfeln, am Handy schreiben, gemeinsam Unsinn rauswählen. Eigene Ideen bringen mehr Punkte.</span></a></li>
+      <li data-min="2" data-max="30"><a class="g" href="/spiele/gruppe/"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-wuerfel"><g transform="rotate(-10 15.0 27.0)"><rect x="4" y="16" width="22" height="22" rx="4.4" fill="#fff" stroke="var(--vh-ink)" stroke-width="2"/><circle cx="9.7" cy="21.7" r="2.2" fill="var(--vh-ink)"/><circle cx="15.0" cy="27.0" r="2.2" fill="var(--vh-ink)"/><circle cx="20.3" cy="32.3" r="2.2" fill="var(--vh-ink)"/></g></g><g class="a-wuerfel a-spaet"><g transform="rotate(12 32.0 17.0)"><rect x="21" y="6" width="22" height="22" rx="4.4" fill="var(--vh-red)" stroke="var(--vh-ink)" stroke-width="2"/><circle cx="26.7" cy="11.7" r="2.2" fill="#fff"/><circle cx="37.3" cy="11.7" r="2.2" fill="#fff"/><circle cx="32.0" cy="17.0" r="2.2" fill="#fff"/><circle cx="26.7" cy="22.3" r="2.2" fill="#fff"/><circle cx="37.3" cy="22.3" r="2.2" fill="#fff"/></g></g></svg><span class="g-name">Kniffel</span><span class="g-meta">ab 2 Personen</span><span class="g-desc">Würfeln, festhalten, eintragen. Jede Person spielt am eigenen Handy und sieht dort auch den Block aller.</span></a></li>
+      <li data-min="3" data-max="30"><a class="g" href="/spiele/gruppe/?new=draw"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><path class="a-zeichne" pathLength="100" d="M7 40V22L21 10l14 12v18z" fill="none" stroke="var(--vh-blue)" stroke-width="3" stroke-linejoin="round"/><path class="a-zeichne a-spaet" pathLength="100" d="M17 40v-9h8v9" fill="none" stroke="var(--vh-blue)" stroke-width="3" stroke-linejoin="round"/><g class="a-stift"><g transform="rotate(40 38 30)"><rect x="35" y="12" width="6" height="22" rx="1" fill="var(--vh-yellow)"/><path d="M35 34h6l-3 6z" fill="var(--vh-ink)"/></g></g></svg><span class="g-name">Montagsmaler</span><span class="g-meta">ab 3 Personen</span><span class="g-desc">Eine Person zeichnet am Handy, alle anderen raten um die Wette.</span></a></li>
+      <li data-min="2" data-max="10"><a class="g" href="/spiele/gruppe/?new=maexchen"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-wackel"><rect x="12" y="3" width="24" height="42" rx="5" fill="none" stroke="var(--vh-ink)" stroke-width="2.5"/><rect x="20" y="40" width="8" height="2" rx="1" fill="var(--vh-ink)"/><g class=""><g transform="rotate(0 24.0 22.0)"><rect x="15" y="13" width="18" height="18" rx="3.6" fill="var(--vh-red)" stroke="var(--vh-ink)" stroke-width="2"/><circle cx="20.0" cy="18.0" r="1.8" fill="#fff"/><circle cx="28.0" cy="26.0" r="1.8" fill="#fff"/></g></g></g></svg><span class="g-name">Mäxchen online</span><span class="g-meta">2 bis 10 Personen</span><span class="g-desc">Bluffen über die Ferne: Jede Person würfelt verdeckt am eigenen Handy.</span></a></li>
+      <li data-min="4" data-max="30"><a class="g" href="/spiele/gruppe/?new=agent"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><rect class="a-karte" style="--n:0" x="3" y="3" width="13" height="13" rx="2" fill="var(--vh-red)"/><rect class="a-karte" style="--n:1" x="18" y="3" width="13" height="13" rx="2" fill="var(--vh-blue)"/><rect class="a-karte" style="--n:2" x="33" y="3" width="13" height="13" rx="2" fill="#d8cfb6"/><rect class="a-karte" style="--n:3" x="3" y="18" width="13" height="13" rx="2" fill="#d8cfb6"/><rect class="a-karte" style="--n:4" x="18" y="18" width="13" height="13" rx="2" fill="var(--vh-ink)"/><rect class="a-karte" style="--n:5" x="33" y="18" width="13" height="13" rx="2" fill="var(--vh-red)"/><rect class="a-karte" style="--n:6" x="3" y="33" width="13" height="13" rx="2" fill="var(--vh-blue)"/><rect class="a-karte" style="--n:7" x="18" y="33" width="13" height="13" rx="2" fill="var(--vh-red)"/><rect class="a-karte" style="--n:8" x="33" y="33" width="13" height="13" rx="2" fill="var(--vh-blue)"/></svg><span class="g-name">Agentenrunde</span><span class="g-meta">ab 4 Personen</span><span class="g-desc">Team gegen Team: Ein Wort als Hinweis, das Team sucht die passenden Karten. Bloß nicht den Doppelagenten erwischen.</span></a></li>
+      <li data-min="4" data-max="30"><a class="g" href="/spiele/gruppe/?new=explain"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-kipp"><rect x="11" y="4" width="26" height="4" rx="2" fill="var(--vh-ink)"/><rect x="11" y="40" width="26" height="4" rx="2" fill="var(--vh-ink)"/><path d="M14 8h20c0 9-7 12-7 16s7 7 7 16H14c0-9 7-12 7-16s-7-7-7-16z" fill="none" stroke="var(--vh-ink)" stroke-width="2.5"/><path d="M17 12h14c-1 4-5 7-7 9-2-2-6-5-7-9zM24 30c3 2 7 4 7 9H17c0-5 4-7 7-9z" fill="var(--vh-yellow)"/></g></svg><span class="g-name">Erklärbär</span><span class="g-meta">ab 4 Personen</span><span class="g-desc">Begriffe gegen die Uhr erklären, ohne die verbotenen Wörter zu sagen. Das andere Team liest mit.</span></a></li>
+    </ul>
   </section>
 
-  <a class="daily" href="/raetsel/">
-    <span class="daily-tiles" aria-hidden="true"><i class="g">R</i><i class="y">A</i><i class="b">T</i><i class="g">E</i><i class="g">N</i></span>
-    <span class="daily-text">
-      <span class="daily-kicker">Tagesrätsel</span>
-      <h2>Wordle, Städteraten, Connections und Nonogramm.</h2>
-      <span class="daily-sub">Jeden Tag neu und für alle dieselben – mit Tagesbestenliste. Wer ist heute am schnellsten?</span>
-    </span>
-    <span class="daily-go">Zu den Rätseln</span>
-  </a>
+  <section class="gal-sec" id="zwei" aria-labelledby="zwei-h">
+    <div class="gal-head"><h2 id="zwei-h">Zu zweit</h2><p>Gegen den Computer, abwechselnd am selben Gerät oder online per Raumcode.</p></div>
+    <ul class="gal-list">
+      <li data-min="1" data-max="2"><a class="g" href="/spiele/games/tictactoe.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M18 4v40M30 4v40M4 18h40M4 30h40" stroke="var(--vh-ink)" stroke-width="2.5" stroke-linecap="round" opacity=".4"/><path class="a-zeichne" pathLength="100" d="M6 6l8 8M14 6l-8 8" stroke="var(--vh-red)" stroke-width="3.5" stroke-linecap="round"/><circle class="a-zeichne a-spaet" pathLength="100" cx="24" cy="24" r="4.5" fill="none" stroke="var(--vh-blue)" stroke-width="3.5"/><path class="a-zeichne a-spaeter" pathLength="100" d="M34 34l8 8M42 34l-8 8" stroke="var(--vh-red)" stroke-width="3.5" stroke-linecap="round"/><circle cx="38" cy="10" r="4.5" fill="none" stroke="var(--vh-blue)" stroke-width="3.5"/></svg><span class="g-name">Tic-Tac-Toe</span><span class="g-desc">Drei in einer Reihe. Schnelle Runden, Siege werden gezählt.</span></a></li>
+      <li data-min="1" data-max="2"><a class="g" href="/spiele/games/connect4.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="7" width="42" height="34" rx="5" fill="var(--vh-blue)"/><circle cx="8" cy="15" r="3.3" fill="#fff"/><circle cx="16" cy="15" r="3.3" fill="#fff"/><circle cx="24" cy="15" r="3.3" fill="#fff"/><circle cx="32" cy="15" r="3.3" fill="#fff"/><circle cx="40" cy="15" r="3.3" fill="#fff"/><circle cx="8" cy="24" r="3.3" fill="#fff"/><circle cx="16" cy="24" r="3.3" fill="var(--vh-yellow)"/><circle cx="24" cy="24" r="3.3" fill="#fff"/><circle cx="32" cy="24" r="3.3" fill="#fff"/><circle cx="40" cy="24" r="3.3" fill="#fff"/><circle cx="8" cy="33" r="3.3" fill="var(--vh-red)"/><circle cx="16" cy="33" r="3.3" fill="var(--vh-yellow)"/><circle cx="24" cy="33" r="3.3" fill="var(--vh-red)"/><circle cx="32" cy="33" r="3.3" fill="#fff"/><circle cx="40" cy="33" r="3.3" fill="var(--vh-yellow)"/><circle class="a-fall" cx="32" cy="33" r="3.3" fill="var(--vh-red)"/></svg><span class="g-name">Vier gewinnt</span><span class="g-desc">Steine einwerfen und vier in eine Reihe bringen: waagerecht, senkrecht oder diagonal.</span></a></li>
+      <li data-min="1" data-max="2"><a class="g" href="/spiele/games/reversi.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="3" width="42" height="42" rx="5" fill="var(--vh-green)"/><path d="M24 3v42M3 24h42" stroke="#0c5a36" stroke-width="1.5"/><circle cx="13.5" cy="13.5" r="7" fill="var(--vh-ink)"/><circle class="a-wende" cx="34.5" cy="13.5" r="7" fill="#fff"/><circle class="a-wende a-spaet" cx="13.5" cy="34.5" r="7" fill="#fff"/><circle cx="34.5" cy="34.5" r="7" fill="var(--vh-ink)"/></svg><span class="g-name">Reversi</span><span class="g-desc">Gegnerische Steine einschließen und umdrehen. Wer am Ende mehr Steine hat, gewinnt.</span></a></li>
+      <li data-min="1" data-max="2"><a class="g" href="/spiele/games/gomoku.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="3" width="42" height="42" rx="4" fill="#e2c38c"/><path d="M10 3v42M19 3v42M28 3v42M37 3v42M3 10h42M3 19h42M3 28h42M3 37h42" stroke="#8a6a35" stroke-width="1"/><circle cx="10" cy="37" r="4" fill="var(--vh-ink)" stroke="var(--vh-ink)" stroke-width="0"/><circle cx="19" cy="28" r="4" fill="var(--vh-ink)" stroke="var(--vh-ink)" stroke-width="0"/><circle cx="28" cy="19" r="4" fill="var(--vh-ink)" stroke="var(--vh-ink)" stroke-width="0"/><circle class="a-setz" cx="37" cy="10" r="4" fill="var(--vh-ink)" stroke="var(--vh-ink)" stroke-width="0"/><circle cx="19" cy="19" r="4" fill="#fff" stroke="var(--vh-ink)" stroke-width="1"/><circle cx="28" cy="28" r="4" fill="#fff" stroke="var(--vh-ink)" stroke-width="1"/><circle cx="37" cy="19" r="4" fill="#fff" stroke="var(--vh-ink)" stroke-width="1"/></svg><span class="g-name">Gomoku</span><span class="g-desc">Fünf in einer Reihe auf dem großen Brett. Schnell erklärt, aber jede Drohung muss man sehen.</span></a></li>
+      <li data-min="1" data-max="2"><a class="g" href="/spiele/games/dots.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="8" width="16" height="16" fill="var(--vh-blue)" opacity=".85"/><rect class="a-fuell" x="24" y="24" width="16" height="16" fill="var(--vh-red)" opacity=".85"/><path d="M8 8h16v16H8zM24 24h16v16M24 8h16M8 40h16" fill="none" stroke="var(--vh-ink)" stroke-width="2.5" stroke-linecap="round"/><path class="a-zeichne" pathLength="100" d="M24 40h16" stroke="var(--vh-ink)" stroke-width="2.5" stroke-linecap="round"/><circle cx="8" cy="8" r="2.6" fill="var(--vh-ink)"/><circle cx="8" cy="24" r="2.6" fill="var(--vh-ink)"/><circle cx="8" cy="40" r="2.6" fill="var(--vh-ink)"/><circle cx="24" cy="8" r="2.6" fill="var(--vh-ink)"/><circle cx="24" cy="24" r="2.6" fill="var(--vh-ink)"/><circle cx="24" cy="40" r="2.6" fill="var(--vh-ink)"/><circle cx="40" cy="8" r="2.6" fill="var(--vh-ink)"/><circle cx="40" cy="24" r="2.6" fill="var(--vh-ink)"/><circle cx="40" cy="40" r="2.6" fill="var(--vh-ink)"/></svg><span class="g-name">Käsekästchen</span><span class="g-desc">Striche ziehen, Kästchen schließen, nochmal ziehen. Taktik aus dem Schulheft.</span></a></li>
+    </ul>
+  </section>
 
-  <h2 class="section-title">Allein spielen<span>mit Bestenliste</span></h2>
-  <div class="grid">
-    <a class="card" data-tilt href="/spiele/games/snake.html" data-game="snake">
-      <span class="icon">🐍</span>
-      <h3>Snake</h3>
-      <p>Futter einsammeln, wachsen, nicht in dich selbst beißen. Wird mit jedem Bissen schneller.</p>
-      <span class="meta"><span class="tag">Tastatur &amp; Touch</span><span class="rec"></span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/blockfall.html" data-game="blockfall">
-      <span class="icon">🧱</span>
-      <h3>Blockfall</h3>
-      <p>Fallende Steine drehen und volle Reihen abräumen. Ab jeder zehnten Reihe wird’s schneller.</p>
-      <span class="meta"><span class="tag">Tastatur &amp; Touch</span><span class="rec"></span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/kloetzchen.html" data-game="kloetzchen">
-      <span class="icon">🟪</span>
-      <h3>Klötzchen</h3>
-      <p>Blöcke aufs 8 × 8-Feld ziehen, volle Reihen und Spalten sprengen, Kombos jagen. Ohne Zeitdruck.</p>
-      <span class="meta"><span class="tag">Maus, Touch &amp; Tastatur</span><span class="tag">Neu</span><span class="rec"></span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/2048.html" data-game="2048">
-      <span class="icon">🔢</span>
-      <h3>2048</h3>
-      <p>Kacheln schieben und gleiche Zahlen verschmelzen, bis die 2048 erscheint.</p>
-      <span class="meta"><span class="tag">Tastatur &amp; Touch</span><span class="rec"></span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/minesweeper.html" data-game="mines9" data-unit="s">
-      <span class="icon">💣</span>
-      <h3>Minesweeper</h3>
-      <p>Alle Felder ohne Mine aufdecken. Zwei Größen, eigene Bestenliste je Größe.</p>
-      <span class="meta"><span class="tag">Maus &amp; Touch</span><span class="rec"></span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/memory.html" data-game="memory" data-unit="Züge">
-      <span class="icon">🃏</span>
-      <h3>Memory</h3>
-      <p>Finde alle acht Paare mit so wenigen Zügen wie möglich.</p>
-      <span class="meta"><span class="tag">Maus &amp; Touch</span><span class="rec"></span></span>
-    </a>
-  </div>
+  <section class="gal-sec" id="tisch" aria-labelledby="tisch-h">
+    <div class="gal-head"><h2 id="tisch-h">Am Tisch</h2><p>Ein Handy geht reihum.</p></div>
+    <ul class="gal-list">
+      <li data-min="1" data-max="6"><a class="g" href="/spiele/games/maexchen.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-wackel"><g transform="rotate(-8 14.0 25.0)"><rect x="3" y="14" width="22" height="22" rx="4.4" fill="#fff" stroke="var(--vh-ink)" stroke-width="2"/><circle cx="9.2" cy="20.2" r="2.2" fill="var(--vh-ink)"/><circle cx="18.8" cy="29.8" r="2.2" fill="var(--vh-ink)"/></g></g><g class="a-wackel a-spaet"><g transform="rotate(9 34.0 21.0)"><rect x="23" y="10" width="22" height="22" rx="4.4" fill="#fff" stroke="var(--vh-ink)" stroke-width="2"/><circle cx="34.0" cy="21.0" r="2.2" fill="var(--vh-red)"/></g></g></svg><span class="g-name">Mäxchen</span><span class="g-meta">2 bis 6 Personen</span><span class="g-desc">Verdeckt würfeln, ansagen, bluffen. Wer auffliegt, verliert einen Deckel. Auch mit Computer-Gegnern.</span></a></li>
+    </ul>
+  </section>
 
-  <h2 class="section-title">Mit der ganzen Gruppe<span>ein Bildschirm, alle spielen am Handy</span></h2>
-  <div class="grid duel">
-    <a class="card" data-tilt href="/spiele/gruppe/">
-      <span class="icon">🫵</span>
-      <h3>Wer würde eher …?</h3>
-      <p>Eine Frage, alle stimmen am Handy ab, wer am ehesten passt. Der Fernseher löst auf.</p>
-      <span class="meta"><span class="tag">ab 3 Personen</span><span class="tag">Fernseher</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/gruppe/">
-      <span class="icon">🔤</span>
-      <h3>Stadt-Land-Fluss</h3>
-      <p>Buchstabe würfeln, am Handy schreiben, gemeinsam Unsinn rauswählen. Eigene Ideen bringen mehr Punkte.</p>
-      <span class="meta"><span class="tag">ab 2 Personen</span><span class="tag">Fernseher</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/gruppe/">
-      <span class="icon">🎲</span>
-      <h3>Kniffel</h3>
-      <p>Würfeln, festhalten, eintragen – am eigenen Handy. Der Fernseher zeigt die Würfel groß und den Block aller.</p>
-      <span class="meta"><span class="tag">ab 2 Personen</span><span class="tag">Fernseher</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/gruppe/?new=draw">
-      <span class="icon">🖍️</span>
-      <h3>Montagsmaler</h3>
-      <p>Eine Person zeichnet am Handy, alle anderen raten um die Wette. Läuft auch ohne Fernseher.</p>
-      <span class="meta"><span class="tag">ab 3 Personen</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/gruppe/?new=maexchen">
-      <span class="icon">🥤</span>
-      <h3>Mäxchen online</h3>
-      <p>Bluffen über die Ferne: jede Person würfelt verdeckt am eigenen Handy.</p>
-      <span class="meta"><span class="tag">2 bis 10 Personen</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/gruppe/?new=agent">
-      <span class="icon">🕵️</span>
-      <h3>Agentenrunde</h3>
-      <p>Team Rot gegen Team Blau: Ein Wort als Hinweis, das Team findet die passenden Karten. Bloß nicht den Doppelagenten erwischen.</p>
-      <span class="meta"><span class="tag">ab 4 Personen</span><span class="tag">Neu</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/gruppe/?new=explain">
-      <span class="icon">🐻</span>
-      <h3>Erklärbär</h3>
-      <p>Begriffe gegen die Uhr erklären, ohne die verbotenen Wörter zu sagen. Das andere Team liest mit.</p>
-      <span class="meta"><span class="tag">ab 4 Personen</span><span class="tag">Neu</span></span>
-    </a>
-  </div>
+  <section class="gal-sec" id="allein" aria-labelledby="allein-h">
+    <div class="gal-head"><h2 id="allein-h">Allein</h2><p>Auf Rekordjagd. Die besten Ergebnisse landen in der Bestenliste.</p></div>
+    <ul class="gal-list">
+      <li data-min="1" data-max="1"><a class="g" data-game="snake" href="/spiele/games/snake.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-kriech"><rect x="5.0" y="35.5" width="9" height="9" rx="2" fill="var(--vh-green)"/><rect x="15.5" y="35.5" width="9" height="9" rx="2" fill="var(--vh-green)"/><rect x="26.0" y="35.5" width="9" height="9" rx="2" fill="var(--vh-green)"/><rect x="26.0" y="25.0" width="9" height="9" rx="2" fill="var(--vh-green)"/><rect x="26.0" y="14.5" width="9" height="9" rx="2" fill="var(--vh-green)"/><rect x="36.5" y="14.5" width="9" height="9" rx="2" fill="#0c6b3e"/></g><g class="a-hoch"><circle cx="11" cy="14" r="4.5" fill="var(--vh-red)"/><path d="M11 9.5c0-2 1-3 2.5-3.5" stroke="var(--vh-green)" stroke-width="1.8" fill="none" stroke-linecap="round"/></g></svg><span class="g-name">Snake</span><span class="g-meta g-rec"></span><span class="g-desc">Futter einsammeln, wachsen, nicht in dich selbst beißen. Wird mit jedem Bissen schneller.</span></a></li>
+      <li data-min="1" data-max="1"><a class="g" data-game="blockfall" href="/spiele/games/blockfall.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-fall"><rect x="13.5" y="3" width="10" height="10" rx="2" fill="var(--vh-blue)"/><rect x="2.5" y="14" width="10" height="10" rx="2" fill="var(--vh-blue)"/><rect x="13.5" y="14" width="10" height="10" rx="2" fill="var(--vh-blue)"/><rect x="24.5" y="14" width="10" height="10" rx="2" fill="var(--vh-blue)"/></g><rect x="35.5" y="25" width="10" height="10" rx="2" fill="var(--vh-yellow)"/><rect x="35.5" y="36" width="10" height="10" rx="2" fill="var(--vh-yellow)"/><rect x="24.5" y="36" width="10" height="10" rx="2" fill="var(--vh-yellow)"/><rect x="2.5" y="36" width="10" height="10" rx="2" fill="var(--vh-green)"/><rect x="13.5" y="36" width="10" height="10" rx="2" fill="var(--vh-green)"/></svg><span class="g-name">Blockfall</span><span class="g-meta g-rec"></span><span class="g-desc">Fallende Steine drehen und volle Reihen abräumen. Ab jeder zehnten Reihe wird es schneller.</span></a></li>
+      <li data-min="1" data-max="1"><a class="g" data-game="kloetzchen" href="/spiele/games/kloetzchen.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="2.5" y="2.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="2.5" y="13.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="2.5" y="24.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="2.5" y="35.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="13.5" y="2.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="13.5" y="13.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="13.5" y="24.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="13.5" y="35.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="24.5" y="2.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="24.5" y="13.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="24.5" y="24.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="24.5" y="35.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="35.5" y="2.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="35.5" y="13.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="35.5" y="24.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="35.5" y="35.5" width="10" height="10" rx="2" fill="var(--vh-line-strong)" opacity=".45"/><rect x="2.5" y="2.5" width="10" height="10" rx="2" fill="var(--vh-teal)"/><rect x="2.5" y="13.5" width="10" height="10" rx="2" fill="var(--vh-teal)"/><rect x="13.5" y="13.5" width="10" height="10" rx="2" fill="var(--vh-teal)"/><g class="a-fall"><rect x="24.5" y="24.5" width="10" height="10" rx="2" fill="var(--vh-red)"/><rect x="35.5" y="24.5" width="10" height="10" rx="2" fill="var(--vh-red)"/><rect x="24.5" y="35.5" width="10" height="10" rx="2" fill="var(--vh-red)"/><rect x="35.5" y="35.5" width="10" height="10" rx="2" fill="var(--vh-red)"/></g></svg><span class="g-name">Klötzchen</span><span class="g-meta g-rec"></span><span class="g-desc">Blöcke aufs 8 × 8-Feld ziehen, volle Reihen und Spalten sprengen. Ohne Zeitdruck.</span></a></li>
+      <li data-min="1" data-max="1"><a class="g" data-game="2048" href="/spiele/games/2048.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g class="a-plopp"><rect x="4" y="4" width="40" height="40" rx="6" fill="var(--vh-yellow)"/><text x="24" y="30" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="16" fill="var(--vh-ink)">2048</text></g></svg><span class="g-name">2048</span><span class="g-meta g-rec"></span><span class="g-desc">Kacheln schieben und gleiche Zahlen verschmelzen, bis die 2048 erscheint.</span></a></li>
+      <li data-min="1" data-max="1"><a class="g" data-game="mines9" data-unit="s" href="/spiele/games/minesweeper.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="3" width="13" height="13" rx="2" fill="#dfe3dc"/><rect x="18" y="3" width="13" height="13" rx="2" fill="#dfe3dc"/><rect x="33" y="3" width="13" height="13" rx="2" fill="var(--vh-line-strong)"/><rect x="3" y="18" width="13" height="13" rx="2" fill="#dfe3dc"/><rect x="18" y="18" width="13" height="13" rx="2" fill="#dfe3dc"/><rect x="33" y="18" width="13" height="13" rx="2" fill="var(--vh-line-strong)"/><rect x="3" y="33" width="13" height="13" rx="2" fill="var(--vh-line-strong)"/><rect x="18" y="33" width="13" height="13" rx="2" fill="var(--vh-line-strong)"/><rect x="33" y="33" width="13" height="13" rx="2" fill="var(--vh-line-strong)"/><text x="24.5" y="14" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="12" fill="var(--vh-blue)">1</text><text x="24.5" y="29" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="12" fill="var(--vh-green)">2</text><text x="9.5" y="29" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="12" fill="var(--vh-blue)">1</text><path d="M38 21v12" stroke="var(--vh-ink)" stroke-width="1.8"/><path class="a-flagge" d="M38 21l7 3.5-7 3.5z" fill="var(--vh-red)"/></svg><span class="g-name">Minesweeper</span><span class="g-meta g-rec"></span><span class="g-desc">Alle Felder ohne Mine aufdecken. Zwei Größen mit eigener Bestenliste.</span></a></li>
+      <li data-min="1" data-max="1"><a class="g" data-game="memory" data-unit="Züge" href="/spiele/games/memory.html"><svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true"><g transform="rotate(-9 16 24)"><rect x="5" y="8" width="22" height="30" rx="3" fill="var(--vh-blue)"/><path d="M9 12l14 14M9 20l10 10M13 12l10 10M17 12l6 6M9 28l6 6" stroke="#ffffff" stroke-opacity=".45" stroke-width="2"/></g><g class="a-wende"><g transform="rotate(8 32 24)"><rect x="21" y="9" width="22" height="30" rx="3" fill="#fff" stroke="var(--vh-ink)" stroke-width="2"/><path d="M32 30c-6-4-8-7-8-9.5 0-2 1.5-3.5 3.6-3.5 2 0 3.4 1.6 4.4 3 1-1.4 2.4-3 4.4-3 2.1 0 3.6 1.5 3.6 3.5 0 2.5-2 5.5-8 9.5z" fill="var(--vh-red)"/></g></g></svg><span class="g-name">Memory</span><span class="g-meta g-rec"></span><span class="g-desc">Alle acht Paare mit so wenigen Zügen wie möglich finden.</span></a></li>
+    </ul>
+  </section>
 
-  <h2 class="section-title">Am Tisch<span>2 bis 6 an einem Handy, auch mit Computer</span></h2>
-  <div class="grid duel">
-    <a class="card table-card" data-tilt href="/spiele/games/maexchen.html">
-      <span class="icon">🎲</span>
-      <h3>Mäxchen</h3>
-      <p>Verdeckt würfeln, ansagen, bluffen. Der Nächste glaubt dir – oder deckt auf. Wer auffliegt, verliert einen Deckel.</p>
-      <span class="meta"><span class="tag">Bluffen</span><span class="tag">Computer</span></span>
-    </a>
-  </div>
-
-  <h2 class="section-title">Zu zweit<span>gegen den Computer, am selben Gerät oder online</span></h2>
-  <div class="grid duel">
-    <a class="card" data-tilt href="/spiele/games/tictactoe.html">
-      <span class="icon txt">✕◯</span>
-      <h3>Tic-Tac-Toe</h3>
-      <p>Der Klassiker: drei in einer Reihe. Schnelle Runden, Siege werden gezählt.</p>
-      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span><span class="tag">Computer</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/connect4.html">
-      <span class="icon">🔴</span>
-      <h3>Vier gewinnt</h3>
-      <p>Steine einwerfen und vier in einer Reihe bilden – waagerecht, senkrecht oder diagonal.</p>
-      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span><span class="tag">Computer</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/reversi.html">
-      <span class="icon">⚫</span>
-      <h3>Reversi</h3>
-      <p>Gegnerische Steine einschließen und umdrehen. Wer am Ende das Brett beherrscht, gewinnt.</p>
-      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span><span class="tag">Computer</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/gomoku.html">
-      <span class="icon">⭕</span>
-      <h3>Gomoku</h3>
-      <p>Fünf in einer Reihe auf dem großen Brett. Schnell erklärt, aber jede Drohung muss man sehen.</p>
-      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span><span class="tag">Computer</span></span>
-    </a>
-    <a class="card" data-tilt href="/spiele/games/dots.html">
-      <span class="icon">▦</span>
-      <h3>Käsekästchen</h3>
-      <p>Striche ziehen, Kästchen schließen, nochmal ziehen. Taktik pur aus dem Schulheft.</p>
-      <span class="meta"><span class="vs-dots" aria-label="2 Spieler"><i></i><i></i></span><span class="tag">Online</span><span class="tag">Computer</span></span>
-    </a>
-  </div>
+  <p class="gal-note">Wordle steht bei den <a href="/raetsel/">Tagesrätseln</a>.</p>
 </main>
-<script>
-  document.querySelectorAll('.card[data-game]').forEach(async (card) => {
-    try {
-      const list = await (await fetch('/api/spiele/scores/' + card.dataset.game)).json();
-      if (list.length) {
-        const top = list[0];
-        card.querySelector('.rec').textContent = `🏆 ${top.score} ${card.dataset.unit || 'Pkt'}, ${top.name}`;
-      }
-    } catch {}
-  });
-</script>
-<script src="/shared/tilt.js"></script>
+<script src="/shared/wimpel.js"></script>
+<script src="/spiele/js/galerie.js"></script>
+<!-- Filz: feines Rauschen für Wimpel und Stecktafel -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="filz" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="rauschen"/>
+    <feColorMatrix in="rauschen" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.9 .55" result="fasern"/>
+    <feComposite in="fasern" in2="SourceGraphic" operator="in" result="flecken"/>
+    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="flecken"/></feMerge>
+  </filter>
+  <linearGradient id="messing" x1="0" x2="1" y1="0" y2="0">
+    <stop offset="0" stop-color="#9b6a14"/><stop offset=".32" stop-color="#f4d98a"/><stop offset=".5" stop-color="#e2b94c"/><stop offset="1" stop-color="#94640f"/>
+  </linearGradient>
+</svg>
 <script src="/shared/account-link.js"></script>
 </body>
 </html>

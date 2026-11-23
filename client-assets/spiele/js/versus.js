@@ -26,16 +26,16 @@ const Versus = (() => {
         </label>
         <div class="vs-modes">
           <div class="vs-cpu" id="vsCpuBox" hidden>
-            <button id="vsCpu">🤖 Gegen den Computer</button>
+            <button id="vsCpu">Gegen den Computer</button>
             <div class="vs-levels" role="radiogroup" aria-label="Stärke des Computers">
               <button type="button" data-level="easy" role="radio">Leicht</button>
               <button type="button" data-level="medium" role="radio">Mittel</button>
               <button type="button" data-level="hard" role="radio">Schwer</button>
             </div>
           </div>
-          <button id="vsLocal" class="ghost">👥 Lokal – zu zweit an einem Gerät</button>
+          <button id="vsLocal" class="ghost">Zu zweit an einem Gerät</button>
           <div class="or">oder online gegen jemand anderen</div>
-          <button id="vsCreate" class="ghost">🌐 Raum erstellen</button>
+          <button id="vsCreate" class="ghost">Online-Raum erstellen</button>
           <div class="vs-join">
             <input id="vsCode" maxlength="4" placeholder="CODE" autocomplete="off" aria-label="Raumcode">
             <button id="vsJoin" class="ghost">Beitreten</button>
@@ -63,7 +63,7 @@ const Versus = (() => {
         <div id="vsBoard"></div>
         <p class="vs-hint" id="vsHint"></p>
         <div class="vs-actions">
-          <button id="vsRematch" hidden>🔁 Nochmal</button>
+          <button id="vsRematch" hidden>Nochmal</button>
           <button id="vsLeave" class="ghost">Zur Lobby</button>
         </div>
         <div class="room-tag" id="vsRoomTag"></div>
@@ -115,12 +115,12 @@ const Versus = (() => {
       if (!state) return 'Warte auf Mitspieler…';
       if (state.draw) return 'Unentschieden!';
       if (state.winner !== null) {
-        if (mode === 'cpu') return state.winner === 0 ? 'Du hast gewonnen! 🎉' : 'Der Computer gewinnt.';
-        if (mode === 'online') return state.winner === you ? 'Du hast gewonnen! 🎉' : 'Du hast verloren.';
-        return `${names[state.winner]} gewinnt! 🎉`;
+        if (mode === 'cpu') return state.winner === 0 ? 'Du hast gewonnen!' : 'Der Computer gewinnt.';
+        if (mode === 'online') return state.winner === you ? 'Du hast gewonnen!' : 'Du hast verloren.';
+        return `${names[state.winner]} gewinnt!`;
       }
       if (mode === 'cpu') {
-        if (state.winner === 0) return 'Du hast gewonnen! 🎉';
+        if (state.winner === 0) return 'Du hast gewonnen!';
         return state.turn === 0 ? 'Du bist am Zug' : 'Der Computer überlegt …';
       }
       if (mode === 'online') return state.turn === you ? 'Du bist am Zug' : `${names[state.turn]} ist am Zug …`;

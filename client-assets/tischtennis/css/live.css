@@ -73,7 +73,8 @@ body.idle { cursor: none; }
 .champ .label { font: 700 2vw var(--display); color: var(--red); text-transform: uppercase; letter-spacing: .3em; }
 .champ .name { font: 700 7vw/1 var(--display); text-transform: uppercase; }
 .champ .t { font: 600 1.6vw var(--display); color: var(--muted); text-transform: uppercase; }
-.champ .cup { font-size: 9vw; line-height: 1; }
+.champ .cup { line-height: 1; }
+.champ .cup .cup-ico { width: 11vw; height: auto; display: block; margin: 0 auto; }
 
 .pick { margin: auto; width: min(900px, 92vw); }
 .pick h1 { font: 700 2.6rem var(--display); text-transform: uppercase; margin: 0 0 1rem; }

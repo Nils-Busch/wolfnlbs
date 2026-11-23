@@ -214,15 +214,15 @@
   function renderSide() {
     const side = $('side');
     if (mode !== 'daily') {
-      side.innerHTML = '<div class="panel"><h2>🎲 Freies Spiel</h2><p class="muted">Neue Mischung aus dem Gruppen-Pool, ohne Bestenliste.</p></div>';
+      side.innerHTML = '<div class="panel"><h2>Freies Spiel</h2><p class="muted">Neue Mischung aus dem Gruppen-Pool, ohne Bestenliste.</p></div>';
       return;
     }
     const st = store.get('conn-stats') || { played: 0, won: 0, perfect: 0, streak: 0 };
     side.innerHTML = `
-      <div class="panel"><h2>🏆 Tagesbestenliste</h2><p class="muted st-date">${esc(Daily.longDate(today))}</p>
+      <div class="panel"><h2>Tagesbestenliste</h2><p class="muted st-date">${esc(Daily.longDate(today))}</p>
         <div id="cnForm"></div><div id="cnLb"><p class="muted">Lade …</p></div>
-        <a class="side-lb-link" href="/raetsel/bestenliste.html">🏆 Ewige Bestenliste</a></div>
-      <div class="panel st-stats"><h2>📊 Deine Statistik</h2>
+        <a class="side-lb-link" href="/raetsel/bestenliste.html">Ewige Bestenliste</a></div>
+      <div class="panel st-stats"><h2>Deine Statistik</h2>
         <div class="nums"><div><b>${st.played}</b><span>gespielt</span></div><div><b>${st.won}</b><span>gelöst</span></div><div><b>${st.perfect}</b><span>perfekt</span></div><div><b>${st.streak}</b><span>Serie</span></div></div>
         <p class="hint">Nur Tagesrätsel, gespeichert auf diesem Gerät.</p></div>`;
     Daily.board($('cnLb'), lbKey, fmtScore, P.submitted || null);

@@ -54,7 +54,7 @@ export const DR_WORDS = [
   "Feuer", "Anker", "Herz", "Schatzkiste", "Bett", "Stuhl", "Badewanne", "Toilette", "Zahnbürste", "Buch", "Brief", "Ampel", "Bank", "Briefkasten",
   "Schaukel", "Rutsche", "Sandburg", "Muschel", "Qualle", "Seestern", "Wal", "Delfin", "Papagei", "Flamingo", "Kamel", "Känguru", "Zebra", "Nashorn",
 ];
-export const DR_COLORS = ["#172036", "#e23b3b", "#2d6be0", "#179e5e", "#f2b705", "#8a5a2b", "#e0658f", "#ffffff"];
+export const DR_COLORS = ["#16201b", "#e23b3b", "#2d6be0", "#179e5e", "#f2b705", "#8a5a2b", "#e0658f", "#ffffff"];
 export const DR_WIDTHS = [6, 14, 30, 60];
 const DR_CHOOSE_MS = 15000;
 const DR_REVEAL_MS = 7000;
