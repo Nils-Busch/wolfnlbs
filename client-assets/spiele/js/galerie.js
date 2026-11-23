@@ -3,13 +3,23 @@
 (function () {
   'use strict';
 
-  // Rekord je Einzelspiel
+  // Rekord je Einzelspiel. Manche Spiele speichern zwei Werte in einer Zahl:
+  // Versuche bzw. Reststifte × 10000 + Sekunden.
+  const zeit = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  function format(score, { fmt, unit }) {
+    if (fmt === 'zeit') return zeit(score);
+    if (fmt === 'versuche') return `${Math.floor(score / 10000)} Versuche, ${zeit(score % 10000)}`;
+    if (fmt === 'stifte') { const n = Math.floor(score / 10000); return `${n} ${n === 1 ? 'Stift' : 'Stifte'}, ${zeit(score % 10000)}`; }
+    return `${Number(score).toLocaleString('de-DE')} ${unit || 'Pkt.'}`;
+  }
+  window.SpieleFormat = format;
+
   document.querySelectorAll('.g[data-game]').forEach(async (a) => {
     try {
       const list = await (await fetch('/api/spiele/scores/' + a.dataset.game)).json();
       if (!list.length) return;
       const top = list[0];
-      a.querySelector('.g-rec').textContent = `Rekord ${Number(top.score).toLocaleString('de-DE')} ${a.dataset.unit || 'Pkt.'}, ${top.name}`;
+      a.querySelector('.g-rec').textContent = `Rekord ${format(top.score, a.dataset)}, ${top.name}`;
     } catch {}
   });
 

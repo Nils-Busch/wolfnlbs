@@ -5,16 +5,10 @@
 .rt-tafel { display: flex; justify-content: space-between; align-items: center; gap: .5rem 2rem; flex-wrap: wrap; margin-bottom: clamp(1.5rem, 4vw, 2.25rem); }
 .rt-uhr span { font-variant-numeric: tabular-nums; color: #f6d96b; }
 
-/* fünf Rätsel: oben drei, unten zwei breitere Karten */
-.rt-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
-.rt-grid > .rt-card { grid-column: span 2; }
-.rt-grid > .rt-card:nth-child(n+4) { grid-column: span 3; }
-@media (max-width: 1000px) {
-  .rt-grid { grid-template-columns: repeat(2, 1fr); }
-  .rt-grid > .rt-card, .rt-grid > .rt-card:nth-child(n+4) { grid-column: auto; }
-  .rt-grid > .rt-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
-}
-@media (max-width: 640px) { .rt-grid { grid-template-columns: 1fr; } .rt-grid > .rt-card:last-child:nth-child(odd) { grid-column: auto; } }
+/* sechs Rätsel: zwei Reihen mit je drei Karten */
+.rt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .rt-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .rt-grid { grid-template-columns: 1fr; } }
 
 .rt-card {
   position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: .45rem;
@@ -68,6 +62,13 @@
 .rt-card:hover .rt-art .jig-art .d { fill: #4fbf7f; }
 .rt-card:hover .rt-art .jig-art .e { fill: #e0457b; transform: translate(0, 3px); }
 .rt-card:hover .rt-art .jig-art .f { fill: #a979d8; transform: translate(3px, 2px) rotate(-3deg); }
+
+.rt-art .sd-art { display: grid; grid-template-columns: repeat(3, 22px); grid-auto-rows: 22px; border: 2px solid #16201b; border-radius: 4px; background: #f3f1e8; }
+.rt-art .sd-art i { display: grid; place-items: center; font: 700 .95rem var(--vh-display); font-style: normal; color: #16201b; border-right: 1px solid #c9c3ad; border-bottom: 1px solid #c9c3ad; }
+.rt-art .sd-art i:nth-child(3n) { border-right: 0; } .rt-art .sd-art i:nth-child(n+7) { border-bottom: 0; }
+.rt-art .sd-art i.neu { color: #2d6be0; opacity: 0; }
+.rt-card:hover .rt-art .sd-art i.neu { animation: rt-ziffer .4s var(--vh-ease-hop) forwards; }
+@keyframes rt-ziffer { from { transform: scale(.3); opacity: 0; } to { opacity: 1; } }
 
 .rt-lb-link {
   display: inline-block; margin-top: 1.4rem; font-weight: 600; color: var(--vh-area-deep);

@@ -6,8 +6,8 @@ Eine private Seite für Freunde und Familie mit Party- und Spiele-Apps:
   (Einsteiger, Klassisch, Liebesdrama, Chaos) und einer **Erzähleransicht**: Wer „Ich leite nur“
   ankreuzt, sieht Vorlesetexte für jede Phase, alle Rollen (verdeckbar) und was nachts passiert.
 - **Party-Quiz** – Fragen auf dem Fernseher, Antworten am Handy; Quizze pflegt man mit Konto
-- **Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores (neu: **Klötzchen**), **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**), Gruppenspiele mit Handys – neu die Teamspiele **Agentenrunde** und **Erklärbär**
-- **Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections**, **Nonogramm** und **Puzzle**, dazu eine **ewige Bestenliste**
+- **Spielegalerie** – kleine Spiele für zwischendurch: Solo-Highscores (neu: **Superhirn**, **Steckhalma** und **Patience**), **Mäxchen** am Tisch, Duelle zu zweit (auch **gegen den Computer**, inkl. **Gomoku**), Gruppenspiele mit Handys – neu die Teamspiele **Agentenrunde** und **Erklärbär**
+- **Tagesrätsel** – jeden Tag neu: **Wordle**, **Städteraten**, **Connections**, **Nonogramm**, **Puzzle** und **Sudoku**, dazu eine **ewige Bestenliste**
 - **Turniere** – **Tischtennis oder Fußball**: Gruppen-/KO-Modus, **Gastlink mit QR-Code** für Zuschauer, **Liveansicht für den Bildschirm**
 - **Konten** – ein gemeinsames Login für alles; neue Konten muss der Admin freischalten
 - **Aussehen** – fünf Farbthemen (auch dunkel), Schrift, Schriftgröße und Animationen, gespeichert am Konto
@@ -25,7 +25,7 @@ client-assets/          Alles, was der Browser direkt lädt (HTML/CSS/JS)
   konto/                   Anmelden, Registrieren, Freischalten & Rechte
   quiz/                    Quiz-Übersicht + Editor, Bildschirm (screen), Handy (play)
   spiele/                  Spielegalerie (inkl. games/wordle.html), js/ai.js = Computergegner
-  raetsel/                 Tagesrätsel: Übersicht, Städteraten, Connections, Nonogramm, ewige Bestenliste
+  raetsel/                 Tagesrätsel: Übersicht, Städteraten, Connections, Nonogramm, Puzzle, Sudoku, ewige Bestenliste
   spiele/gruppe/           Gruppenspiele mit Handys (Wer würde eher, Stadt-Land-Fluss, Kniffel, Mäxchen online, Montagsmaler, Agentenrunde, Erklärbär)
   tischtennis/             Turniere (Tischtennis + Fußball): Besucheransicht, Turnierleitung, Liveansicht
   woelfe/                  Gebaute Werwolf-Oberfläche (entsteht automatisch beim Deploy)
@@ -90,7 +90,7 @@ Die richtige Antwort wird erst bei der Auflösung an die Handys geschickt. Der
 Bildschirm lässt sich nur in dem Browser steuern, in dem das Quiz gestartet wurde.
 Wer sein Handy neu lädt, landet wieder auf seinem Platz.
 
-## Spielegalerie: Computergegner, Mäxchen, Gomoku
+## Spielegalerie: Computergegner, Mäxchen, Einzelspiele
 
 - **Gegen den Computer** (Tic-Tac-Toe, Vier gewinnt, Reversi, Käsekästchen, Gomoku) in
   drei Stufen: Leicht, Mittel, Schwer. Läuft komplett im Browser (`client-assets/spiele/js/ai.js`).
@@ -101,6 +101,13 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
   Mehrere Reihen auf einmal bringen mehr (80, 240, 480 …), Abräumen in Folge baut eine Kombo
   auf (×2, ×3 …), ein leeres Feld gibt 300 extra. Vorbei, wenn keiner der drei Blöcke passt.
   Ein angefangenes Spiel bleibt nach dem Neuladen erhalten. Bestenliste wie bei den anderen Solo-Spielen.
+- **Superhirn**: vier versteckte Farben aus sechs (doppelte erlaubt) in höchstens zehn Versuchen;
+  schwarze Stifte = richtige Stelle, weiße = richtige Farbe. Bestenliste nach Versuchen, dann Zeit.
+- **Steckhalma**: englisches Brett mit 33 Löchern, Stifte überspringen, bis einer übrig ist
+  (am besten in der Mitte). Rückgängig geht. Bestenliste nach Reststiften, dann Zeit.
+- **Patience**: Klondike mit einer Karte pro Zug. Antippen legt eine Karte dorthin, wo sie passt,
+  Ziehen geht auch; zum Schluss legt sich der Rest von selbst ab. Bestenliste nach Zeit.
+  Die Regeln der drei Spiele liegen ohne Bildschirm in `spiele/js/solo-regeln.js` (getestet).
 - **Gruppenspiele** (`/spiele/gruppe/`): **Alle Spiele gehen nur mit Handys.** Wer den Raum
   eröffnet („Raum eröffnen & mitspielen“), spielt selbst mit und leitet das Spiel am Handy; die
   anderen treten per Code oder QR-Code bei – ohne Konto. Die Handys zeigen alles, was sonst der
@@ -162,7 +169,7 @@ Wer sein Handy neu lädt, landet wieder auf seinem Platz.
 
 ## Tagesrätsel
 
-Unter `/raetsel/`: Wordle, Städteraten, Connections, Nonogramm und Puzzle, für alle am selben Tag
+Unter `/raetsel/`: Wordle, Städteraten, Connections, Nonogramm, Puzzle und Sudoku, für alle am selben Tag
 gleich (deutsche Zeit, neue Rätsel um Mitternacht).
 
 - **Städteraten**: fünf Städte auf der Deutschlandkarte antippen, bis zu 1000 Punkte je
@@ -181,10 +188,14 @@ gleich (deutsche Zeit, neue Rätsel um Mitternacht).
   Tageszeiten) – keine Bilddateien, keine fremden Rechte. Teile rasten am richtigen Platz ein;
   „Vorlage“ zeigt das Bild blass im Rahmen, „Ränder zuerst“ legt die Randteile nach vorne.
   Im freien Spiel 12, 24 oder 54 Teile mit immer neuem Bild.
+- **Sudoku** (`/raetsel/sudoku.html`): täglich ein Sudoku der Stufe „Mittel“, für alle gleich
+  (erzeugt aus dem Datum, genau eine Lösung, `raetsel/js/sudoku-core.js`), Bestenliste nach Zeit.
+  Notizen, Rückgängig, Konflikte werden rot. Im freien Spiel Leicht, Mittel oder Schwer mit
+  eigener Bestenliste je Stufe (`sudoku1` … `sudoku3`); in der Spielegalerie unter „Allein“.
 - Die Tagesbestenlisten werden 14 Tage aufgehoben, pro Name zählt der beste Eintrag.
 - **Ewige Bestenliste** (`/raetsel/bestenliste.html`): Punkte, Serien, Tagessiege und Rekorde
   über alle Tage (D1-Tabelle `daily_results`). Wordle bis 600, Städteraten bis 500,
-  Nonogramm bis 600, Connections bis 600, Puzzle bis 600 Punkte – Details stehen auf der Seite.
+  Nonogramm bis 600, Connections bis 600, Puzzle bis 600, Sudoku bis 600 Punkte – Details stehen auf der Seite.
 - **Mit Konto**: Wer angemeldet ist, trägt sich in allen Bestenlisten automatisch unter dem
   Kontonamen ein. Namen, die zu einem Konto gehören, können ohne Anmeldung nicht mehr benutzt
   werden. Angemeldete sehen auf der ewigen Bestenliste ihre eigene Statistik.

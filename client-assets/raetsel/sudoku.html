@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/shared/theme.js"></script>
+<title>Sudoku · Tagesrätsel</title>
+<link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="stylesheet" href="/raetsel/raetsel.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/shared/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#e6ebe3">
+<script src="/shared/pwa.js" defer></script>
+</head>
+<body class="rt">
+<header class="top"><a href="/raetsel/" class="back">Tagesrätsel</a><h1><svg class="top-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="4" width="40" height="40" rx="4" fill="#f3f1e8"/><path d="M17.3 4v40M30.7 4v40M4 17.3h40M4 30.7h40" stroke="var(--vh-ink)" stroke-width="1.6"/><text x="10.7" y="15.2" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="10" fill="var(--vh-ink)">5</text><text x="37.3" y="15.2" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="10" fill="var(--vh-ink)">3</text><text x="24.0" y="28.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="10" fill="var(--vh-ink)">7</text><text x="10.7" y="41.8" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="10" fill="var(--vh-ink)">1</text><text x="37.3" y="41.8" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="10" fill="var(--vh-ink)">9</text><text class="a-setz" x="10.7" y="28.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="10" fill="var(--vh-blue)">8</text></svg>Sudoku <span class="rt-num" id="sdNum"></span></h1></header>
+<main class="solo sd">
+  <div class="sd-main">
+    <div class="st-modes">
+      <div class="levels" id="sdModes" role="tablist">
+        <button data-mode="daily" role="tab">Tagesrätsel</button>
+        <button data-mode="free" role="tab">Freies Spiel</button>
+      </div>
+      <div class="vs-levels" id="sdLevels" hidden role="group" aria-label="Stufe">
+        <button type="button" data-level="1">Leicht</button>
+        <button type="button" data-level="2">Mittel</button>
+        <button type="button" data-level="3">Schwer</button>
+      </div>
+      <span class="nn-time">Zeit <b id="sdTime">0:00</b></span>
+    </div>
+    <div class="sd-wrap"><div class="sd-board" id="sdBoard" role="grid" aria-label="Sudoku"></div></div>
+    <div class="sd-pad" id="sdPad" role="group" aria-label="Ziffern"></div>
+    <div class="sd-tools">
+      <button type="button" class="ghost" id="sdNotes" aria-pressed="false">Notizen</button>
+      <button type="button" class="ghost" id="sdErase">Löschen</button>
+      <button type="button" class="ghost" id="sdUndo">Zurück</button>
+    </div>
+    <p class="nn-done" id="sdDone" hidden></p>
+    <p class="hint">In jede Zeile, jede Spalte und jeden 3 × 3-Block gehören die Ziffern 1 bis 9 genau einmal. Feld antippen, dann Ziffer wählen. Mit „Notizen“ merkst du dir Kandidaten. Tastatur: Ziffern, Pfeiltasten, Entf, N für Notizen.</p>
+  </div>
+  <aside class="st-side" id="side"></aside>
+</main>
+<script src="/shared/motion.js"></script>
+<script src="/raetsel/js/daily.js"></script>
+<script src="/raetsel/js/sudoku-core.js"></script>
+<script src="/raetsel/js/sudoku.js"></script>
+<script src="/shared/me.js"></script>
+</body>
+</html>

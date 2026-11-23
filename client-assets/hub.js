@@ -43,19 +43,20 @@
     }
   }
 
-  // Wie viele der fünf Tagesrätsel heute schon fertig sind (gleiche Regeln wie auf /raetsel/)
+  // Wie viele der sechs Tagesrätsel heute schon fertig sind (gleiche Regeln wie auf /raetsel/)
   const g = (k) => Daily.store.get(k);
-  const w = g('wordle-stats'), s = g('staedte-day'), c = g('conn-day'), n = g('nono-day'), j = g('jig-day');
+  const w = g('wordle-stats'), s = g('staedte-day'), c = g('conn-day'), n = g('nono-day'), j = g('jig-day'), su = g('sudoku-day');
   const solved = [
     w && w.lastCounted === d,
     s && s.date === d && s.guesses && s.guesses.length >= 5,
     c && c.date === d && c.over,
     n && n.date === d && n.done,
     j && j.date === d && j.done,
+    su && su.date === d && su.done,
   ].filter(Boolean).length;
   const dateText = new Date(d + 'T12:00:00Z').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).replace(',', '');
   set(line('date'), dateText);
-  set(line('daily'), solved === 5 ? 'Alle 5 Rätsel gelöst' : solved ? `Rätsel: ${solved} von 5 gelöst` : '5 neue Tagesrätsel');
+  set(line('daily'), solved === 6 ? 'Alle 6 Rätsel gelöst' : solved ? `Rätsel: ${solved} von 6 gelöst` : '6 neue Tagesrätsel');
 
   // Beim ersten Besuch am Tag werden die Buchstaben sichtbar gesteckt
   if (Daily.store.get('hub-tafel') !== d) {
@@ -94,6 +95,8 @@
     ['Reversi', '/spiele/games/reversi.html', 'spiele'], ['Snake', '/spiele/games/snake.html', 'spiele'],
     ['Blockfall', '/spiele/games/blockfall.html', 'spiele'], ['Wordle', '/spiele/games/wordle.html', 'raetsel'],
     ['Connections', '/raetsel/connections.html', 'raetsel'], ['Städteraten', '/raetsel/staedte.html', 'raetsel'],
+    ['Sudoku', '/raetsel/sudoku.html', 'raetsel'], ['Patience', '/spiele/games/patience.html', 'spiele'],
+    ['Superhirn', '/spiele/games/superhirn.html', 'spiele'], ['Steckhalma', '/spiele/games/steckhalma.html', 'spiele'],
   ];
   const btn = tafel.querySelector('.wuerfeln');
   const die = tafel.querySelector('.wuerfel');
@@ -138,6 +141,9 @@
     ['kloetzchen', 'Klötzchen', 'kloetzchen', 'Pkt.'],
     ['memory', 'Memory', 'memory', 'Züge'],
     ['mines9', 'Minesweeper', 'minesweeper', 's'],
+    ['patience', 'Patience', 'patience', 'zeit'],
+    ['superhirn', 'Superhirn', 'superhirn', 'versuche'],
+    ['steckhalma', 'Steckhalma', 'steckhalma', 'stifte'],
   ];
   const CUPS = {
     // Henkelpokal (Mitte), Sternsäule und Schale
@@ -146,7 +152,14 @@
     schale: '<path d="M14 42h72c0 20-15 32-36 32S14 62 14 42z" fill="url(#messing)"/><ellipse cx="50" cy="42" rx="36" ry="5" fill="#f6e3a3"/><path d="M45 74h10l-1 12h-8z" fill="url(#messing)"/><ellipse cx="50" cy="86" rx="11" ry="4" fill="url(#messing)"/><path d="M33 92h34l4 9H29z" fill="url(#messing)"/>',
   };
   const cup = (shape) => `<svg viewBox="0 0 100 106" aria-hidden="true"><g class="pokal-glanz">${CUPS[shape]}</g><rect x="25" y="101" width="50" height="5" fill="#2b211a"/></svg>`;
-  const fmt = (score, unit) => `${Number(score).toLocaleString('de-DE')} ${unit}`;
+  const zeit = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  // Manche Spiele speichern zwei Werte in einer Zahl: Versuche bzw. Reststifte × 10000 + Sekunden
+  const fmt = (score, unit) => {
+    if (unit === 'zeit') return zeit(score);
+    if (unit === 'versuche') return `${Math.floor(score / 10000)} Versuche`;
+    if (unit === 'stifte') { const n = Math.floor(score / 10000); return `${n} ${n === 1 ? 'Stift' : 'Stifte'}`; }
+    return `${Number(score).toLocaleString('de-DE')} ${unit}`;
+  };
   let picks = [];
 
   function fillShelf(records) {

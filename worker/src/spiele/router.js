@@ -8,12 +8,17 @@ import { recordResult, dailyBoard, backfillIfEmpty, myStats } from "./dailyStats
 import { resolveName, NameError } from "./names.js";
 
 // 'desc' = mehr ist besser, 'asc' = weniger ist besser (z.B. Züge bei Memory).
-const SCORE_ORDER = { snake: "desc", "2048": "desc", memory: "asc", blockfall: "desc", kloetzchen: "desc", mines9: "asc", mines16: "asc" };
+// superhirn = Versuche × 10000 + Sekunden, steckhalma = Reststifte × 10000 + Sekunden,
+// patience und sudoku1/2/3 (freies Sudoku, je Stufe) = Sekunden
+const SCORE_ORDER = {
+  snake: "desc", "2048": "desc", memory: "asc", blockfall: "desc", kloetzchen: "desc", mines9: "asc", mines16: "asc",
+  superhirn: "asc", steckhalma: "asc", patience: "asc", sudoku1: "asc", sudoku2: "asc", sudoku3: "asc",
+};
 // Tagesrätsel: eine Bestenliste pro Tag, z. B. "staedte20261026" (Punkte) oder "nono20261026" (Sekunden).
 // conn = Connections: Fehler × 10000 + Sekunden (weniger ist besser)
-// jig = Tagespuzzle: Sekunden (weniger ist besser)
-const DAILY_ORDER = { staedte: "desc", nono: "asc", conn: "asc", jig: "asc" };
-const DAILY_MAX = { staedte: 5000, nono: 24 * 3600, conn: 3 * 10000 + 24 * 3600, jig: 24 * 3600 };
+// jig = Tagespuzzle, sudoku = Tagessudoku: Sekunden (weniger ist besser)
+const DAILY_ORDER = { staedte: "desc", nono: "asc", conn: "asc", jig: "asc", sudoku: "asc" };
+const DAILY_MAX = { staedte: 5000, nono: 24 * 3600, conn: 3 * 10000 + 24 * 3600, jig: 24 * 3600, sudoku: 24 * 3600 };
 
 function scoreOrder(game) {
   if (Object.hasOwn(SCORE_ORDER, game)) return SCORE_ORDER[game];
@@ -201,7 +206,7 @@ export async function handleSpiele(request, env, path) {
       const name = who.name;
       if (!Number.isInteger(score) || score < 0 || score > scoreMax(game)) return json({ error: "Ungültige Punktzahl" }, 400);
       const list = await lb.add(game, name, score, order);
-      const dm = game.match(/^(staedte|nono|conn|jig)(\d{4})(\d{2})(\d{2})$/);
+      const dm = game.match(/^(staedte|nono|conn|jig|sudoku)(\d{4})(\d{2})(\d{2})$/);
       if (dm) await recordResult(env, { game: dm[1], name, userId: who.userId, date: `${dm[2]}-${dm[3]}-${dm[4]}`, raw: score });
       return json(list);
     }

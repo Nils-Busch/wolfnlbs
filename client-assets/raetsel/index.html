@@ -37,11 +37,11 @@
           <text class="w-name" x="90" y="57">TAGESRÄTSEL</text>
         </g>
       </svg></h1>
-    <p id="rtDate">Fünf Rätsel, jeden Tag neu und für alle dieselben. Wer ist heute am schnellsten?</p>
+    <p id="rtDate">Sechs Rätsel, jeden Tag neu und für alle dieselben. Wer ist heute am schnellsten?</p>
   </div>
 
   <section class="vh-filz rt-tafel" aria-label="Stand heute">
-    <p id="rtStand">Heute 0 von 5 gelöst</p>
+    <p id="rtStand">Heute 0 von 6 gelöst</p>
     <p class="rt-uhr" aria-live="off">Neue Rätsel in <span id="rtClock">–</span></p>
   </section>
 
@@ -76,6 +76,12 @@
       <p>Jeden Tag ein neues, selbst gemaltes Bild in 24 Teilen. Wer setzt es am schnellsten zusammen?</p>
       <span class="rt-state">Heute puzzeln</span>
     </a>
+    <a class="rt-card" id="rtSudoku" href="/raetsel/sudoku.html">
+      <span class="rt-art" aria-hidden="true"><span class="sd-art"><i>5</i><i></i><i>3</i><i></i><i>7</i><i></i><i>1</i><i class="neu">8</i><i>9</i></span></span>
+      <h2>Sudoku</h2>
+      <p>Ziffern 1 bis 9 in jede Zeile, Spalte und jeden Block. Heute in der Stufe „Mittel“, mit genau einer Lösung.</p>
+      <span class="rt-state">Heute lösen</span>
+    </a>
   </div>
   <a class="rt-lb-link" href="/raetsel/bestenliste.html">Ewige Bestenliste: Punkte, Serien und Rekorde</a>
 </main>
@@ -84,7 +90,7 @@
 <script>
   (() => {
     const today = Daily.today();
-    document.getElementById('rtDate').textContent = `${Daily.longDate(today)}: fünf Rätsel, jeden Tag neu und für alle dieselben. Wer ist heute am schnellsten?`;
+    document.getElementById('rtDate').textContent = `${Daily.longDate(today)}: sechs Rätsel, jeden Tag neu und für alle dieselben. Wer ist heute am schnellsten?`;
     const clock = document.getElementById('rtClock');
     const tick = () => { clock.textContent = Daily.fmtCountdown(Daily.untilMidnight()); };
     tick();
@@ -108,7 +114,9 @@
     if (n && n.date === today && n.done) mark('rtNono', true, `Gelöst in ${Math.floor(n.elapsed / 60)}:${String(n.elapsed % 60).padStart(2, '0')}`);
     const j = Daily.store.get('jig-day');
     if (j && j.date === today && j.done) mark('rtJig', true, `Fertig in ${Math.floor(j.elapsed / 60)}:${String(j.elapsed % 60).padStart(2, '0')}`);
-    document.getElementById('rtStand').textContent = solved === 5 ? 'Heute alle 5 gelöst' : `Heute ${solved} von 5 gelöst`;
+    const su = Daily.store.get('sudoku-day');
+    if (su && su.date === today && su.done) mark('rtSudoku', true, `Gelöst in ${Math.floor(su.elapsed / 60)}:${String(su.elapsed % 60).padStart(2, '0')}`);
+    document.getElementById('rtStand').textContent = solved === 6 ? 'Heute alle 6 gelöst' : `Heute ${solved} von 6 gelöst`;
   })();
 </script>
 <script src="/shared/wimpel.js"></script>

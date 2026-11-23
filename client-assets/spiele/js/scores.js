@@ -1,6 +1,7 @@
 /**
  * Scores – Bestenlisten-Widget für Solo-Spiele.
  * const hs = Scores.panel(element, 'snake', { unit: 'Pkt' });
+ * const hs = Scores.panel(element, 'patience', { fmt: (s) => '3:12' });  // eigene Anzeige
  * hs.offer(punkte)  → Formular zum Eintragen anzeigen
  */
 const Scores = (() => {
@@ -29,21 +30,23 @@ const Scores = (() => {
     return data;
   }
 
-  function table(entries, unit, mark) {
+  function table(entries, fmt, mark) {
     if (!entries.length) return '<p class="muted">Noch keine Einträge – sei die oder der Erste!</p>';
     const markIdx = mark ? entries.findIndex((e) => e.name === mark.name && e.score === mark.score) : -1;
     return `<ol class="hs">${entries
-      .map((e, i) => `<li class="${i === markIdx ? 'me' : ''}"><span>${esc(e.name)}</span><b>${e.score}${unit ? ' ' + unit : ''}</b></li>`)
+      .map((e, i) => `<li class="${i === markIdx ? 'me' : ''}"><span>${esc(e.name)}</span><b>${esc(fmt(e.score))}</b></li>`)
       .join('')}</ol>`;
   }
 
-  function panel(el, game, { unit = '', title = 'Bestenliste' } = {}) {
+  function panel(el, game, { unit = '', title = 'Bestenliste', fmt = null } = {}) {
+    const show = fmt || ((s) => `${s}${unit ? ' ' + unit : ''}`);
+    const unitArg = show;
     el.classList.add('panel');
     el.innerHTML = `<h2>${title}</h2><div class="hs-form" hidden></div><div class="hs-list"><p class="muted">Lade …</p></div>`;
     const listEl = el.querySelector('.hs-list');
     const formEl = el.querySelector('.hs-form');
 
-    const refresh = async (mark) => { listEl.innerHTML = table(await list(game), unit, mark); };
+    const refresh = async (mark) => { listEl.innerHTML = table(await list(game), unitArg, mark); };
     refresh();
 
     return {
@@ -51,7 +54,7 @@ const Scores = (() => {
       offer(score) {
         formEl.hidden = false;
         formEl.innerHTML = `
-          <p>Dein Ergebnis: <b>${score}${unit ? ' ' + unit : ''}</b></p>
+          <p>Dein Ergebnis: <b>${esc(show(score))}</b></p>
           <form><input name="n" maxlength="16" placeholder="Dein Name" required value="${esc(getName())}"><button>Eintragen</button></form>
           <p class="error"></p>`;
         const form = formEl.querySelector('form');
@@ -65,7 +68,7 @@ const Scores = (() => {
           try {
             const entries = await submit(game, name, score);
             formEl.hidden = true;
-            listEl.innerHTML = table(entries, unit, { name, score });
+            listEl.innerHTML = table(entries, unitArg, { name, score });
           } catch (err) {
             formEl.querySelector('.error').textContent = err.message;
             btn.disabled = false;

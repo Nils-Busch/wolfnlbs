@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/shared/theme.js"></script>
+<title>Superhirn · Spielegalerie</title>
+<link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/spiele/css/style.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/shared/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#e6ebe3">
+<script src="/shared/pwa.js" defer></script>
+</head>
+<body>
+<header class="top"><a href="/spiele/" class="back">Spielegalerie</a><h1><svg class="top-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="12" width="42" height="24" rx="5" fill="#8a5c33"/><circle class="a-karte" style="--n:0" cx="10.0" cy="24" r="3.6" fill="var(--vh-red)"/><circle class="a-karte" style="--n:1" cx="18.5" cy="24" r="3.6" fill="var(--vh-blue)"/><circle class="a-karte" style="--n:2" cx="27.0" cy="24" r="3.6" fill="var(--vh-yellow)"/><circle class="a-karte" style="--n:3" cx="35.5" cy="24" r="3.6" fill="var(--vh-green)"/><circle cx="40" cy="20.5" r="1.8" fill="#16201b"/><circle cx="40" cy="27.5" r="1.8" fill="#fff"/></svg>Superhirn</h1></header>
+<main class="solo">
+  <div>
+    <div class="hud"><div class="stat">Versuch<b id="try">1 / 10</b></div><div class="stat">Zeit<b id="time">0:00</b></div><div class="spacer"></div><button id="newGame" class="ghost">Neues Spiel</button></div>
+    <div class="board-wrap mm-wrap">
+      <ol class="mm" id="board" aria-label="Versuche"></ol>
+      <div class="overlay" id="overlay" hidden><p id="ovText"></p><div class="mm-code" id="ovCode"></div><div class="row"><button id="ovBtn">Nochmal</button></div></div>
+    </div>
+    <div class="mm-bank" id="palette" role="group" aria-label="Farben"></div>
+    <div class="mm-actions"><button class="ghost" id="back">Letzte Farbe weg</button><button id="check" disabled>Prüfen</button></div>
+    <p class="hint">Der Computer hat vier Farben versteckt, Farben können doppelt vorkommen. Nach jedem Versuch zeigen die kleinen Stifte: schwarz = richtige Farbe an der richtigen Stelle, weiß = richtige Farbe an einer anderen Stelle. Tasten 1–6 wählen Farben, Enter prüft.</p>
+  </div>
+  <aside id="scores"></aside>
+</main>
+<script src="/shared/motion.js"></script>
+<script src="/spiele/js/scores.js"></script>
+<script src="/spiele/js/solo-regeln.js"></script>
+<script src="/spiele/js/games/superhirn.js"></script>
+<script src="/shared/me.js"></script>
+</body>
+</html>

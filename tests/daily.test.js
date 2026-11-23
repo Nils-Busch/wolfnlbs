@@ -14,3 +14,10 @@ test("Tagesrätsel: bisherige Wertungen unverändert", () => {
   assert.equal(pointsFor("nono", 200), 500);
   assert.equal(pointsFor("staedte", 4200), 420);
 });
+
+test("Tagesrätsel: Punkte fürs Sudoku", () => {
+  assert.ok(GAMES.includes("sudoku"));
+  assert.equal(pointsFor("sudoku", 0), 600);
+  assert.equal(pointsFor("sudoku", 600), 450, "10 Minuten = 450 Punkte");
+  assert.equal(pointsFor("sudoku", 9000), 100, "nie unter 100");
+});
