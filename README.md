@@ -52,6 +52,7 @@ wrangler.jsonc          Die komplette Cloudflare-Konfiguration
   | Bereich | Recht | Bedeutung |
   |---|---|---|
   | Konten | Konten freischalten & Rechte vergeben | Admin |
+  | Zugang | Gastlinks erstellen (höchstens 7 Tage) | für Leute, die selbst Gäste einladen |
   | Quiz | Eigene Quizze erstellen & bearbeiten | Standard für neue Leute |
   | Quiz | Alle Quizze bearbeiten & löschen | Moderation |
   | Turniere | Turniere anlegen / Teilnehmer verwalten / Ergebnisse eintragen | wie bisher |
@@ -320,10 +321,19 @@ Reinkommen geht auf drei Wegen:
 3. **Konto** – Anmelden öffnet das Tor automatisch. Registrieren können sich nur Leute, die schon
    drin sind.
 
+**Gastlinks:** Wer das Recht „Gastlinks erstellen“ hat, bekommt unter **Konto → Gastlinks** einen
+eigenen Reiter. Dort entstehen Einladungslinks mit 1 bis 7 Tagen Laufzeit – länger oder ohne Ablauf
+geht nicht. Jede Person sieht und löscht nur ihre eigenen Links (höchstens 20 gleichzeitig gültige),
+Admins sehen sie zusätzlich unter **Konto → Zugang** mit dem Hinweis „Gastlink“. Gäste können über
+den Link ein Konto anfragen; die Anfrage zeigt, über wessen Link sie kam. Freischalten kann nur, wer
+„Konten freischalten & Rechte vergeben“ hat. Wird das Recht entzogen, das Konto gesperrt oder
+gelöscht, gelten dessen Gastlinks sofort nicht mehr. Abgelaufene Gastlinks verschwinden nach 30 Tagen.
+
 Dazu kommt der **Turnier-Gastlink** (siehe Turniere): Er öffnet für kurze Zeit nur Spielplan,
 Liveansicht und Tippspiel eines einzigen Turniers.
 
 Der Zugang gilt pro Gerät/Browser 180 Tage und verlängert sich bei Benutzung von selbst.
+Bei Einladungen und Gastlinks mit Ablauf endet er spätestens mit dem Link.
 QR-Codes und Links aus Quiz, Werwolf, Gruppenspielen und Turnieren funktionieren weiter: Neue
 Gäste sehen zuerst das Tor, geben den Code ein und landen dann direkt auf der richtigen Seite.
 

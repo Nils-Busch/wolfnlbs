@@ -1,9 +1,10 @@
 // Gemeinsame Konten für das ganze Vereinsheim (Quiz, Tischtennis, …).
 //
-// - Jeder, der schon drin ist (Zugangscode oder Einladung), kann sich selbst
-//   registrieren. Neue Konten sind aber "wartend"
-//   (pending) und können sich erst anmelden, wenn jemand mit dem Recht
-//   "users.manage" sie freigeschaltet hat.
+// - Jeder, der schon drin ist (Zugangscode, Einladung oder Gastlink), kann sich
+//   selbst registrieren. Neue Konten sind aber "wartend" (pending) und können
+//   sich erst anmelden, wenn jemand mit dem Recht "users.manage" sie
+//   freigeschaltet hat. Wer nur Gastlinks erstellen darf ("invites.create"),
+//   kann nicht freischalten. Bei der Anfrage wird vermerkt, woher sie kam.
 // - Rechte werden pro Person vergeben (siehe PERMISSIONS).
 // - Ein Login gilt für die ganze Seite (Cookie "sid" mit Path=/).
 //
@@ -35,10 +36,11 @@ import {
   bodyReader,
   handleErrors,
 } from "./http.js";
-import { issueAccessCookie } from "../zugang/gate.js";
+import { issueAccessCookie, accessOrigin, dropGuestLinks } from "../zugang/gate.js";
 
 export const PERMISSIONS = [
   { key: "users.manage", label: "Konten freischalten & Rechte vergeben", area: "Konten" },
+  { key: "invites.create", label: "Gastlinks erstellen (höchstens 7 Tage)", area: "Zugang" },
   { key: "quiz.create", label: "Eigene Quizze erstellen & bearbeiten", area: "Quiz" },
   { key: "quiz.manage", label: "Alle Quizze bearbeiten & löschen", area: "Quiz" },
   { key: "tournaments.manage", label: "Turniere anlegen, starten, zurücksetzen", area: "Turniere" },
@@ -105,6 +107,11 @@ export async function ensureAccounts(env) {
   // Migration: persönliche Einstellungen (Aussehen) als JSON
   if (!cols.results.some((c) => c.name === "prefs")) {
     await env.DB.prepare("ALTER TABLE users ADD COLUMN prefs TEXT").run();
+  }
+
+  // Migration: Woher kam eine Konto-Anfrage (Einladung, Gastlink, Code)?
+  if (!cols.results.some((c) => c.name === "via")) {
+    await env.DB.prepare("ALTER TABLE users ADD COLUMN via TEXT").run();
   }
 
   await env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(Date.now()).run();
@@ -204,6 +211,8 @@ async function setPermissions(env, id, permissions) {
       perms.map((p) => env.DB.prepare("INSERT INTO user_permissions (user_id, permission) VALUES (?,?)").bind(id, p))
     );
   }
+  // Recht weg: eigene Gastlinks gelten ab sofort nicht mehr
+  if (!perms.includes("invites.create") && !perms.includes("users.manage")) await dropGuestLinks(env, id);
 }
 
 async function assertAdminRemains(env) {
@@ -215,6 +224,7 @@ async function assertAdminRemains(env) {
 }
 
 export async function deleteUserCascade(env, id) {
+  await dropGuestLinks(env, id);
   await env.DB.batch([
     env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id),
     env.DB.prepare("DELETE FROM user_permissions WHERE user_id = ?").bind(id),
@@ -268,10 +278,11 @@ export async function handleKontoApi(request, env, path) {
       if (exists) fail(409, "Benutzername ist schon vergeben.");
       const { n } = await env.DB.prepare("SELECT count(*) AS n FROM users WHERE pending = 1").first();
       if (n >= MAX_PENDING) fail(429, "Gerade warten zu viele Anfragen auf Freischaltung. Bitte später nochmal versuchen.");
+      const via = await accessOrigin(request, env).catch(() => null);
       await env.DB.prepare(
-        "INSERT INTO users (username, display_name, password_hash, active, pending, created_at) VALUES (?,?,?,0,1,?)"
+        "INSERT INTO users (username, display_name, password_hash, active, pending, created_at, via) VALUES (?,?,?,0,1,?,?)"
       )
-        .bind(username, displayName, await bcrypt.hash(password, 10), now)
+        .bind(username, displayName, await bcrypt.hash(password, 10), now, via)
         .run();
       const cur = r && r.until > now ? r : { count: 0 };
       registrations.set(ip, { count: cur.count + 1, until: now + 60 * 60e3 });
@@ -359,7 +370,7 @@ export async function handleKontoApi(request, env, path) {
     if (path === "/users" && method === "GET") {
       requirePerm("users.manage");
       const usersRaw = await env.DB.prepare(
-        "SELECT id, username, display_name, active, pending, created_at FROM users ORDER BY pending DESC, username"
+        "SELECT id, username, display_name, active, pending, created_at, via FROM users ORDER BY pending DESC, username"
       ).all();
       const permsRaw = await env.DB.prepare("SELECT user_id, permission FROM user_permissions").all();
       const byUser = new Map();
@@ -424,7 +435,10 @@ export async function handleKontoApi(request, env, path) {
       }
       if (typeof b.active === "boolean") {
         await env.DB.prepare("UPDATE users SET active = ?, pending = 0 WHERE id = ?").bind(b.active ? 1 : 0, id).run();
-        if (!b.active) await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id).run();
+        if (!b.active) {
+          await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id).run();
+          await dropGuestLinks(env, id); // gesperrt: auch die Gastlinks
+        }
       }
       if (b.password !== undefined && b.password !== "") {
         if (String(b.password).length < 8) fail(400, "Passwort braucht mindestens 8 Zeichen.");

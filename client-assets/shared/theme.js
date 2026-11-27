@@ -210,4 +210,33 @@
     apply();
     listeners.forEach(function (fn) { try { fn(api.get()); } catch (er) {} });
   });
+  // Kopfzeile: Name (und wartende Konten) aus dem Zwischenspeicher eintragen.
+  // Die Seiten rufen VHHead() direkt nach </header> auf – also vor dem ersten
+  // Bild. So springt die Kopfzeile beim Seitenwechsel nicht von „Anmelden“ auf
+  // den Namen. /shared/account-link.js prüft danach beim Server nach.
+  function headShow(a, v) {
+    a.textContent = v ? v.name : 'Anmelden';
+    a.title = v ? 'Mein Konto' : '';
+    a.href = v && v.pending > 0 ? '/konto/#users' : '/konto/';
+    if (v && v.pending > 0) {
+      var b = document.createElement('span');
+      b.className = 'vh-badge';
+      b.textContent = String(v.pending);
+      b.title = v.pending + ' Konto/Konten warten auf Freischaltung';
+      a.appendChild(b);
+    }
+  }
+  function headCache(v) {
+    try {
+      if (v === undefined) return JSON.parse(localStorage.getItem('vh-me') || 'null');
+      if (v) localStorage.setItem('vh-me', JSON.stringify(v)); else localStorage.removeItem('vh-me');
+    } catch (er) {}
+    return null;
+  }
+  window.VHHead = function () {
+    var a = document.querySelector('.vh-header .vh-account');
+    if (a) headShow(a, headCache());
+  };
+  window.VHHead.show = headShow;
+  window.VHHead.cache = headCache;
 })();

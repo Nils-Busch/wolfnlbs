@@ -62,3 +62,9 @@
 .invite-qr { display: grid; justify-items: start; gap: .3rem; }
 .invite-qr svg { width: 180px; height: 180px; background: #fff; border-radius: 8px; }
 .invite-qr .vh-hint { word-break: break-all; font-size: .8rem; }
+
+/* Gastlinks: drei kurze Regeln, wie Pinnwand-Notizen untereinander */
+.guest-facts { list-style: none; padding: 0; margin: 0; }
+.guest-facts li { padding: .5rem 0 .5rem 1.1rem; border-bottom: 1px dashed var(--vh-line); position: relative; font-size: .95rem; }
+.guest-facts li:last-child { border-bottom: 0; }
+.guest-facts li::before { content: ""; position: absolute; left: 0; top: .95rem; width: .45rem; height: .45rem; background: var(--vh-area, var(--vh-club)); clip-path: polygon(0 0, 100% 50%, 0 100%); }

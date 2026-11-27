@@ -15,10 +15,18 @@
 //   PUT    /admin/code           { code }  ("" = aus) (users.manage)
 //   POST   /admin/invites        { label, days }     (users.manage)
 //   DELETE /admin/invites/:id                        (users.manage)
+//   GET    /gastlinks                                (invites.create oder users.manage)
+//   POST   /gastlinks            { label, days }     (dito, höchstens 7 Tage)
+//   DELETE /gastlinks/:id                            (dito, nur eigene)
+//
+// Gastlinks sind Einladungslinks, die jedes Konto mit dem Recht
+// „invites.create“ selbst erstellen kann – immer mit Ablauf, höchstens
+// GUEST_MAX_DAYS Tage. Wer darüber hereinkommt, darf ein Konto anfragen;
+// freischalten kann es nur jemand mit „users.manage“.
 
 import { ensureAccounts, getUser, hasPerm } from "../konto/auth.js";
 import { fail, intId, str, json, securityHeaders, readCookie, rejectNonJsonWrites, bodyReader, handleErrors } from "../konto/http.js";
-import { COOKIE, GUEST_COOKIE, RENEW_AFTER_SEC, signToken, verifyToken, cookieHeader, normalizeCode, isValidForState, isValidGuest, guestAllows, isPublicPath } from "./token.js";
+import { COOKIE, GUEST_COOKIE, MAX_AGE_SEC, RENEW_AFTER_SEC, signToken, verifyToken, cookieHeader, normalizeCode, isValidForState, isValidGuest, guestAllows, isPublicPath } from "./token.js";
 import { gatePage } from "./page.js";
 import { init as initTurniere } from "../tischtennis/db.js";
 
@@ -36,6 +44,10 @@ const SCHEMA = [
   )`,
 ];
 const CACHE_MS = 60_000;
+export const GUEST_MAX_DAYS = 7; // Gastlinks: längstens eine Woche
+const GUEST_PER_USER = 20; // gleichzeitig gültige Gastlinks pro Konto
+const INVITES_MAX = 200;
+const DAY_MS = 86_400_000;
 let tablesReady = false;
 let cache = null; // { at, secret, code, codeVersion, invites: Map, users: Set }
 
@@ -49,6 +61,11 @@ async function ensureTables(env) {
   if (tablesReady) return;
   await ensureAccounts(env);
   for (const s of SCHEMA) await env.DB.prepare(s).run();
+  // Migration: Gastlinks (von Konten mit „invites.create“) markieren
+  const cols = await env.DB.prepare("PRAGMA table_info(access_invites)").all();
+  if (!cols.results.some((c) => c.name === "guest")) {
+    await env.DB.prepare("ALTER TABLE access_invites ADD COLUMN guest INTEGER NOT NULL DEFAULT 0").run();
+  }
   await env.DB.prepare("INSERT OR IGNORE INTO access_settings (k, v) VALUES ('secret', ?)").bind(randomHex(32)).run();
   await env.DB.prepare("INSERT OR IGNORE INTO access_settings (k, v) VALUES ('code_version', '1')").run();
   tablesReady = true;
@@ -94,12 +111,46 @@ export function forgetGuestTournament(tid) {
   guestCache.delete(Number(tid));
 }
 
+/** Cookie-Laufzeit: bei Einladungen mit Ablauf nicht länger als die Einladung selbst. */
+function cookieAge(st, kind, id) {
+  const exp = kind === "i" ? st.invites.get(id) : null;
+  if (!exp) return MAX_AGE_SEC;
+  return Math.max(60, Math.min(MAX_AGE_SEC, Math.ceil((exp - Date.now()) / 1000)));
+}
+
 /** Set-Cookie-Kopfzeile für einen neuen Zugang (Code, Einladung oder Konto). */
 export async function issueAccessCookie(env, request, kind, id = 0) {
   const st = await loadState(env, true);
   const payload = { k: kind, id, t: Math.floor(Date.now() / 1000) };
   if (kind === "c") payload.v = st.codeVersion;
-  return cookieHeader(await signToken(st.secret, payload), isSecure(request));
+  return cookieHeader(await signToken(st.secret, payload), isSecure(request), cookieAge(st, kind, id));
+}
+
+/**
+ * Woher kommt diese Person? Für Konto-Anfragen: über welchen Einladungs- oder
+ * Gastlink (und von wem) bzw. mit dem Code. null, wenn unbekannt.
+ */
+export async function accessOrigin(request, env) {
+  const raw = readCookie(request, COOKIE);
+  if (!raw) return null;
+  const st = await loadState(env);
+  const p = await verifyToken(st.secret, raw);
+  if (!isValidForState(p, st)) return null;
+  if (p.k === "c") return "Zugangscode";
+  if (p.k !== "i") return null;
+  const row = await env.DB.prepare(
+    `SELECT i.label, i.guest, u.display_name AS by_name FROM access_invites i LEFT JOIN users u ON u.id = i.created_by WHERE i.id = ?`
+  ).bind(p.id).first();
+  if (!row) return null;
+  const by = row.by_name ? ` von ${row.by_name}` : "";
+  return (row.guest ? `Gastlink${by}` : `Einladung${by}`) + ` („${row.label}“)`;
+}
+
+/** Gastlinks eines Kontos löschen (Konto weg oder Recht entzogen). */
+export async function dropGuestLinks(env, userId) {
+  await ensureTables(env);
+  await env.DB.prepare("DELETE FROM access_invites WHERE guest = 1 AND created_by = ?").bind(userId).run();
+  await loadState(env, true);
 }
 
 function wantsHtml(request) {
@@ -141,7 +192,7 @@ export async function guard(request, env, path) {
       const age = Date.now() / 1000 - p.t;
       if (age > RENEW_AFTER_SEC) {
         const fresh = { ...p, t: Math.floor(Date.now() / 1000) };
-        return { setCookie: cookieHeader(await signToken(st.secret, fresh), isSecure(request)) };
+        return { setCookie: cookieHeader(await signToken(st.secret, fresh), isSecure(request), cookieAge(st, p.k, p.id)) };
       }
       return {};
     }
@@ -231,20 +282,69 @@ export async function handleZugangApi(request, env, path) {
 
     const user = await getUser(request, env);
     if (!user) fail(401, "Bitte anmelden.");
-    if (!hasPerm(user, "users.manage")) fail(403, "Dafür fehlt dir das Recht.");
     const origin = new URL(request.url).origin;
     let m;
+
+    /* ---------- Gastlinks (höchstens 7 Tage, nur eigene) ---------- */
+    if (path === "/gastlinks" || path.startsWith("/gastlinks/")) {
+      if (!hasPerm(user, "invites.create") && !hasPerm(user, "users.manage")) fail(403, "Dafür fehlt dir das Recht.");
+      const now = Date.now();
+      // Längst abgelaufene Gastlinks aufräumen, damit die Liste nicht vollläuft
+      await env.DB.prepare("DELETE FROM access_invites WHERE guest = 1 AND expires_at < ?").bind(now - 30 * DAY_MS).run();
+
+      if (path === "/gastlinks" && method === "GET") {
+        const rows = await env.DB.prepare(
+          "SELECT id, token, label, created_at, expires_at, uses, last_used FROM access_invites WHERE guest = 1 AND created_by = ? ORDER BY created_at DESC"
+        ).bind(user.id).all();
+        return securityHeaders(
+          json({
+            maxDays: GUEST_MAX_DAYS,
+            links: rows.results.map(({ token, ...r }) => ({ ...r, link: `${origin}/zugang/${token}`, expired: r.expires_at < now })),
+          })
+        );
+      }
+
+      if (path === "/gastlinks" && method === "POST") {
+        const b = await readBody();
+        const label = str(b.label, 60);
+        if (!label) fail(400, "Bitte angeben, für wen der Link ist.");
+        const days = Number(b.days);
+        if (!Number.isInteger(days) || days < 1 || days > GUEST_MAX_DAYS) fail(400, `Gastlinks gelten 1 bis ${GUEST_MAX_DAYS} Tage.`);
+        const [{ n: mine }, { n: all }] = await Promise.all([
+          env.DB.prepare("SELECT count(*) AS n FROM access_invites WHERE guest = 1 AND created_by = ? AND expires_at > ?").bind(user.id, now).first(),
+          env.DB.prepare("SELECT count(*) AS n FROM access_invites").first(),
+        ]);
+        if (mine >= GUEST_PER_USER) fail(409, `Du hast schon ${GUEST_PER_USER} gültige Gastlinks. Lösch erst ein paar.`);
+        if (all >= INVITES_MAX) fail(409, "Es gibt gerade zu viele Einladungen. Frag den Admin, alte zu löschen.");
+        const token = randomHex(16);
+        await env.DB.prepare("INSERT INTO access_invites (token, label, created_by, created_at, expires_at, guest) VALUES (?,?,?,?,?,1)")
+          .bind(token, label, user.id, now, now + days * DAY_MS)
+          .run();
+        await loadState(env, true);
+        return securityHeaders(json({ ok: true, link: `${origin}/zugang/${token}` }, 201));
+      }
+
+      if ((m = path.match(/^\/gastlinks\/(\d+)$/)) && method === "DELETE") {
+        const r = await env.DB.prepare("DELETE FROM access_invites WHERE id = ? AND guest = 1 AND created_by = ?").bind(intId(m[1]), user.id).run();
+        if (!r.meta.changes) fail(404, "Diesen Gastlink gibt es nicht (mehr).");
+        await loadState(env, true);
+        return securityHeaders(json({ ok: true }));
+      }
+      fail(404, "Nicht gefunden.");
+    }
+
+    if (!hasPerm(user, "users.manage")) fail(403, "Dafür fehlt dir das Recht.");
 
     if (path === "/admin" && method === "GET") {
       const st = await loadState(env, true);
       const rows = await env.DB.prepare(
-        `SELECT i.id, i.token, i.label, i.created_at, i.expires_at, i.uses, i.last_used, u.display_name AS created_by_name
+        `SELECT i.id, i.token, i.label, i.created_at, i.expires_at, i.uses, i.last_used, i.guest, u.display_name AS created_by_name
            FROM access_invites i LEFT JOIN users u ON u.id = i.created_by ORDER BY i.created_at DESC`
       ).all();
       return securityHeaders(
         json({
           code: st.code,
-          invites: rows.results.map(({ token, ...r }) => ({ ...r, link: `${origin}/zugang/${token}`, expired: !!(r.expires_at && r.expires_at < Date.now()) })),
+          invites: rows.results.map(({ token, ...r }) => ({ ...r, guest: !!r.guest, link: `${origin}/zugang/${token}`, expired: !!(r.expires_at && r.expires_at < Date.now()) })),
         })
       );
     }
@@ -269,10 +369,10 @@ export async function handleZugangApi(request, env, path) {
       const days = Number(b.days) || 0;
       if (days < 0 || days > 3650) fail(400, "Ungültige Gültigkeitsdauer.");
       const { n } = await env.DB.prepare("SELECT count(*) AS n FROM access_invites").first();
-      if (n >= 200) fail(409, "Es gibt schon sehr viele Einladungen – lösch erst ein paar alte.");
+      if (n >= INVITES_MAX) fail(409, "Es gibt schon sehr viele Einladungen – lösch erst ein paar alte.");
       const token = randomHex(16);
       await env.DB.prepare("INSERT INTO access_invites (token, label, created_by, created_at, expires_at) VALUES (?,?,?,?,?)")
-        .bind(token, label, user.id, Date.now(), days ? Date.now() + days * 86_400_000 : null)
+        .bind(token, label, user.id, Date.now(), days ? Date.now() + days * DAY_MS : null)
         .run();
       await loadState(env, true);
       return securityHeaders(json({ ok: true, link: `${origin}/zugang/${token}` }, 201));

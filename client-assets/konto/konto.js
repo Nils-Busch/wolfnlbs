@@ -1,5 +1,5 @@
 'use strict';
-/* Konto-Seite: Anmelden, Registrieren, eigenes Konto, Freischaltung & Rechte, Zugang zur Seite. */
+/* Konto-Seite: Anmelden, Registrieren, eigenes Konto, Freischaltung & Rechte, Zugang zur Seite, Gastlinks. */
 
 const app = document.getElementById('app');
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -98,6 +98,7 @@ function shell(content) {
   const tabs = [['account', 'Mein Konto'], ['look', 'Aussehen']];
   if (can('users.manage')) tabs.push(['users', `Konten & Rechte${S.pendingCount ? ` (${S.pendingCount} neu)` : ''}`]);
   if (can('users.manage')) tabs.push(['access', 'Zugang']);
+  else if (can('invites.create')) tabs.push(['guests', 'Gastlinks']);
   app.innerHTML = `
     <div class="konto-head">
       <div class="konto-hello"><span class="avatar" aria-hidden="true">${esc((S.me.display_name || '?').trim().charAt(0).toUpperCase())}</span><h1 class="vh-h1">Hallo, ${esc(S.me.display_name)}!</h1></div>
@@ -161,7 +162,7 @@ async function usersView() {
               .map(
                 (u) => `<form class="pending-item" data-form="approve" data-id="${u.id}">
                   <div class="who">${esc(u.display_name)} <span class="vh-hint">(${esc(u.username)})</span></div>
-                  <div class="when">registriert am ${fmtDate(u.created_at)}</div>
+                  <div class="when">registriert am ${fmtDate(u.created_at)}${u.via ? ` · kam über ${esc(u.via)}` : ''}</div>
                   ${permCheckboxes(['quiz.create'])}
                   <div class="vh-row">
                     <button class="vh-btn vh-btn-accent vh-btn-small">✓ Freischalten</button>
@@ -264,7 +265,7 @@ async function accessView() {
               <div class="top">
                 <div class="name"><strong>${esc(i.label)}</strong>
                   <span class="vh-hint">erstellt ${fmtDay(i.created_at)}${i.created_by_name ? ` von ${esc(i.created_by_name)}` : ''}</span></div>
-                <span class="vh-pill">${i.expired ? 'abgelaufen' : i.expires_at ? `bis ${fmtDay(i.expires_at)}` : 'ohne Ablauf'}</span>
+                <span class="vh-pill">${i.guest ? 'Gastlink · ' : ''}${i.expired ? 'abgelaufen' : i.expires_at ? `bis ${fmtDay(i.expires_at)}` : 'ohne Ablauf'}</span>
               </div>
               <div class="vh-hint">${i.uses ? `${i.uses}× geöffnet, zuletzt ${fmtDate(i.last_used)}` : 'noch nicht geöffnet'}</div>
               <div class="vh-row">
@@ -277,6 +278,57 @@ async function accessView() {
               )
               .join('')
           : '<p class="vh-hint">Noch keine Einladungen.</p>'
+      }
+    </section>`);
+}
+
+/* ---------- Gastlinks: für alle mit „Gastlinks erstellen“, höchstens 7 Tage ---------- */
+async function guestsView() {
+  const r = await api('/zugang/gastlinks');
+  S.access = { invites: r.links };
+  const fmtDay = (ms) => new Date(ms).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
+  const days = [1, 2, 3, r.maxDays].filter((d, i, a) => d <= r.maxDays && a.indexOf(d) === i);
+  shell(`
+    <div class="konto-grid">
+      <form class="vh-card taped" data-form="guest-link">
+        <h2>Gastlink erstellen</h2>
+        <p class="vh-hint">Wer den Link öffnet, ist auf diesem Gerät im Vereinsheim, bis der Link abläuft. Länger als ${r.maxDays} Tage geht nicht.</p>
+        <label class="vh-field">Für wen?<input name="label" maxlength="60" required placeholder="z. B. Spieleabend bei Jana"></label>
+        <label class="vh-field">Gültig
+          <select name="days">${days.map((d) => `<option value="${d}">${d === 1 ? '1 Tag' : `${d} Tage`}</option>`).join('')}</select></label>
+        <button class="vh-btn vh-btn-accent">Link erstellen und kopieren</button>
+      </form>
+      <section class="vh-card pinned">
+        <h2>Gut zu wissen</h2>
+        <ul class="guest-facts">
+          <li>Gäste können über den Link ein eigenes Konto anfragen.</li>
+          <li>Freischalten kann das nur, wer Konten verwalten darf – du siehst die Anfrage nicht.</li>
+          <li>Löschst du einen Link, sind alle, die damit drin sind, sofort wieder draußen.</li>
+        </ul>
+      </section>
+    </div>
+    <section class="vh-card" style="margin-top:1.25rem">
+      <h2>Deine Gastlinks (${r.links.length})</h2>
+      ${
+        r.links.length
+          ? r.links
+              .map(
+                (i) => `<div class="invite-row${i.expired ? ' expired' : ''}">
+              <div class="top">
+                <div class="name"><strong>${esc(i.label)}</strong></div>
+                <span class="vh-pill">${i.expired ? 'abgelaufen' : `bis ${fmtDay(i.expires_at)}`}</span>
+              </div>
+              <div class="vh-hint">${i.uses ? `${i.uses}× geöffnet, zuletzt ${fmtDate(i.last_used)}` : 'noch nicht geöffnet'}</div>
+              <div class="vh-row">
+                ${i.expired ? '' : `<button class="vh-btn vh-btn-small" data-action="copy-invite" data-id="${i.id}">Link kopieren</button>
+                <button class="vh-btn vh-btn-small" data-action="qr-invite" data-id="${i.id}">QR-Code</button>`}
+                <button class="vh-btn vh-btn-small vh-btn-danger" data-action="del-invite" data-id="${i.id}">Löschen</button>
+              </div>
+              ${S.qr === i.id && !i.expired ? `<div class="invite-qr">${qrSvg(i.link)}<p class="vh-hint">${esc(i.link)}</p></div>` : ''}
+            </div>`
+              )
+              .join('')
+          : '<p class="vh-hint">Noch keine Gastlinks. Abgelaufene verschwinden nach 30 Tagen von selbst.</p>'
       }
     </section>`);
 }
@@ -300,13 +352,30 @@ async function loadMe() {
   if (me.user && window.VHLook) window.VHLook.sync(me.user.prefs && me.user.prefs.look);
 }
 
+/* Name oben in der Kopfzeile nach An- und Abmelden gleich mitziehen */
+function syncHeader() {
+  const v = S.me ? { name: S.me.display_name, pending: S.pendingCount || 0 } : null;
+  const a = document.querySelector('.vh-header .vh-account');
+  if (!window.VHHead) return;
+  window.VHHead.cache(v);
+  if (a) window.VHHead.show(a, v);
+}
+
 async function render() {
   try {
     if (S.me === null) await loadMe();
+    syncHeader();
     if (!S.me) return loggedOutView();
-    if (!S.tab || (['users', 'access'].includes(S.tab) && !can('users.manage')) || !['account', 'users', 'access', 'look'].includes(S.tab)) S.tab = 'account';
+    if (S.tab === 'guests' && can('users.manage')) S.tab = 'access';
+    if (
+      !S.tab ||
+      (['users', 'access'].includes(S.tab) && !can('users.manage')) ||
+      (S.tab === 'guests' && !can('invites.create')) ||
+      !['account', 'users', 'access', 'guests', 'look'].includes(S.tab)
+    ) S.tab = 'account';
     if (S.tab === 'users') await usersView();
     else if (S.tab === 'access') await accessView();
+    else if (S.tab === 'guests') await guestsView();
     else if (S.tab === 'look') lookView();
     else accountView();
   } catch (e) {
@@ -397,6 +466,13 @@ app.addEventListener('submit', async (e) => {
       await copyText(r.link);
     });
   }
+  if (kind === 'guest-link') {
+    const d = formData(f);
+    return run(async () => {
+      const r = await api('/zugang/gastlinks', { method: 'POST', body: { label: d.label, days: Number(d.days) } });
+      await copyText(r.link);
+    });
+  }
   if (kind === 'create-user') {
     const d = formData(f);
     return run(
@@ -431,8 +507,9 @@ app.addEventListener('click', (e) => {
   const invite = S.access && S.access.invites.find((i) => String(i.id) === id);
   if (a === 'copy-invite' && invite) copyText(invite.link);
   if (a === 'qr-invite' && invite) { S.qr = S.qr === invite.id ? null : invite.id; render(); }
-  if (a === 'del-invite' && invite && confirm(`Einladung für „${invite.label}“ löschen? Wer damit drin ist, sieht danach nur noch das Eingangstor.`)) {
-    run(() => api(`/zugang/admin/invites/${id}`, { method: 'DELETE' }), 'Einladung gelöscht.');
+  if (a === 'del-invite' && invite && confirm(`${S.tab === 'guests' ? 'Gastlink' : 'Einladung'} für „${invite.label}“ löschen? Wer damit drin ist, sieht danach nur noch das Eingangstor.`)) {
+    if (S.tab === 'guests') run(() => api(`/zugang/gastlinks/${id}`, { method: 'DELETE' }), 'Gastlink gelöscht.');
+    else run(() => api(`/zugang/admin/invites/${id}`, { method: 'DELETE' }), 'Einladung gelöscht.');
   }
   if (a === 'code-off' && confirm('Zugangscode abschalten? Geräte, die nur mit dem Code drin waren, sind dann ausgesperrt.')) {
     run(() => api('/zugang/admin/code', { method: 'PUT', body: { code: '' } }), 'Zugangscode abgeschaltet.');

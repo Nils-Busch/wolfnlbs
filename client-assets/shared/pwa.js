@@ -35,15 +35,21 @@
   // Aussehen: Pinsel-Knopf in der Kopfzeile, die Auswahl (/shared/look.js) kommt erst beim Antippen
   function lookButton() {
     const header = document.querySelector('.vh-header');
-    if (!header || !window.VHLook || header.querySelector('.vh-look-btn')) return;
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'vh-look-btn';
-    b.title = 'Aussehen';
-    b.setAttribute('aria-label', 'Aussehen ändern');
-    b.setAttribute('aria-expanded', 'false');
-    b.textContent = 'Aussehen';
-    header.insertBefore(b, header.querySelector('.vh-account, .vh-guest-pill'));
+    if (!header) return;
+    let b = header.querySelector('.vh-look-btn');
+    if (!window.VHLook) { if (b) b.hidden = true; return; }
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'vh-look-btn';
+      b.title = 'Aussehen';
+      b.setAttribute('aria-label', 'Aussehen ändern');
+      b.setAttribute('aria-expanded', 'false');
+      b.textContent = 'Aussehen';
+      header.insertBefore(b, header.querySelector('.vh-account, .vh-guest-pill'));
+    }
+    if (b.dataset.bound) return;
+    b.dataset.bound = '1';
     b.addEventListener('click', () => {
       if (window.VHLookUI) return window.VHLookUI.toggle(b);
       const s = document.createElement('script');

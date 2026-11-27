@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/shared/theme.js"></script>
+<link rel="preload" href="/shared/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/barlow-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/barlow-500.woff2" as="font" type="font/woff2" crossorigin>
 <title>Offline – Vereinsheim</title>
 <meta name="theme-color" content="#e6ebe3">
 <link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
@@ -13,7 +16,8 @@
 <script src="/shared/pwa.js" defer></script>
 </head>
 <body class="vh-body">
-<header class="vh-header"><a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a></header>
+<header class="vh-header"><a class="vh-brand" href="/"><span class="dot"></span>Vereinsheim</a>  <button type="button" class="vh-look-btn" title="Aussehen" aria-label="Aussehen ändern" aria-expanded="false">Aussehen</button>
+</header>
 <main style="max-width:560px;margin:clamp(2.5rem,8vw,5rem) auto;padding:0 1.25rem;text-align:center">
   <h1 class="vh-h1">Gerade keine Verbindung</h1>
   <p>Online-Spiele, Quiz und Turniere brauchen Internet. Spiele aus der Spielegalerie, die du schon einmal geöffnet hast, laufen auch offline.</p>

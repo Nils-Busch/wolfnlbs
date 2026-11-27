@@ -1,5 +1,5 @@
 // Rauchtest: startet die Seite lokal (wrangler dev), prüft das Eingangstor (Code,
-// Einladungslink, Konto, Turnier-Gastlink), ruft die wichtigsten Seiten auf,
+// Einladungslink, Gastlinks mit Konto-Anfrage, Konto, Turnier-Gastlink), ruft die wichtigsten Seiten auf,
 // speichert ein Aussehen am Konto und spielt kurze Runden Mäxchen, Agentenrunde,
 // Erklärbär, Kniffel und „Wer würde eher“ ohne Fernseher über WebSockets
 // (inklusive „Gruppe verlassen“ mit Übergabe der Spielleitung). Läuft lokal und im GitHub-Workflow:
@@ -94,6 +94,32 @@ try {
   await send("/api/zugang/admin/code", admin, { method: "PUT", body: JSON.stringify({ code: "neuer code" }) });
   (await send("/spiele/", gast)).status === 401 ? ok("Code geändert: alter Code-Zugang gesperrt") : bad("alter Code gilt noch");
   (await send("/", admin)).ok ? ok("Konto bleibt drin") : bad("Konto ausgesperrt");
+
+  // Gastlinks: Konto mit „invites.create“ erstellt Links (höchstens 7 Tage),
+  // Gäste können darüber ein Konto anfragen, freischalten kann nur „users.manage“
+  const gg = await send("/api/konto/users", admin, { method: "POST", body: JSON.stringify({ username: "gastgeber", display_name: "Gastgeberin", password: "gastgeber-pw-1", permissions: ["invites.create"] }) });
+  const ggId = (await gg.json()).id;
+  const host = jar();
+  (await send("/api/konto/auth/login", host, { method: "POST", body: JSON.stringify({ username: "gastgeber", password: "gastgeber-pw-1" }) })).ok ? ok("Gastgeberin angemeldet") : bad("Gastgeberin-Anmeldung");
+  (await send("/api/zugang/gastlinks", host, { method: "POST", body: JSON.stringify({ label: "zu lang", days: 8 }) })).status === 400 ? ok("Gastlink über 7 Tage abgelehnt") : bad("Gastlink 8 Tage angenommen");
+  (await send("/api/zugang/gastlinks", host, { method: "POST", body: JSON.stringify({ label: "ohne Ablauf", days: 0 }) })).status === 400 ? ok("Gastlink ohne Ablauf abgelehnt") : bad("Gastlink ohne Ablauf angenommen");
+  (await send("/api/zugang/admin", host)).status === 403 ? ok("Gastgeberin sieht die Zugangsverwaltung nicht") : bad("Gastgeberin sieht Zugangsverwaltung");
+  const gl = await (await send("/api/zugang/gastlinks", host, { method: "POST", body: JSON.stringify({ label: "Spieleabend", days: 3 }) })).json();
+  const besuch = jar();
+  const gr = await send(new URL(gl.link).pathname, besuch);
+  const age = Number((gr.headers.get("set-cookie") || "").match(/Max-Age=(\d+)/)?.[1]);
+  gr.status === 302 && age > 2.9 * 86400 && age <= 3 * 86400 ? ok("Gastlink eingelöst, Cookie endet mit dem Link") : bad(`Gastlink -> ${gr.status}, Max-Age ${age}`);
+  (await send("/quiz/", besuch)).ok ? ok("mit Gastlink drin") : bad("mit Gastlink nicht drin");
+  (await send("/api/konto/auth/register", besuch, { method: "POST", body: JSON.stringify({ username: "besuch", display_name: "Besuch", password: "besuch-pw-12" }) })).status === 201 ? ok("über Gastlink Konto angefragt") : bad("Konto-Anfrage über Gastlink");
+  const wart = (await (await send("/api/konto/users", admin)).json()).find((u) => u.username === "besuch");
+  wart?.pending && /Gastlink von Gastgeberin/.test(wart.via || "") ? ok("Anfrage zeigt den Gastlink") : bad(`Herkunft fehlt: ${wart?.via}`);
+  (await send(`/api/konto/users/${wart.id}/approve`, host, { method: "POST", body: "{}" })).status === 403 ? ok("Gastgeberin kann nicht freischalten") : bad("Gastgeberin konnte freischalten");
+  const mine = await (await send("/api/zugang/gastlinks", host)).json();
+  mine.links.length === 1 && mine.links[0].uses === 1 && mine.maxDays === 7 ? ok("eigene Gastlinks gelistet") : bad("Gastlink-Liste");
+  (await send(`/api/zugang/gastlinks/${mine.links[0].id}`, admin, { method: "DELETE", body: "{}" })).status === 404 ? ok("fremde Gastlinks nicht über die Gastlink-Liste löschbar") : bad("fremden Gastlink gelöscht");
+  await send(`/api/konto/users/${ggId}`, admin, { method: "PATCH", body: JSON.stringify({ permissions: [] }) });
+  (await send("/quiz/", besuch)).status === 401 ? ok("Recht entzogen: Gastlinks gelten nicht mehr") : bad("Gastlink gilt nach Rechteentzug");
+  (await send(`/api/konto/users/${wart.id}`, admin, { method: "DELETE", body: "{}" })).ok && (await send(`/api/konto/users/${ggId}`, admin, { method: "DELETE", body: "{}" })).ok ? ok("Testkonten gelöscht") : bad("Testkonten löschen");
 
   for (const path of ["/", "/spiele/", "/spiele/gruppe/", "/spiele/games/maexchen.html", "/spiele/games/kloetzchen.html", "/raetsel/puzzle.html", "/shared/theme.js", "/shared/look.js", "/quiz/", "/raetsel/", "/konto/", "/tischtennis/", "/tischtennis/rangliste", "/tischtennis/live", "/datenschutz", "/robots.txt", "/manifest.webmanifest", "/sw.js", "/woelfe/"]) {
     const r = await send(path, admin, { redirect: "follow" });

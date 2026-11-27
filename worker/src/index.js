@@ -52,6 +52,7 @@ function asGuestPage(res, guest) {
   return new HTMLRewriter()
     .on("body", { element(e) { e.setAttribute("class", `${e.getAttribute("class") || ""} vh-guest`.trim()); } })
     .on(".vh-header nav", { element(e) { e.remove(); } })
+    .on(".vh-header .vh-account", { element(e) { e.remove(); } })
     .on(".top-links", { element(e) { e.remove(); } })
     .on("a.vh-brand", { element(e) { e.setAttribute("href", home); } })
     .on(".vh-header", { element(e) { e.append(`<span class="vh-guest-pill" title="Du siehst nur dieses Turnier">Gastzugang</span>`, { html: true }); } })

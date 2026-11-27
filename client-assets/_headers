@@ -1,0 +1,7 @@
+# Schriften und Icons ändern sich nie unter demselben Namen: lange im Browser
+# behalten. Sonst fragt jede Seite neu nach und die Kopfzeile blitzt kurz in
+# einer Ersatzschrift auf.
+/shared/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/shared/icons/*
+  Cache-Control: public, max-age=604800

@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/shared/theme.js"></script>
+<link rel="expect" href="#vh-kopf-ende" blocking="render">
+<link rel="preload" href="/shared/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/barlow-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/barlow-500.woff2" as="font" type="font/woff2" crossorigin>
 <title>Ewige Bestenliste – Tagesrätsel</title>
 <meta name="description" content="Wer ist am besten in den Tagesrätseln? Punkte, Serien und Rekorde über alle Tage.">
 <link rel="icon" href="/shared/icons/favicon.svg" type="image/svg+xml">
@@ -25,7 +29,10 @@
     <a href="/raetsel/" class="is-active">Tagesrätsel</a>
     <a href="/tischtennis/">Turniere</a>
   </nav>
+  <button type="button" class="vh-look-btn" title="Aussehen" aria-label="Aussehen ändern" aria-expanded="false">Aussehen</button>
+  <a class="vh-account" href="/konto/">Anmelden</a>
 </header>
+<script id="vh-kopf-ende">VHHead()</script>
 <main class="gallery lb">
   <section class="rt-hero">
     <div>
